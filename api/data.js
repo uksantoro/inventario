@@ -19,6 +19,27 @@ export default async function handler(req, res) {
     await sql`create table if not exists app_state (
       id int primary key, version int not null default 0, data jsonb, updated_at timestamptz not null default now())`;
 
+    // registro delle modifiche: /api/data?log=1  (GET ultime 500 voci, POST {voci:[{u,a,o,d}]})
+    if (req.query && req.query.log !== undefined) {
+      await sql`create table if not exists registro (id bigserial primary key, quando timestamptz not null default now(), utente text not null, azione text not null, oggetto text, dettaglio text)`;
+      if (req.method === 'GET') {
+        const r = await sql`select quando, utente, azione, oggetto, dettaglio from registro order by id desc limit 500`;
+        return res.status(200).json({ voci: r.map(x => ({ t: x.quando, u: x.utente, a: x.azione, o: x.oggetto, d: x.dettaglio })) });
+      }
+      if (req.method === 'POST') {
+        const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        const voci = Array.isArray(body && body.voci) ? body.voci.slice(0, 60) : [];
+        const cut = (v, n) => String(v == null ? '' : v).slice(0, n);
+        for (const v of voci) {
+          const u = cut(v.u, 40).trim(), a = cut(v.a, 20);
+          if (!u || !a) continue;
+          await sql`insert into registro (utente, azione, oggetto, dettaglio) values (${u}, ${a}, ${cut(v.o, 40)}, ${cut(v.d, 600)})`;
+        }
+        return res.status(200).json({ ok: true });
+      }
+      return res.status(405).json({ error: 'method not allowed' });
+    }
+
     // foto degli articoli: /api/data?img=<chiave>  (GET, PUT {dati}, DELETE)
     if (req.query && req.query.img !== undefined) {
       const k = String(req.query.img).slice(0, 300);
