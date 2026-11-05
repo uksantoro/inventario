@@ -835,11 +835,11 @@ function leggiRiga(d) {
   if (q === null || Number.isNaN(q)) throw new Err("Inserisci la quantità (numero intero).");
   return o;
 }
-function dlgRiga(id) {
+function dlgRiga(id, back) {
   const r = id == null ? { articolo: "", area: ui.area !== "*" && ui.area !== "-" ? ui.area : "", origine: "", qty: 1 } : invRow(id);
   const vecchio = id == null ? null : r.articolo;
   dlg(id == null ? "Nuovo articolo" : "Modifica articolo", formRiga(r), {
-    onOk: d => { const o = leggiRiga(d); run(() => { salvaRiga(id, o); migraFoto(vecchio, o.articolo); }, "Salvato."); },
+    onOk: d => { const o = leggiRiga(d); run(() => { salvaRiga(id, o); migraFoto(vecchio, o.articolo); }, "Salvato."); if (back) setTimeout(() => dlgArticoloAree(o.articolo), 80); },
     init: d => {
       pvSync(d);
       $("#pvAdd", d).onclick = () => { $("#pv", d).insertAdjacentHTML("beforeend", pvRowHtml({})); pvSync(d); };
@@ -1004,7 +1004,22 @@ function listRie() {
   S.inv.forEach(r => { const k = norm(r.articolo); const g = m.get(k) || { nome: r.articolo, qty: 0, rotto: 0, ripar: 0, dis: 0, aree: new Map() }; g.qty += n0(r.qty); g.rotto += n0(r.rotto); g.ripar += n0(r.ripar); g.dis += n0(r.dismesso); const a = r.area || "Da assegnare"; g.aree.set(a, (g.aree.get(a) || 0) + n0(r.qty)); m.set(k, g); });
   const q = norm(ui.qr);
   const R = [...m.values()].filter(g => !q || norm(g.nome).includes(q)).sort((a, b) => a.nome.localeCompare(b.nome, "it"));
-  $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> articoli diversi</span><span><b>${R.reduce((s, g) => s + g.qty, 0)}</b> pezzi</span></div><div class="list">` + (R.length ? `<div class="gh cols-rie"><div>Articolo</div><div class="num">Totale</div><div class="num">Rotti</div><div class="num">Rip.</div><div class="num">Dism.</div><div>Dove si trova</div></div>` + R.map(g => `<div class="gr cols-rie"><div class="art cell"><a href="#" data-act="vedi" data-n="${esc(g.nome)}" style="color:var(--brand);text-decoration:none">${esc(g.nome)}</a></div><div class="num cell" data-l="Totale"><b>${g.qty}</b></div><div class="num cell" data-l="Rotti">${g.rotto || "·"}</div><div class="num cell" data-l="Rip.">${g.ripar || "·"}</div><div class="num cell" data-l="Dism.">${g.dis || "·"}</div><div class="cell">${[...g.aree].map(([a, n]) => `<span class="chip">${esc(a)} · ${n}</span>`).join(" ")}</div></div>`).join("") : `<div class="empty">Nessun articolo.</div>`) + `</div>`;
+  $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> articoli diversi</span><span><b>${R.reduce((s, g) => s + g.qty, 0)}</b> pezzi</span></div><div class="list">` + (R.length ? `<div class="gh cols-rie"><div>Articolo</div><div class="num">Totale</div><div class="num">Rotti</div><div class="num">Rip.</div><div class="num">Dism.</div><div>Dove si trova</div></div>` + R.map(g => `<div class="gr ra cols-rie" data-act="artAree" data-n="${esc(g.nome)}"><div class="art cell"><a href="#" data-act="artAree" data-n="${esc(g.nome)}" style="color:var(--brand);text-decoration:none">${esc(g.nome)}</a></div><div class="num cell" data-l="Totale"><b>${g.qty}</b></div><div class="num cell" data-l="Rotti">${g.rotto || "·"}</div><div class="num cell" data-l="Rip.">${g.ripar || "·"}</div><div class="num cell" data-l="Dism.">${g.dis || "·"}</div><div class="cell">${[...g.aree].map(([a, n]) => `<span class="chip">${esc(a)} · ${n}</span>`).join(" ")}</div></div>`).join("") : `<div class="empty">Nessun articolo.</div>`) + `</div>`;
+}
+
+/* scheda di un articolo presente in più aree: quanti ce ne sono dove, con gli Einkauf, e modifica di area/origine/quantità */
+function dlgArticoloAree(nome) {
+  const k = norm(nome), rows = S.inv.filter(r => norm(r.articolo) === k).sort((a, b) => (a.area || "~").localeCompare(b.area || "~", "it"));
+  if (!rows.length) return toast("Articolo non trovato.");
+  const tot = rows.reduce((t, r) => t + n0(r.qty), 0), nm = rows[0].articolo;
+  dlg(esc(nm), `<div style="font-size:15px">Totale <b>${tot} pz</b> · ${rows.length} ${rows.length === 1 ? "riga" : "righe"}</div>
+    <div class="un">${rows.map(r => `<div class="r"><b>${esc(r.area || "Da assegnare")}</b><span class="sub"><b style="color:var(--fg)">${n0(r.qty)}</b> pz</span>${provHtml(r)}${n0(r.rotto) ? `<span class="chip r">${r.rotto} rotti</span>` : ""}${n0(r.ripar) ? `<span class="chip o">${r.ripar} in rip.</span>` : ""}${n0(r.dismesso) ? `<span class="chip y">${r.dismesso} dismessi</span>` : ""}
+      <span style="margin-left:auto;display:flex;gap:6px"><button type="button" class="btn sm" data-x="edit" data-id="${r.id}">Modifica</button><button type="button" class="btn sm" data-x="move" data-id="${r.id}">Sposta</button><button type="button" class="btn sm" data-x="det" data-id="${r.id}">Scheda</button></span></div>`).join("")}</div>
+    <div class="hint">«Modifica» cambia area, Einkauf di provenienza e quantità di quella riga; «Sposta» porta alcuni pezzi in un'altra area.</div>`,
+    { noCancel: true, ok: "Chiudi", wide: true, onOk: () => {}, init: d => d.querySelectorAll("[data-x]").forEach(b => b.onclick = () => {
+      const id = Number(b.dataset.id), x = b.dataset.x; closeDlg();
+      if (x === "edit") dlgRiga(id, nm); else if (x === "move") dlgSposta(id); else dlgDettaglio(id);
+    }) });
 }
 
 /* --- Controlli --- */
@@ -1060,10 +1075,11 @@ function dlgUnisci(key) {
   dlg("Unire questi articoli?", `<div>Le ${rows.length} righe diventano <b>una sola</b> in «${esc(rows[0].area || "Da assegnare")}». Quantità, rotti, in riparazione e dismessi vengono sommati; gli acquisti collegati restano collegati.</div>
     <div class="f"><span class="lab">Nome dopo l'unione</span>${nomi.map((n, i) => `<label class="optn"><input type="radio" name="unN" value="${esc(n)}" ${i === 0 ? "checked" : ""}><span>${esc(n)}</span></label>`).join("")}</div>
     <div class="un">${rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="sub">${n0(r.qty)} pz</span>${provHtml(r)}</div>`).join("")}</div>
-    <div class="f"><span class="lab">Risultato</span><div><b>${tot} pz</b> in totale</div><div class="un"><div class="r">${[...agg].map(([o, q]) => `<span class="chip">${esc(o)} · ${q}</span>`).join("")}${tot > ass ? `<span class="chip y">senza Einkauf · ${tot - ass}</span>` : ""}${!agg.size ? '<span class="sub">Nessun Einkauf indicato</span>' : ""}</div></div></div>`,
-    { ok: "Sì, unisci", wide: true, onOk: d => { const nome = (d.querySelector('input[name=unN]:checked') || {}).value || nomi[0]; run(() => unisciRighe(ids, nome), "Articoli uniti: " + tot + " pz."); } });
+    <div class="f"><span class="lab">Quantità totale dopo l'unione</span><input type="number" id="unTot" min="1" step="1" value="${tot}" inputmode="numeric"><div class="hint">Somma suggerita: <b>${tot}</b>. Cambiala se i pezzi in realtà sono di meno o di più (ad es. lo stesso articolo contato due volte). Se scendi sotto i pezzi assegnati agli Einkauf, questi vengono ridotti a partire dall'ultimo.</div></div>
+    <div class="f"><span class="lab">Risultato</span><div><b>${tot} pz</b> in totale (con la somma suggerita)</div><div class="un"><div class="r">${[...agg].map(([o, q]) => `<span class="chip">${esc(o)} · ${q}</span>`).join("")}${tot > ass ? `<span class="chip y">senza Einkauf · ${tot - ass}</span>` : ""}${!agg.size ? '<span class="sub">Nessun Einkauf indicato</span>' : ""}</div></div></div>`,
+    { ok: "Sì, unisci", wide: true, onOk: d => { const nome = (d.querySelector('input[name=unN]:checked') || {}).value || nomi[0]; const t = Number(($("#unTot", d) || {}).value); if (!Number.isInteger(t) || t < 1) { $("#derr", d).textContent = "Scrivi una quantità totale valida (intero, almeno 1)."; return false; } run(() => unisciRighe(ids, nome, t), "Articoli uniti: " + t + " pz."); } });
 }
-function unisciRighe(ids, nome) {
+function unisciRighe(ids, nome, totale) {
   const rows = ids.map(invRow).filter(Boolean);
   if (rows.length < 2) throw new Err("Servono almeno due righe da unire.");
   const target = rows.slice().sort((a, b) => n0(b.qty) - n0(a.qty))[0], agg = [];
@@ -1074,7 +1090,11 @@ function unisciRighe(ids, nome) {
   S.acq = S.acq.filter(a => !(a.man && ids.includes(a.inv_id)));
   S.acq.forEach(a => { if (ids.includes(a.inv_id)) a.inv_id = target.id; });
   S.inv = S.inv.filter(r => r === target || !ids.includes(r.id));
-  Object.assign(target, { articolo: nome, qty: somma("qty"), rotto: nz(somma("rotto")), ripar: nz(somma("ripar")), dismesso: nz(somma("dismesso")), note, marca, modello });
+  const qtot = totale != null ? totale : somma("qty");
+  let rem = agg.reduce((t, x) => t + x.q, 0) - qtot;
+  for (let i = agg.length - 1; i >= 0 && rem > 0; i--) { const d = Math.min(agg[i].q, rem); agg[i].q -= d; rem -= d; }
+  for (let i = agg.length - 1; i >= 0; i--) if (agg[i].q <= 0) agg.splice(i, 1);
+  Object.assign(target, { articolo: nome, qty: qtot, rotto: nz(somma("rotto")), ripar: nz(somma("ripar")), dismesso: nz(somma("dismesso")), note, marca, modello });
   setOrigini(target, agg); clampStati(target); sincAcq(target);
   nomiVecchi.forEach(n => migraFoto(n, nome));
 }
@@ -1498,6 +1518,7 @@ document.addEventListener("click", e => {
     case "delAcq": { const a = S.acq.find(x => x.id === id); dlgConferma("Elimina acquisto", `Eliminare l'acquisto ${a.anno} di «${esc(a.articolo)}» (${a.qty} pz)? Le ${a.qty} unità verranno tolte anche dall'inventario collegato.`, "Elimina", () => run(() => delAcq(id), "Acquisto eliminato.")); break; }
     case "link": dlgCollega(id); break;
     case "linkAll": go(() => { const n = collegaTutti(); if (!n) throw new Err("Nessun collegamento automatico possibile: collega a mano."); }, "Acquisti collegati."); break;
+    case "artAree": e.preventDefault(); dlgArticoloAree(t.dataset.n); break;
     case "vedi": e.preventDefault(); ui.q = t.dataset.n; ui.area = "*"; ui.stato = ""; ui.tab = "inv"; render(); inCima(); break;
     case "fix": {
       if (t.dataset.d === "acq") { t.dataset.t === "NONCOLL" ? dlgCollega(id) : dlgAcq(id); }
