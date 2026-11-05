@@ -153,8 +153,8 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
   .gr .num{text-align:left}
   .acts{justify-content:flex-start}
   .gr .c-q{font-size:15px}
-  .bnav{display:grid;grid-template-columns:repeat(4,1fr);position:static;flex:none;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px))}
-  .bnav .tab{flex-direction:column;gap:2px;font-size:11.5px;padding:6px 2px;position:relative;justify-content:center}
+  .bnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:static;flex:none;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px))}
+  .bnav .tab{flex-direction:column;gap:2px;font-size:10.5px;padding:6px 1px;min-width:0;position:relative;justify-content:center}
   .bnav .tab svg{width:22px;height:22px}
   .bnav .badge{position:absolute;top:0;right:18%}
   .fab{display:flex;position:sticky;bottom:14px;margin:0 0 14px auto;z-index:24;border-radius:99px;padding:13px 18px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
@@ -169,6 +169,11 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
   .card{grid-template-columns:minmax(0,1fr)}
   .bar .btn.fl{display:none}
 }
+/* registro */
+.lg{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:grid;gap:4px;margin-bottom:8px}
+.lg .m{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:12.5px;color:var(--muted)}
+.lg .m b{color:var(--fg);font-size:14px}
+.lg .t{overflow-wrap:anywhere}
 /* dettaglio, foto, provenienza multipla */
 .cam{display:inline-block;margin-left:6px;color:var(--teal);vertical-align:-2px}
 .cam svg{width:15px;height:15px}
@@ -276,7 +281,7 @@ const Repo = {
     if (this.cfg.api) { this.mode = "cloud"; return this.pwd() ? "ok" : "login"; }
     return "ok";
   },
-  async login(_e, pass) { try { localStorage.setItem("sl_pwd", pass); } catch (e) {} try { await this.call("GET"); } catch (e) { if (e.auth) { try { localStorage.removeItem("sl_pwd"); } catch (x) {} } throw e; } },
+  async login(nome, pass) { try { localStorage.setItem("sl_pwd", pass); } catch (e) {} try { await this.call("GET"); } catch (e) { if (e.auth) { try { localStorage.removeItem("sl_pwd"); } catch (x) {} } throw e; } Reg.setNome(nome); },
   async logout() { try { localStorage.removeItem("sl_pwd"); } catch (e) {} },
   async load() {
     if (this.mode === "local") return this.loadLocal();
@@ -301,6 +306,51 @@ const Repo = {
 const fixS = s => { if (!Array.isArray(s.imgs)) s.imgs = []; if (!s.imgv || typeof s.imgv !== "object" || Array.isArray(s.imgv)) s.imgv = {}; return s; };
 let S = Repo.fresh();
 function setStato(t, err) { const e = $("#stato"); if (e) { e.textContent = t; e.style.color = err ? "var(--danger)" : "var(--muted)"; } }
+/* ---------- registro: chi ha fatto cosa e quando ---------- */
+const Reg = {
+  dati: null,
+  nome() { try { return localStorage.getItem("sl_nome") || ""; } catch (e) { return ""; } },
+  setNome(n) { try { localStorage.setItem("sl_nome", n); } catch (e) {} },
+  async aggiungi(voci) {
+    if (!voci.length) return;
+    const u = this.nome() || "Sconosciuto";
+    if (Repo.mode === "cloud") { try { await Repo.call("POST", { voci: voci.map(v => ({ ...v, u })) }, "?log=1"); } catch (e) { console.error(e); } }
+    else { try { const l = JSON.parse(localStorage.getItem("sl_log") || "[]"), t = new Date().toISOString(); voci.slice().reverse().forEach(v => l.unshift({ t, u, ...v })); localStorage.setItem("sl_log", JSON.stringify(l.slice(0, 500))); } catch (e) {} }
+  },
+  async leggi() {
+    if (Repo.mode === "cloud") return (await Repo.call("GET", null, "?log=1")).voci || [];
+    try { return JSON.parse(localStorage.getItem("sl_log") || "[]"); } catch (e) { return []; }
+  }
+};
+const CAMPI_INV = [["articolo", "articolo"], ["area", "area"], ["qty", "quantità"], ["rotto", "rotti"], ["ripar", "in riparazione"], ["dismesso", "dismessi"], ["marca", "marca"], ["modello", "modello"], ["origine", "Einkauf"], ["note", "note"]];
+const CAMPI_ACQ = [["articolo", "articolo"], ["area", "area"], ["qty", "quantità"], ["rotto", "rotti"], ["ripar", "in riparazione"], ["dismesso", "dismessi"], ["note", "note"]];
+function diffRighe(A, B, tipo, descr, campi, salta) {
+  const out = [], ma = new Map(A.map(x => [x.id, x])), mb = new Map(B.map(x => [x.id, x])), v = x => x == null || x === "" ? "—" : String(x);
+  for (const [id, x] of mb) {
+    if (salta && salta(x)) continue;
+    const o = ma.get(id);
+    if (!o) out.push({ a: "Aggiunto", o: tipo, d: descr(x) });
+    else { const c = campi.filter(([k]) => (o[k] ?? null) !== (x[k] ?? null)).map(([k, l]) => l + ": " + v(o[k]) + " → " + v(x[k])); if (c.length) out.push({ a: "Modificato", o: tipo, d: descr(x) + " — " + c.join(", ") }); }
+  }
+  for (const [id, x] of ma) if (!mb.has(id) && !(salta && salta(x))) out.push({ a: "Eliminato", o: tipo, d: descr(x) });
+  return out;
+}
+function diffStato(A, B) {
+  const out = [
+    ...diffRighe(A.inv, B.inv, "Inventario", x => x.articolo + (x.area ? " (" + x.area + ")" : "") + " × " + n0(x.qty), CAMPI_INV),
+    ...diffRighe(A.acq, B.acq, "Acquisto", x => x.anno + " · " + x.articolo + " × " + n0(x.qty), CAMPI_ACQ, x => x.man)
+  ];
+  for (const a of B.aree) if (!A.aree.includes(a)) out.push({ a: "Aggiunto", o: "Area", d: a });
+  for (const a of A.aree) if (!B.aree.includes(a)) out.push({ a: "Eliminato", o: "Area", d: a });
+  const nm = k => (B.inv.concat(A.inv).find(r => norm(r.articolo) === k) || {}).articolo || k;
+  for (const k of B.imgs || []) if (!(A.imgs || []).includes(k)) out.push({ a: "Aggiunto", o: "Foto", d: nm(k) });
+  for (const k of A.imgs || []) if (!(B.imgs || []).includes(k)) out.push({ a: "Eliminato", o: "Foto", d: nm(k) });
+  if (out.length > 40) { const n = out.length - 39; out.length = 39; out.push({ a: "Modificato", o: "Vari", d: "… e altre " + n + " modifiche" }); }
+  return out;
+}
+function registra(prima, dopo, pref) {
+  try { const v = diffStato(JSON.parse(prima), typeof dopo === "string" ? JSON.parse(dopo) : dopo); if (pref) v.forEach(x => x.d = pref + x.d); Reg.aggiungi(v); } catch (e) { console.error(e); }
+}
 const undo = [];
 const snap = () => { undo.push(JSON.stringify(S)); if (undo.length > 15) undo.shift(); };
 
@@ -580,6 +630,7 @@ const TABS = [
   ["inv", "Inventario", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>'],
   ["acq", "Acquisti", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a2 2 0 002 1.6h8.2a2 2 0 002-1.5L21 7H6"/></svg>'],
   ["rie", "Riepilogo", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>'],
+  ["log", "Registro", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h11v16H5V4h3z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>'],
   ["con", "Controlli", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3L12 3z"/><path d="M12 10v4M12 17v.5"/></svg>']
 ];
 let toastT;
@@ -590,6 +641,7 @@ function run(fn, msg) {
   const prima = JSON.stringify(S);
   try { fn(); } catch (e) { S = JSON.parse(prima); throw e; }
   undo.push(prima); if (undo.length > 15) undo.shift();
+  registra(prima, S);
   if (!Repo.save(S)) toast("Salvataggio nel browser non riuscito: scarica un backup.");
   else if (msg) toast(msg);
   render();
@@ -597,7 +649,8 @@ function run(fn, msg) {
 function go(fn, msg) { try { run(fn, msg); } catch (e) { if (e instanceof Err) toast(e.message); else { console.error(e); toast("Errore imprevisto: " + e.message); } } }
 function annulla() {
   if (!undo.length) return toast("Niente da annullare.");
-  S = JSON.parse(undo.pop()); Repo.save(S); render(); toast("Ultima modifica annullata.");
+  const prima = JSON.stringify(S);
+  S = JSON.parse(undo.pop()); registra(prima, S, "(annullata) "); Repo.save(S); render(); toast("Ultima modifica annullata.");
 }
 
 function dlg(title, body, o = {}) {
@@ -643,6 +696,7 @@ function render() {
   if (ui.tab === "inv") viewInv(v, SM);
   else if (ui.tab === "acq") viewAcq(v, SM);
   else if (ui.tab === "rie") viewRie(v);
+  else if (ui.tab === "log") viewLog(v);
   else viewCon(v, L);
 }
 
@@ -915,6 +969,26 @@ function listCon(L) {
     <div>${esc(x.testo)}</div><div class="todo"><b>Cosa fare:</b> ${esc(x.sugg)}</div></div>`).join("")}</div>` : `<div class="empty">Nessuna anomalia con questi filtri. 🎉</div>`.replace(" 🎉", "");
 }
 
+/* --- registro --- */
+const ui2 = { lu: "", la: "", ql: "" };
+function viewLog(v) {
+  v.innerHTML = `<div class="bar"><select id="fLu" aria-label="Utente"><option value="">Tutti gli utenti</option></select>
+    <select id="fLa" aria-label="Azione"><option value="">Tutte le azioni</option>${["Aggiunto", "Modificato", "Eliminato"].map(a => `<option ${ui2.la === a ? "selected" : ""}>${a}</option>`).join("")}</select>
+    <input type="search" class="grow" id="qL" placeholder="Cerca nel registro…" value="${esc(ui2.ql)}" aria-label="Cerca"><button class="btn" id="bLog">Aggiorna</button></div><div id="list"><div class="empty">Caricamento…</div></div>`;
+  const carica = () => Reg.leggi().then(l => { Reg.dati = l; if (ui.tab === "log") listLog(); }).catch(e => { if (ui.tab === "log" && $("#list")) $("#list").innerHTML = `<div class="empty">${esc(e.message || "Registro non disponibile.")}</div>`; });
+  $("#bLog").onclick = carica; carica();
+}
+const quando = t => { const d = new Date(t); return isNaN(d) ? "" : d.toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }); };
+function listLog() {
+  const L = Reg.dati || [], sel = $("#fLu"); if (!sel || !$("#list")) return;
+  const utenti = [...new Set(L.map(x => x.u))].sort((a, b) => a.localeCompare(b, "it"));
+  sel.innerHTML = `<option value="">Tutti gli utenti</option>` + utenti.map(u => `<option value="${esc(u)}" ${u === ui2.lu ? "selected" : ""}>${esc(u)}</option>`).join("");
+  const q = norm(ui2.ql);
+  const R = L.filter(x => (!ui2.lu || x.u === ui2.lu) && (!ui2.la || x.a === ui2.la) && (!q || norm([x.u, x.o, x.d].join(" ")).includes(q)));
+  const k = { Aggiunto: "g", Modificato: "o", Eliminato: "r" };
+  $("#list").innerHTML = R.length ? R.map(x => `<div class="lg"><div class="m"><b>${esc(x.u)}</b><span class="chip ${k[x.a] || ""}">${esc(x.a)}</span><span>${esc(x.o || "")}</span><span>${quando(x.t)}</span></div><div class="t">${esc(x.d || "")}</div></div>`).join("") : `<div class="empty">${L.length ? "Nessuna voce con questi filtri." : "Il registro è vuoto: le modifiche future compariranno qui."}</div>`;
+}
+
 /* --- aree --- */
 function dlgAree() {
   const draw = d => {
@@ -1030,13 +1104,14 @@ function dlgEsporta() {
 
 /* ---------- backup ---------- */
 function dlgMenu() {
-  dlg("Menu", `<div class="menu"><button class="btn dskonly" data-m="exp">Esporta Excel…</button><button class="btn" data-m="aree">Gestisci aree</button><button class="btn" data-m="bk">Scarica backup (JSON)</button><button class="btn" data-m="imp">Importa backup (JSON)…</button>${Repo.mode === "cloud" ? '<button class="btn" data-m="out">Esci dall\'account</button>' : ""}<button class="btn dng" data-m="reset">Ripristina i dati iniziali…</button></div><div class="hint">${Repo.mode === "cloud" ? "I dati sono salvati nel database online e si aggiornano su ogni dispositivo." : "I dati sono salvati solo nel browser di questo dispositivo. Scarica un backup ogni tanto."}</div>`, {
+  dlg("Menu", `<div class="menu"><button class="btn dskonly" data-m="exp">Esporta Excel…</button><button class="btn" data-m="aree">Gestisci aree</button><button class="btn" data-m="bk">Scarica backup (JSON)</button><button class="btn" data-m="imp">Importa backup (JSON)…</button><button class="btn" data-m="nome">Cambia nome (${esc(Reg.nome() || "—")})</button>${Repo.mode === "cloud" ? '<button class="btn" data-m="out">Esci dall\'account</button>' : ""}<button class="btn dng" data-m="reset">Ripristina i dati iniziali…</button></div><div class="hint">${Repo.mode === "cloud" ? "I dati sono salvati nel database online e si aggiornano su ogni dispositivo." : "I dati sono salvati solo nel browser di questo dispositivo. Scarica un backup ogni tanto."}</div>`, {
     noCancel: true, init: d => {
       d.querySelector(".menu").onclick = e => {
         const b = e.target.closest("button"); if (!b) return; const m = b.dataset.m; d.close();
         if (m === "exp") dlgEsporta(); else if (m === "aree") dlgAree();
         else if (m === "bk") salvaFile("SL_backup_" + today() + ".json", new Blob([JSON.stringify(S, null, 1)], { type: "application/json" })).catch(er => toast(er.message));
         else if (m === "imp") $("#fileIn").click();
+        else if (m === "nome") chiediNome(() => render(), false);
         else if (m === "out") Repo.logout().then(() => boot());
         else if (m === "reset") dlgConferma("Ripristina i dati iniziali", "Tutte le modifiche fatte da questo browser verranno sostituite dai dati di partenza (259 righe, 117 acquisti). Puoi annullare subito dopo.", "Ripristina", () => run(() => { S = Repo.fresh(); }, "Dati iniziali ripristinati."));
       };
@@ -1087,11 +1162,14 @@ document.addEventListener("input", e => {
   else if (id === "qa") { ui.qa = e.target.value; listAcq(); }
   else if (id === "qr") { ui.qr = e.target.value; listRie(); }
   else if (id === "qc") { ui.qc = e.target.value; listCon(); }
+  else if (id === "qL") { ui2.ql = e.target.value; listLog(); }
 });
 document.addEventListener("change", e => {
   const id = e.target.id;
   if (id === "fSt") { ui.stato = e.target.value; listInv(); }
   else if (id === "fAn") { ui.anno = e.target.value; listAcq(); }
+  else if (id === "fLu") { ui2.lu = e.target.value; listLog(); }
+  else if (id === "fLa") { ui2.la = e.target.value; listLog(); }
   else if (id === "areaSel") { ui.area = e.target.value; render(); }
 });
 const TEMI = ["", "light", "dark"], NOMI_TEMA = { "": "automatico (come il dispositivo)", light: "chiaro", dark: "scuro" }, ICO_TEMA = { "": "◐", light: "☀", dark: "☾" };
@@ -1121,20 +1199,30 @@ async function controllaRemoto() {
 setInterval(controllaRemoto, 15000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) controllaRemoto(); });
 /* ---------- avvio ---------- */
+const campoStile = 'style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface)"';
+const pulisciNome = v => { const n = String(v || "").trim().replace(/\s+/g, " "); if (n.length < 2) throw new Err("Scrivi il tuo nome (almeno 2 lettere): comparirà nel registro delle modifiche."); return n.slice(0, 40); };
 function chiediAccesso() {
-  const d = dlg("Accedi", `<div class="hint">Inventario Sound&amp;Light · Robinson Apulia</div><div class="f"><label for="lP">Password</label><input type="password" id="lP" autocomplete="current-password" name="password" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface)"></div>`, {
+  const d = dlg("Accedi", `<div class="hint">Inventario Sound&amp;Light · Robinson Apulia</div><div class="f"><label for="lN">Il tuo nome</label><input type="text" id="lN" autocomplete="name" maxlength="40" value="${esc(Reg.nome())}" ${campoStile}></div><div class="f"><label for="lP">Password</label><input type="password" id="lP" autocomplete="current-password" name="password" ${campoStile}></div><div class="hint">Il nome serve per il registro: si vede chi aggiunge, modifica o elimina.</div>`, {
     ok: "Accedi", noCancel: true, onOk: d => {
+      const nome = pulisciNome($("#lN", d).value);
       $("#dok", d).disabled = true;
-      Repo.login("", $("#lP", d).value).then(() => { d.close(); boot(); }).catch(e => { $("#derr", d).textContent = e.message; $("#dok", d).disabled = false; });
+      Repo.login(nome, $("#lP", d).value).then(() => { d.close(); boot(); }).catch(e => { $("#derr", d).textContent = e.message; $("#dok", d).disabled = false; });
       return false;
     }
   });
   $(".x", d).hidden = true; d.oncancel = e => e.preventDefault();
 }
+function chiediNome(dopo, obbligo) {
+  const d = dlg(obbligo ? "Come ti chiami?" : "Cambia nome", `<div class="hint">Il tuo nome comparirà nel registro delle modifiche.</div><div class="f"><label for="lN">Nome</label><input type="text" id="lN" autocomplete="name" maxlength="40" value="${esc(Reg.nome())}" ${campoStile}></div>`, {
+    ok: "Continua", noCancel: !!obbligo, onOk: d => { Reg.setNome(pulisciNome($("#lN", d).value)); toast("Ciao " + Reg.nome() + "!"); dopo && dopo(); }
+  });
+  if (obbligo) { $(".x", d).hidden = true; d.oncancel = e => e.preventDefault(); }
+}
 async function boot() {
   try {
     const m = await Repo.init();
     if (m === "login") { render(); return chiediAccesso(); }
+    if (!Reg.nome()) { render(); return chiediNome(() => boot(), true); }
     const r = await Repo.load();
     if (r) S = fixS(r); else { S = Repo.fresh(); if (Repo.mode === "cloud") { await Repo.push(S); toast("Dati iniziali caricati nel database."); } }
     undo.length = 0; Repo.saveLocal(S); render();
