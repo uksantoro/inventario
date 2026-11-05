@@ -989,10 +989,21 @@ function dlgAcq(id) {
 }
 function dlgCollega(id) {
   const a = S.acq.find(x => x.id === id); const c = candidati(a);
-  dlg("Collega acquisto", `<div><b>${esc(a.articolo)}</b> · ${a.anno} · ${esc(a.area || "senza area")} · ${a.qty} pz</div><div class="lab">Righe in ${orgDi(a.anno)}</div>
-   ${c.length ? c.map((x, i) => `<label class="opt"><input type="radio" name="cd" value="${x.r.id}" ${i === 0 ? "checked" : ""}><span><b>${esc(x.r.articolo)}</b><br><span class="sub">${esc(x.r.area || "Da assegnare")} · ${x.r.qty} pz · ${["", "stesso nome e area", "stesso nome", "nome simile"][x.liv]}</span></span></label>`).join("") : `<div class="hint">Nessuna riga simile trovata in ${orgDi(a.anno)}.</div>`}
+  const opt = (r, sub, chk) => `<label class="opt"><input type="radio" name="cd" value="${r.id}" ${chk ? "checked" : ""}><span><b>${esc(r.articolo)}</b><br><span class="sub">${esc(r.area || "Da assegnare")} · ${r.qty ?? "—"} pz${sub ? " · " + sub : ""}</span></span></label>`;
+  const lista = q => {
+    q = norm(q || "");
+    if (!q) return c.length ? c.map((x, i) => opt(x.r, ["", "stesso nome e area", "stesso nome", "nome simile"][x.liv], i === 0)).join("") : `<div class="hint">Nessuna riga simile trovata in ${orgDi(a.anno)}. Prova a cercare per nome qui sopra.</div>`;
+    const T = q.split(" ").filter(Boolean);
+    const R = S.inv.filter(r => { const h = norm([r.articolo, r.area, r.marca, r.modello, r.origine].join(" ")); return T.every(t => h.includes(t)); }).slice(0, 40);
+    return R.length ? R.map((r, i) => opt(r, r.origine || "", i === 0)).join("") + (R.length === 40 ? `<div class="hint">Mostro le prime 40: scrivi di più per restringere.</div>` : "") : `<div class="hint">Nessun articolo trovato con «${esc(q)}».</div>`;
+  };
+  dlg("Collega acquisto", `<div><b>${esc(a.articolo)}</b> · ${a.anno} · ${esc(a.area || "senza area")} · ${a.qty} pz</div>
+   <div class="f"><label for="cdQ">Cerca nell'inventario</label><input type="search" id="cdQ" placeholder="Nome, marca, modello, area…" autocomplete="off"></div>
+   <div class="lab" id="cdT">Righe simili in ${orgDi(a.anno)}</div><div id="cdL">${lista("")}</div>
    <label class="opt"><input type="radio" name="cd" value="new" ${c.length ? "" : "checked"}><span><b>Crea una nuova riga nell'inventario</b><br><span class="sub">${a.qty} pz in ${esc(a.area || "Da assegnare")}</span></span></label>`, {
-    ok: "Collega", onOk: d => { const v = d.querySelector("input[name=cd]:checked").value; run(() => { const x = S.acq.find(z => z.id === id); delete x.fuori; if (v === "new") creaRigaDaAcq(x); else x.inv_id = Number(v); }, "Collegato."); }
+    ok: "Collega",
+    init: d => { $("#cdQ", d).oninput = e => { const q = e.target.value; $("#cdT", d).textContent = q.trim() ? "Risultati della ricerca" : "Righe simili in " + orgDi(a.anno); $("#cdL", d).innerHTML = lista(q); const f = d.querySelector("#cdL input[name=cd]"); if (f) f.checked = true; else if (!c.length || q.trim()) d.querySelector("input[value=new]").checked = true; }; },
+    onOk: d => { const v = d.querySelector("input[name=cd]:checked").value; run(() => { const x = S.acq.find(z => z.id === id); delete x.fuori; if (v === "new") creaRigaDaAcq(x); else x.inv_id = Number(v); }, "Collegato."); }
   });
 }
 
