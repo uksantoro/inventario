@@ -206,6 +206,7 @@ dialog::backdrop{background:rgba(10,20,40,.5)}
   <div class="tools">
     <span class="sub dsk" id="stato" aria-live="polite"></span>
     <button class="btn sm" id="bUndo" title="Annulla (Ctrl+Z)" aria-label="Annulla"><span aria-hidden="true">↶</span><span class="tx"> Annulla</span></button>
+    <button class="btn sm" id="bTema" aria-label="Cambia tema" title="Tema: automatico / chiaro / scuro"><span aria-hidden="true" id="icTema">◐</span><span class="tx"> Tema</span></button>
     <button class="btn sm dsk" id="bAree">Aree</button>
     <button class="btn sm dsk pri" id="bExp">Esporta Excel</button>
     <button class="btn sm" id="bMenu" aria-label="Menu"><span aria-hidden="true">⋯</span><span class="tx"> Menu</span></button>
@@ -254,6 +255,7 @@ const Repo = {
     catch (e) { throw new Err("Server non raggiungibile. Controlla la connessione."); }
     if (r.status === 401) throw Object.assign(new Err("Password errata."), { auth: true });
     if (r.status === 409) throw Object.assign(new Err("I dati sono stati modificati da un altro dispositivo. Ricarica la pagina."), { conflict: true });
+    if (r.status === 404) throw new Err("API non trovata (404): la cartella api/ con data.js non risulta pubblicata su Vercel. Controlla il repository e fai Redeploy.");
     if (!r.ok) throw new Err("Errore del server (" + r.status + ").");
     return r.json();
   },
@@ -1057,6 +1059,18 @@ document.addEventListener("change", e => {
   else if (id === "fAn") { ui.anno = e.target.value; listAcq(); }
   else if (id === "areaSel") { ui.area = e.target.value; render(); }
 });
+const TEMI = ["", "light", "dark"], NOMI_TEMA = { "": "automatico (come il dispositivo)", light: "chiaro", dark: "scuro" }, ICO_TEMA = { "": "◐", light: "☀", dark: "☾" };
+function temaCorrente() { try { return localStorage.getItem("sl_tema") || ""; } catch (e) { return ""; } }
+function applicaTema(t) {
+  const r = document.documentElement; if (t) r.dataset.theme = t; else delete r.dataset.theme;
+  const i = $("#icTema"); if (i) i.textContent = ICO_TEMA[t];
+}
+applicaTema(temaCorrente());
+$("#bTema").onclick = () => {
+  const t = TEMI[(TEMI.indexOf(temaCorrente()) + 1) % TEMI.length];
+  try { if (t) localStorage.setItem("sl_tema", t); else localStorage.removeItem("sl_tema"); } catch (e) {}
+  applicaTema(t); toast("Tema " + NOMI_TEMA[t] + ".");
+};
 $("#bUndo").onclick = annulla; $("#bExp").onclick = dlgEsporta; $("#bAree").onclick = dlgAree; $("#bMenu").onclick = dlgMenu;
 document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !/INPUT|TEXTAREA|SELECT/.test((e.target.tagName || "")) && !$("#dlg").open) { e.preventDefault(); annulla(); } });
 /* ---------- avvio ---------- */
