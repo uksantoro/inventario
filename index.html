@@ -659,7 +659,7 @@ function anomalie() {
   }
   for (const a of S.acq) {
     const base = { dove: "acq", id: a.id, articolo: a.articolo, area: a.area, qty: a.qty };
-    if (a.inv_id == null || !invRow(a.inv_id)) push({ ...base, gr: 2, tipo: "NONCOLL", testo: "Acquisto " + a.anno + " non collegato a una riga di inventario.", sugg: "Usa «Collega» per scegliere la riga in " + orgDi(a.anno) + ", oppure creala." });
+    if ((a.inv_id == null || !invRow(a.inv_id)) && !a.fuori) push({ ...base, gr: 2, tipo: "NONCOLL", testo: "Acquisto " + a.anno + " non collegato a una riga di inventario.", sugg: "Usa «Collega» per scegliere la riga in " + orgDi(a.anno) + ", oppure creala." });
     if (!a.area) push({ ...base, gr: 2, tipo: "AREA", testo: "L'acquisto " + a.anno + " non ha un'area.", sugg: "Apri l'acquisto e scegli l'area." });
     const stessoArt = b => { const ra = invRow(a.inv_id), rb = b.inv_id != null ? invRow(b.inv_id) : null; return !!(ra && rb && (ra.id === rb.id || norm(ra.articolo) === norm(rb.articolo))); };   // già collegati allo stesso articolo (es. dopo «Unisci»): non è un doppione
     const prima = S.acq.find(b => b.anno < a.anno && !stessoArt(b) && sim(b.articolo, a.articolo) >= 0.85);
@@ -936,8 +936,8 @@ function listAcq(SM) {
   const html = R.length ? `<div class="gh cols-acq"><div>Anno</div><div>Articolo</div><div>Area</div><div class="num">Qtà</div><div>Note</div><div>Inventario</div><div></div></div>` + R.map(a => {
     const s = SM.acq.get(a.id) || 0; const col = a.inv_id != null && invRow(a.inv_id);
     return `<div class="gr ra cols-acq ${s ? "s" + s : ""}" data-act="detAcq" data-id="${a.id}"><div class="cell" data-l="Anno">${a.anno}</div><div class="art cell">${esc(a.articolo)}</div><div class="cell sub" data-l="Area">${esc(a.area || "—")}</div><div class="num cell" data-l="Qtà"><b>${a.qty}</b></div><div class="cell sub" ${a.note ? 'data-l="Note"' : ""}>${esc(a.note || "")}</div>
-     <div><span class="chip ${col ? "g" : "o"}">${col ? "collegato" : "non collegato"}</span></div>
-     <div class="acts"><button class="btn sm" data-act="editAcq" data-id="${a.id}">Modifica</button>${col ? "" : `<button class="btn sm" data-act="link" data-id="${a.id}">Collega</button>`}<button class="btn sm dng" data-act="delAcq" data-id="${a.id}" aria-label="Elimina">✕</button></div></div>`;
+     <div><span class="chip ${col ? "g" : a.fuori ? "" : "o"}">${col ? "collegato" : a.fuori ? "non in inventario" : "non collegato"}</span></div>
+     <div class="acts"><button class="btn sm" data-act="editAcq" data-id="${a.id}">Modifica</button>${col ? "" : `<button class="btn sm" data-act="link" data-id="${a.id}">Collega</button>`}${!col && a.fuori ? `<button class="btn sm" data-act="fuoriNo" data-id="${a.id}">Segnala di nuovo</button>` : ""}<button class="btn sm dng" data-act="delAcq" data-id="${a.id}" aria-label="Elimina">✕</button></div></div>`;
   }).join("") : `<div class="empty">Nessun acquisto trovato.</div>`;
   $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> acquisti</span><span><b>${tot}</b> pezzi</span></div><div class="list">${html}</div>`;
 }
@@ -992,7 +992,7 @@ function dlgCollega(id) {
   dlg("Collega acquisto", `<div><b>${esc(a.articolo)}</b> · ${a.anno} · ${esc(a.area || "senza area")} · ${a.qty} pz</div><div class="lab">Righe in ${orgDi(a.anno)}</div>
    ${c.length ? c.map((x, i) => `<label class="opt"><input type="radio" name="cd" value="${x.r.id}" ${i === 0 ? "checked" : ""}><span><b>${esc(x.r.articolo)}</b><br><span class="sub">${esc(x.r.area || "Da assegnare")} · ${x.r.qty} pz · ${["", "stesso nome e area", "stesso nome", "nome simile"][x.liv]}</span></span></label>`).join("") : `<div class="hint">Nessuna riga simile trovata in ${orgDi(a.anno)}.</div>`}
    <label class="opt"><input type="radio" name="cd" value="new" ${c.length ? "" : "checked"}><span><b>Crea una nuova riga nell'inventario</b><br><span class="sub">${a.qty} pz in ${esc(a.area || "Da assegnare")}</span></span></label>`, {
-    ok: "Collega", onOk: d => { const v = d.querySelector("input[name=cd]:checked").value; run(() => { const x = S.acq.find(z => z.id === id); if (v === "new") creaRigaDaAcq(x); else x.inv_id = Number(v); }, "Collegato."); }
+    ok: "Collega", onOk: d => { const v = d.querySelector("input[name=cd]:checked").value; run(() => { const x = S.acq.find(z => z.id === id); delete x.fuori; if (v === "new") creaRigaDaAcq(x); else x.inv_id = Number(v); }, "Collegato."); }
   });
 }
 
@@ -1037,7 +1037,7 @@ function listCon(L) {
   L = L || anomalie(); const q = norm(ui.qc);
   const R = L.filter(x => ui.gr.has(x.gr) && (!q || norm(x.articolo).includes(q)));
   $("#list").innerHTML = R.length ? `<div class="cards">${R.map(x => `<div class="card s${x.gr}"><div style="min-width:0"><h3>${esc(x.articolo)}</h3><div class="sub">${x.dove === "inv" ? "Inventario" : "Acquisti"} · ${esc(x.area || "senza area")} · <b>${x.qty ?? "—"}</b> pz · <span class="chip ${["", "y", "o", "r"][x.gr]}">${TIPI[x.tipo]}</span></div></div>
-    <div class="acts"><button class="btn sm pri" data-act="fix" data-d="${x.dove}" data-id="${x.id}" data-t="${x.tipo}">${x.tipo === "NONCOLL" ? "Collega" : x.tipo === "DOPPIA" ? "Unisci" : "Apri"}</button>${x.tipo === "DOPPIA" ? `<button class="btn sm" data-act="fix" data-d="${x.dove}" data-id="${x.id}" data-t="open">Apri</button>` : ""}</div>
+    <div class="acts"><button class="btn sm pri" data-act="fix" data-d="${x.dove}" data-id="${x.id}" data-t="${x.tipo}">${x.tipo === "NONCOLL" ? "Collega" : x.tipo === "DOPPIA" ? "Unisci" : "Apri"}</button>${x.tipo === "NONCOLL" ? `<button class="btn sm" data-act="fuori" data-id="${x.id}">Non in inventario</button>` : ""}${x.tipo === "DOPPIA" ? `<button class="btn sm" data-act="fix" data-d="${x.dove}" data-id="${x.id}" data-t="open">Apri</button>` : ""}</div>
     <div>${esc(x.testo)}</div><div class="todo"><b>Cosa fare:</b> ${esc(x.sugg)}</div></div>`).join("")}</div>` : `<div class="empty">Nessuna anomalia con questi filtri. 🎉</div>`.replace(" 🎉", "");
 }
 
@@ -1519,6 +1519,8 @@ document.addEventListener("click", e => {
     case "editAcq": dlgAcq(id); break;
     case "delAcq": { const a = S.acq.find(x => x.id === id); dlgConferma("Elimina acquisto", `Eliminare l'acquisto ${a.anno} di «${esc(a.articolo)}» (${a.qty} pz)? Le ${a.qty} unità verranno tolte anche dall'inventario collegato.`, "Elimina", () => run(() => delAcq(id), "Acquisto eliminato.")); break; }
     case "link": dlgCollega(id); break;
+    case "fuori": run(() => { const x = S.acq.find(z => z.id === id); if (x) x.fuori = true; }, "Segnato: non deve stare in inventario."); break;
+    case "fuoriNo": run(() => { const x = S.acq.find(z => z.id === id); if (x) delete x.fuori; }, "Tornerà tra i controlli."); break;
     case "linkAll": go(() => { const n = collegaTutti(); if (!n) throw new Err("Nessun collegamento automatico possibile: collega a mano."); }, "Acquisti collegati."); break;
     case "artAree": e.preventDefault(); dlgArticoloAree(t.dataset.n); break;
     case "vedi": e.preventDefault(); ui.q = t.dataset.n; ui.area = "*"; ui.stato = ""; ui.tab = "inv"; render(); inCima(); break;
