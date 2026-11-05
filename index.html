@@ -131,7 +131,14 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
 }
 @media (max-width:760px){
   .foot{display:none}
-  body{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+  /* telefono: la pagina non scorre, scorre solo il contenuto; intestazione e barra in basso restano sempre ferme */
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+  body{height:100vh;height:100dvh;display:flex;flex-direction:column;position:relative;padding-bottom:0}
+  body::before{display:none}
+  .top{position:static;flex:none;padding-top:env(safe-area-inset-top,0px)}
+  .wrap{flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .bnav{position:static;flex:none;transform:none}
+  #toast{position:absolute;bottom:80px}
   .tabs{display:none}
   .brand img{height:38px}
   .tools .dsk{display:none}
@@ -150,7 +157,7 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
   .bnav .tab{flex-direction:column;gap:2px;font-size:11.5px;padding:6px 2px;position:relative;justify-content:center}
   .bnav .tab svg{width:22px;height:22px}
   .bnav .badge{position:absolute;top:0;right:18%}
-  .fab{display:flex;position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:24;border-radius:99px;padding:13px 18px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+  .fab{display:flex;position:sticky;bottom:14px;margin:0 0 14px auto;z-index:24;border-radius:99px;padding:13px 18px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
   .g2,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
   .prow{grid-template-columns:minmax(0,1fr) 80px;padding:10px;border:1px solid var(--line);border-radius:10px}
   .prow>*:nth-child(1){grid-column:1/-1}.prow>*:nth-child(2){grid-column:1/2}.prow>*:nth-child(4){grid-column:1/-1}
@@ -594,6 +601,7 @@ function dlg(title, body, o = {}) {
   o.init && o.init(d);
   return d;
 }
+const inCima = () => { scrollTo({ top: 0 }); const w = $(".wrap"); if (w) w.scrollTop = 0; };
 const closeDlg = () => { const d = $("#dlg"); if (d.open) d.close(); };
 const intOrNull = v => { v = String(v ?? "").trim(); if (v === "") return null; const n = Number(v); return Number.isFinite(n) ? n : NaN; };
 const areaOpts = (sel, vuoto) => (vuoto ? `<option value="">${vuoto}</option>` : "") + S.aree.map(a => `<option ${a === sel ? "selected" : ""}>${esc(a)}</option>`).join("");
@@ -1031,7 +1039,7 @@ $("#fileIn").onchange = async ev => {
 /* ---------- eventi ---------- */
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-tab],[data-area],[data-act],[data-gr]"); if (!t) return;
-  if (t.dataset.tab) { ui.tab = t.dataset.tab; render(); scrollTo({ top: 0 }); return; }
+  if (t.dataset.tab) { ui.tab = t.dataset.tab; render(); inCima(); return; }
   if (t.dataset.area != null) { ui.area = t.dataset.area; render(); return; }
   if (t.dataset.gr) { const g = Number(t.dataset.gr); ui.gr.has(g) ? ui.gr.delete(g) : ui.gr.add(g); render(); return; }
   const id = Number(t.dataset.id);
@@ -1047,7 +1055,7 @@ document.addEventListener("click", e => {
     case "delAcq": { const a = S.acq.find(x => x.id === id); dlgConferma("Elimina acquisto", `Eliminare l'acquisto ${a.anno} di «${esc(a.articolo)}» (${a.qty} pz)? Le ${a.qty} unità verranno tolte anche dall'inventario collegato.`, "Elimina", () => run(() => delAcq(id), "Acquisto eliminato.")); break; }
     case "link": dlgCollega(id); break;
     case "linkAll": go(() => { const n = collegaTutti(); if (!n) throw new Err("Nessun collegamento automatico possibile: collega a mano."); }, "Acquisti collegati."); break;
-    case "vedi": e.preventDefault(); ui.q = t.dataset.n; ui.area = "*"; ui.stato = ""; ui.tab = "inv"; render(); scrollTo({ top: 0 }); break;
+    case "vedi": e.preventDefault(); ui.q = t.dataset.n; ui.area = "*"; ui.stato = ""; ui.tab = "inv"; render(); inCima(); break;
     case "fix": {
       if (t.dataset.d === "acq") { t.dataset.t === "NONCOLL" ? dlgCollega(id) : dlgAcq(id); }
       else if (t.dataset.t === "DOPPIA") go(() => { const r = invRow(id); const o = S.inv.find(x => x.id !== id && sameKey(x, r)); if (o) fuse(o); }, "Righe unite.");
