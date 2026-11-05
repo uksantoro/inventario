@@ -6,6 +6,7 @@
 <style>
 /* Layout: header con logo e schede; Inventario = elenco aree + righe; su telefono barra di navigazione in basso e righe come schede */
 :root{
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
   --bg:#F7F7F8;--surface:#FFFFFF;--fg:#32394C;--muted:#5F6473;--line:#DFE1E6;
   --brand:#0047AB;--brand-fg:#FFFFFF;--navy:#0A4169;--teal:#00B1AA;--soft:#E8EFFA;
   --y:#FFF9A6;--o:#FFD9A3;--r:#FFB4B4;--ok:#0A7F78;--danger:#C2253F;--shadow:0 1px 2px rgba(10,65,105,.08),0 4px 14px rgba(10,65,105,.07);
@@ -133,10 +134,10 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
   .foot{display:none}
   /* telefono: la pagina non scorre, scorre solo il contenuto; intestazione e barra in basso restano sempre ferme */
   html,body{height:100%;overflow:hidden;overscroll-behavior:none}
-  body{height:100vh;height:100dvh;display:flex;flex-direction:column;position:relative;padding-bottom:0}
+  body{position:fixed;inset:0;box-sizing:border-box;margin:0;padding:0;display:flex;flex-direction:column}
   body::before{display:none}
-  .top{position:static;flex:none;padding-top:env(safe-area-inset-top,0px)}
-  .wrap{flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .top{position:static;flex:none;margin-inline:0;padding-top:var(--sat);padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+  .wrap{flex:1 1 auto;min-height:0;width:100%;box-sizing:border-box;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
   .bnav{position:static;flex:none;transform:none}
   #toast{position:absolute;bottom:80px}
   .tabs{display:none}
@@ -153,9 +154,9 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
   .gr .num{text-align:left}
   .acts{justify-content:flex-start}
   .gr .c-q{font-size:15px}
-  .bnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:static;flex:none;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px))}
-  .bnav .tab{flex-direction:column;gap:2px;font-size:10.5px;padding:6px 1px;min-width:0;position:relative;justify-content:center}
-  .bnav .tab svg{width:22px;height:22px}
+  .bnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:static;flex:none;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding:6px max(6px,env(safe-area-inset-left,0px)) calc(6px + var(--sab)) max(6px,env(safe-area-inset-right,0px))}
+  .bnav .tab{flex-direction:column;gap:3px;font-size:11px;font-weight:600;padding:7px 0 6px;min-width:0;position:relative;justify-content:center;align-items:center;letter-spacing:-.01em;white-space:nowrap}
+  .bnav .tab svg{width:24px;height:24px;flex:none}
   .bnav .badge{position:absolute;top:0;right:18%}
   .fab{display:flex;position:sticky;bottom:14px;margin:0 0 14px auto;z-index:24;border-radius:99px;padding:13px 18px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
   .g2,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
