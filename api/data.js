@@ -42,6 +42,10 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'method not allowed' });
     }
 
+    if (req.method === 'GET' && req.query && req.query.ver !== undefined) {
+      const r = await sql`select version from app_state where id = 1`;
+      return res.status(200).json({ version: r.length ? r[0].version : 0 });
+    }
     if (req.method === 'GET') {
       const rows = await sql`select version, data from app_state where id = 1`;
       return res.status(200).json(rows[0] || { version: 0, data: null });
