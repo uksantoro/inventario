@@ -155,7 +155,7 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
   .gr .num{text-align:left}
   .acts{justify-content:flex-start}
   .gr .c-q{font-size:15px}
-  .bnav{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));position:static;flex:none;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding:6px max(6px,env(safe-area-inset-left,0px)) calc(6px + var(--sab)) max(6px,env(safe-area-inset-right,0px))}
+  .bnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:static;flex:none;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding:6px max(6px,env(safe-area-inset-left,0px)) calc(6px + var(--sab)) max(6px,env(safe-area-inset-right,0px))}
   .bnav .tab{flex-direction:column;gap:3px;font-size:10px;font-weight:600;padding:7px 0 6px;min-width:0;position:relative;justify-content:center;align-items:center;letter-spacing:-.01em;white-space:nowrap}
   .bnav .tab svg{width:23px;height:23px;flex:none}
   .bnav .tab span:not(.badge){max-width:100%;overflow:hidden;text-overflow:ellipsis}
@@ -171,6 +171,40 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
   .dbody{flex:1}
   .card{grid-template-columns:minmax(0,1fr)}
   .bar .btn.fl{display:none}
+}
+@media (min-width:761px) and (max-width:1180px){.tabs{flex-wrap:wrap}.tab{padding:8px 10px;font-size:14px}}
+/* batterie e show/live */
+.bsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 12px}
+.bc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:2px}
+.bc .t{font-weight:700;color:var(--muted);letter-spacing:.04em;font-size:12px}
+.bc .n{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.bc.low{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 9%,var(--surface))}
+.bc.low .n{color:var(--danger)}
+.allerta{border:1px solid var(--danger);background:color-mix(in srgb,var(--danger) 10%,var(--surface));border-radius:12px;padding:10px 14px;margin-bottom:12px;font-weight:600}
+.bt-h,.bt-r{display:grid;grid-template-columns:minmax(0,1.3fr) 80px 100px 100px 100px minmax(0,1.6fr) minmax(0,1fr) 48px;gap:10px;padding:10px 14px;align-items:center}
+.bt-h{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--bg);border-bottom:1px solid var(--line);border-radius:12px 12px 0 0}
+.bt-r{border-bottom:1px solid var(--line);background:var(--surface)}
+.bt-h .num,.bt-r .num{text-align:right;font-variant-numeric:tabular-nums}
+.pos{color:var(--ok)}
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.sc{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;display:grid;align-content:start}
+.sc img{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--bg);display:block}
+.sc .i{padding:8px 10px;display:grid;gap:3px;justify-items:start}
+.sc .i b{overflow-wrap:anywhere}
+.zv{overflow:auto;max-height:62vh;border:1px solid var(--line);border-radius:10px;background:var(--bg);margin-bottom:8px;-webkit-overflow-scrolling:touch}
+.zv img{display:block;width:100%;height:auto}
+.zv.z2 img{width:200%;max-width:none}.zv.z3 img{width:320%;max-width:none}
+@media (max-width:760px){
+  .bt-h{display:none}
+  .bt-r{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"t t d" "g p s" "n n n" "c c x";gap:6px 10px;padding:12px 14px}
+  .bt-r .bt-t{grid-area:t}.bt-r .bt-d{grid-area:d;text-align:right;color:var(--muted);font-size:13px}
+  .bt-r .bt-g{grid-area:g}.bt-r .bt-p{grid-area:p}.bt-r .bt-s{grid-area:s}
+  .bt-r .num{text-align:left;font-size:17px}
+  .bt-r .cell[data-l]::before{content:attr(data-l);display:block;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  .bt-r .bt-n{grid-area:n}.bt-r .bt-n:empty{display:none}.bt-r .bt-c{grid-area:c;color:var(--muted);font-size:13px}.bt-r .bt-x{grid-area:x;justify-self:end}
+  .bsum{gap:8px}.bc{padding:10px 10px}.bc .n{font-size:26px}
+  .sg{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .bc .sub{font-size:12px}.bc .chip{font-size:11px;padding:1px 7px;margin-top:2px}
 }
 /* unisci articoli simili */
 .un{display:grid;gap:6px;margin:8px 0}
@@ -283,6 +317,7 @@ const Repo = {
     catch (e) { throw new Err("Server non raggiungibile. Controlla la connessione."); }
     if (r.status === 401) throw Object.assign(new Err("Password errata."), { auth: true });
     if (r.status === 409) throw Object.assign(new Err("I dati sono stati modificati da un altro dispositivo. Ricarica la pagina."), { conflict: true });
+    if (r.status === 422) { const j = await r.json().catch(() => ({})); throw new Err(j.error || "Operazione non valida."); }
     if (r.status === 404) throw new Err("API non trovata (404): la cartella api/ con data.js non risulta pubblicata su Vercel. Controlla il repository e fai Redeploy.");
     if (!r.ok) throw new Err("Errore del server (" + r.status + ").");
     return r.json();
@@ -640,6 +675,8 @@ const TABS = [
   ["inv", "Inventario", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>'],
   ["acq", "Acquisti", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a2 2 0 002 1.6h8.2a2 2 0 002-1.5L21 7H6"/></svg>'],
   ["rie", "Riepilogo", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>'],
+  ["bat", "Batterie", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="6" width="10" height="15" rx="2"/><path d="M10 3h4v3h-4zM12 10v6M9.5 13h5"/></svg>'],
+  ["show", "Show/Live", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 15l-5-5-8 8M8 21h8"/></svg>'],
   ["uni", "Unisci", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v5a4 4 0 004 4h2a4 4 0 014 4v3"/><path d="M17 4v5a4 4 0 01-4 4"/><path d="M14 17l3 3 3-3"/></svg>'],
   ["log", "Registro", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h11v16H5V4h3z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>'],
   ["con", "Controlli", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3L12 3z"/><path d="M12 10v4M12 17v.5"/></svg>']
@@ -691,11 +728,12 @@ const nomi = () => [...new Set(S.inv.map(r => r.articolo))].sort((a, b) => a.loc
 const datalists = () => `<datalist id="dlOr">${origini().map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlMa">${marche().map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlNo">${nomi().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`;
 
 /* tabs */
-function drawTabs(L) {
-  const g = L.filter(x => x.gr === 3).length, m = L.filter(x => x.gr === 2).length, nUni = gruppiSimili().length;
-  const mk = ([k, t, ico], mob) => `<button class="tab" role="tab" aria-selected="${ui.tab === k}" data-tab="${k}">${mob ? ico : ""}<span>${t}</span>${k === "con" && (g || m) ? `<span class="badge ${g ? "" : "o"}">${g || m}</span>` : ""}${k === "uni" && nUni ? `<span class="badge o">${nUni}</span>` : ""}</button>`;
+function drawTabs(L = anomalie()) {
+  const g = L.filter(x => x.gr === 3).length, m = L.filter(x => x.gr === 2).length, nUni = gruppiSimili().length, nBassi = battBassi().length;
+  const mk = ([k, t, ico], mob) => `<button class="tab" role="tab" aria-selected="${ui.tab === k}" data-tab="${k}">${mob ? ico : ""}<span>${t}</span>${k === "con" && (g || m) ? `<span class="badge ${g ? "" : "o"}">${g || m}</span>` : ""}${k === "uni" && nUni ? `<span class="badge o">${nUni}</span>` : ""}${k === "bat" && nBassi ? `<span class="badge">${nBassi}</span>` : ""}</button>`;
   $("#tabs").innerHTML = TABS.map(t => mk(t, false)).join("");
-  $("#bnav").innerHTML = TABS.map(t => mk(t, true)).join("");
+  const prim = ["inv", "acq", "bat", "show"], nAltro = (g || m) + nUni;
+  $("#bnav").innerHTML = TABS.filter(t => prim.includes(t[0])).map(t => mk(t, true)).join("") + `<button class="tab" data-act="altro" aria-selected="${!prim.includes(ui.tab)}"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg><span>Altro</span>${nAltro ? `<span class="badge ${g ? "" : "o"}">${nAltro}</span>` : ""}</button>`;
   $("#bUndo").disabled = !undo.length;
 }
 
@@ -709,6 +747,8 @@ function render() {
   else if (ui.tab === "rie") viewRie(v);
   else if (ui.tab === "log") viewLog(v);
   else if (ui.tab === "uni") viewUni(v);
+  else if (ui.tab === "bat") viewBat(v);
+  else if (ui.tab === "show") viewShow(v);
   else viewCon(v, L);
 }
 
@@ -1036,6 +1076,235 @@ function unisciRighe(ids, nome) {
   nomiVecchi.forEach(n => migraFoto(n, nome));
 }
 
+/* --- batterie --- */
+const TIPI_B = ["9V", "AAA", "AA"], SOGLIE0 = { "9V": 10, AAA: 20, AA: 20 };
+const ui3 = { bt: "", qb: "", sh: "", qs: "" };
+const Batt = {
+  mov: [], soglie: { ...SOGLIE0 }, ok: false, err: "", lk: "sl_batt",
+  loc() { try { const d = JSON.parse(localStorage.getItem(this.lk)); if (d && Array.isArray(d.mov)) return d; } catch (e) {} return { mov: [], soglie: { ...SOGLIE0 }, seq: 0 }; },
+  salvaLoc(d) { try { localStorage.setItem(this.lk, JSON.stringify(d)); } catch (e) {} },
+  async carica() {
+    try {
+      if (Repo.mode === "cloud") { const r = await Repo.call("GET", null, "?batt=1"); this.mov = r.mov || []; this.soglie = { ...SOGLIE0, ...(r.soglie || {}) }; }
+      else { const d = this.loc(); this.mov = d.mov; this.soglie = { ...SOGLIE0, ...d.soglie }; }
+      this.ok = true; this.err = "";
+    } catch (e) { this.ok = false; this.err = e.message || "Batterie non disponibili."; }
+  },
+  async aggiungi(m) {
+    if (Repo.mode === "cloud") { await Repo.call("POST", { mov: { ...m, u: Reg.nome() } }, "?batt=1"); await this.carica(); return; }
+    const d = this.loc(), g = d.mov.filter(x => x.tipo === m.tipo).reduce((t, x) => t + (x.az === "carico" ? x.q : -x.q), 0);
+    if (m.az === "prelievo" && g < m.q) throw new Err("Giacenza insufficiente: di " + m.tipo + " ce ne sono " + g + ".");
+    d.seq = (d.seq || 0) + 1; d.mov.push({ id: d.seq, data: m.data, tipo: m.tipo, az: m.az, q: m.q, note: m.note, u: Reg.nome(), t: new Date().toISOString() });
+    this.salvaLoc(d); await this.carica();
+  },
+  async elimina(id) {
+    if (Repo.mode === "cloud") { await Repo.call("POST", { del: id }, "?batt=1"); await this.carica(); return; }
+    const d = this.loc(); d.mov = d.mov.filter(x => x.id !== id); this.salvaLoc(d); await this.carica();
+  },
+  async salvaSoglie(s) {
+    if (Repo.mode === "cloud") { await Repo.call("POST", { soglie: s }, "?batt=1"); await this.carica(); return; }
+    const d = this.loc(); d.soglie = s; this.salvaLoc(d); await this.carica();
+  }
+};
+/* movimenti in ordine, con giacenza prima e residua dopo ogni operazione */
+function battRighe(movs) {
+  const run = {}, rows = [];
+  for (const m of movs || Batt.mov) { const g = run[m.tipo] || 0, r = m.az === "carico" ? g + m.q : g - m.q; run[m.tipo] = r; rows.push({ ...m, giac: g, res: r }); }
+  return { rows, tot: run };
+}
+const battBassi = () => { const { tot } = battRighe(); return TIPI_B.filter(t => n0(Batt.soglie[t]) > 0 && (tot[t] || 0) < Batt.soglie[t]).map(t => ({ tipo: t, g: tot[t] || 0, s: Batt.soglie[t] })); };
+const txtBassi = b => b.map(x => x.tipo + ": " + x.g + " (soglia " + x.s + ")").join(" · ");
+const oggiISO = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+const dataIt = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ""); return m ? m[3] + "/" + m[2] + "/" + m[1] : (s || ""); };
+
+function viewBat(v) {
+  v.innerHTML = `<div class="bar"><button class="btn pri" data-act="battPrel">Preleva</button><button class="btn pri" data-act="battCar">Carica batterie</button>
+    <select id="fBt" aria-label="Tipo"><option value="">Tutti i tipi</option>${TIPI_B.map(t => `<option ${ui3.bt === t ? "selected" : ""}>${t}</option>`).join("")}</select>
+    <input type="search" class="grow" id="qB" placeholder="Cerca nota o nome…" value="${esc(ui3.qb)}" aria-label="Cerca"><button class="btn" data-act="battSog">Impostazioni</button><button class="btn" data-act="battExp">Esporta Excel</button></div><div id="list"></div>`;
+  listBat();
+  Batt.carica().then(() => { if (ui.tab === "bat") { listBat(); drawTabs(); } });
+}
+function listBat() {
+  const L = $("#list"); if (!L) return;
+  if (!Batt.ok && !Batt.mov.length) { L.innerHTML = `<div class="empty">${esc(Batt.err || "Caricamento…")}${Batt.err && /404/.test(Batt.err) ? "<br>Ricarica su GitHub anche <b>api/data.js</b> (versione nuova) e fai Redeploy." : ""}</div>`; return; }
+  const { rows, tot } = battRighe(), bassi = battBassi(), q = norm(ui3.qb);
+  const vis = rows.filter(r => (!ui3.bt || r.tipo === ui3.bt) && (!q || norm([r.note, r.u, r.tipo].join(" ")).includes(q))).reverse();
+  const cards = TIPI_B.map(t => { const low = bassi.some(x => x.tipo === t), s = n0(Batt.soglie[t]); return `<div class="bc ${low ? "low" : ""}"><div class="t">${t}</div><div class="n">${tot[t] || 0}</div><div class="sub">${s ? "sotto " + s : "no avviso"} ${low ? '<span class="chip r">Scorta bassa</span>' : ""}</div></div>`; }).join("");
+  const avviso = bassi.length ? `<div class="allerta" role="alert">⚠ Scorte in esaurimento — ${esc(txtBassi(bassi))}. Ordina nuove batterie e usa «Carica batterie» quando arrivano.</div>` : "";
+  const righe = vis.length ? `<div class="bt-h"><div>Tipo</div><div class="num">Giacenza</div><div class="num">Q.tà prelevata</div><div class="num">Q.tà residua</div><div>Data</div><div>Note</div><div>Chi</div><div></div></div>` + vis.map(r => `<div class="bt-r">
+      <div class="cell bt-t"><b>${esc(r.tipo)}</b> <span class="chip ${r.az === "carico" ? "g" : "o"}">${r.az === "carico" ? "Carico" : "Prelievo"}</span></div>
+      <div class="num cell bt-g" data-l="Giacenza">${r.giac}</div>
+      <div class="num cell bt-p" data-l="${r.az === "carico" ? "Caricate" : "Prelevate"}">${r.az === "carico" ? `<b class="pos">+${r.q}</b>` : `<b>${r.q}</b>`}</div>
+      <div class="num cell bt-s" data-l="Residua"><b>${r.res}</b></div>
+      <div class="cell bt-d">${dataIt(r.data)}</div><div class="cell sub bt-n">${esc(r.note || "")}</div><div class="cell bt-c">${esc(r.u || "")}</div>
+      <div class="acts bt-x"><button class="btn sm dng" data-act="battDel" data-id="${r.id}" aria-label="Elimina movimento">✕</button></div></div>`).join("") : `<div class="empty">Nessun movimento${rows.length ? " con questi filtri" : ": usa «Carica batterie» per inserire la giacenza iniziale"}.</div>`;
+  L.innerHTML = avviso + `<div class="bsum">${cards}</div><div class="list">${righe}</div>`;
+}
+function dlgBatMov(az, tipoIni) {
+  const prel = az === "prelievo", { tot } = battRighe();
+  dlg(prel ? "Preleva batterie" : "Carica batterie", `<div class="g2"><div class="f"><label for="bT">Tipo batteria</label><select id="bT">${TIPI_B.map(t => `<option ${t === (tipoIni || ui3.bt || "9V") ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+    <div class="f"><label for="bQ">${prel ? "Quantità prelevata" : "Quantità ordinata arrivata"}</label><input type="number" id="bQ" min="1" inputmode="numeric" placeholder="pz"></div></div>
+    <div class="hint" id="bH"></div>
+    <div class="g2"><div class="f"><label for="bD">Data</label><input type="date" id="bD" value="${oggiISO()}"></div><div class="f"><label>Chi</label><input type="text" value="${esc(Reg.nome() || "—")}" disabled></div></div>
+    <div class="f"><label for="bN">Note</label><textarea id="bN" rows="2" placeholder="${prel ? "es. show di stasera, microfoni…" : "es. ordine del 05/11"}"></textarea></div>`, {
+    ok: prel ? "Registra prelievo" : "Carica", init: d => {
+      const hint = () => { const t = $("#bT", d).value, g = battRighe().tot[t] || 0; $("#bH", d).textContent = "Giacenza attuale di " + t + ": " + g + " pz."; };
+      hint(); $("#bT", d).onchange = hint;
+    },
+    onOk: d => {
+      const m = { tipo: $("#bT", d).value, az, q: intOrNull($("#bQ", d).value), data: $("#bD", d).value || oggiISO(), note: $("#bN", d).value.trim() };
+      if (!Number.isInteger(m.q) || m.q < 1) throw new Err("Inserisci la quantità (numero intero, almeno 1).");
+      const g = battRighe().tot[m.tipo] || 0;
+      if (prel && m.q > g) throw new Err("Giacenza insufficiente: di " + m.tipo + " ce ne sono " + g + ".");
+      $("#dok", d).disabled = true;
+      Batt.aggiungi(m).then(() => {
+        d.close(); const res = battRighe().tot[m.tipo] || 0;
+        Reg.aggiungi([{ a: "Aggiunto", o: "Batterie", d: (prel ? "Prelievo " : "Carico ") + m.tipo + " × " + m.q + " (residuo " + res + ")" + (m.note ? " — " + m.note : "") }]);
+        render(); toast((prel ? "Prelevate " : "Caricate ") + m.q + " " + m.tipo + ". Residuo: " + res + ".");
+        const b = battBassi().find(x => x.tipo === m.tipo); if (prel && b) setTimeout(() => toast("⚠ Scorta bassa: " + m.tipo + " " + b.g + " (soglia " + b.s + ")"), 3400);
+      }).catch(e => { $("#derr", d).textContent = e.message || "Errore."; $("#dok", d).disabled = false; });
+      return false;
+    }
+  });
+}
+function dlgBatSoglie() {
+  dlg("Impostazioni inventario batterie", `<div class="hint">Quando la giacenza di un tipo scende <b>sotto</b> la soglia compare l'avviso di scorta in esaurimento. Metti 0 per non avere avvisi.</div>
+    <div class="g2" style="grid-template-columns:repeat(3,minmax(0,1fr))">${TIPI_B.map(t => `<div class="f"><label for="sg${t}">${t}</label><input type="number" min="0" inputmode="numeric" id="sg${t}" value="${n0(Batt.soglie[t])}"></div>`).join("")}</div>`, {
+    ok: "Salva", onOk: d => {
+      const s = {}; for (const t of TIPI_B) { const n = intOrNull($("#sg" + t, d).value); if (n === null || Number.isNaN(n) || n < 0) throw new Err("La soglia di " + t + " deve essere un numero intero (0 o più)."); s[t] = n; }
+      $("#dok", d).disabled = true;
+      Batt.salvaSoglie(s).then(() => { d.close(); Reg.aggiungi([{ a: "Modificato", o: "Batterie", d: "Soglie scorta: " + TIPI_B.map(t => t + " " + s[t]).join(", ") }]); render(); toast("Soglie salvate."); }).catch(e => { $("#derr", d).textContent = e.message; $("#dok", d).disabled = false; });
+      return false;
+    }
+  });
+}
+function battElimina(id) {
+  const m = Batt.mov.find(x => x.id === id); if (!m) return;
+  const dopo = Batt.mov.filter(x => x.id !== id), r = battRighe(dopo);
+  if (r.rows.some(x => x.res < 0)) return toast("Non posso eliminarlo: la giacenza andrebbe sotto zero nei movimenti successivi.");
+  dlgConferma("Elimina movimento", `Eliminare ${m.az === "carico" ? "il carico" : "il prelievo"} di <b>${m.q} ${esc(m.tipo)}</b> del ${dataIt(m.data)}${m.u ? " (" + esc(m.u) + ")" : ""}? La giacenza viene ricalcolata.`, "Elimina", () => {
+    Batt.elimina(id).then(() => { Reg.aggiungi([{ a: "Eliminato", o: "Batterie", d: (m.az === "carico" ? "Carico " : "Prelievo ") + m.tipo + " × " + m.q + " del " + dataIt(m.data) }]); render(); toast("Movimento eliminato."); }).catch(e => toast(e.message));
+  });
+}
+async function esportaBatterie() {
+  if (typeof ExcelJS === "undefined") throw new Err("La libreria Excel non si è caricata. Controlla la connessione e riprova.");
+  const { rows, tot } = battRighe(), wb = new ExcelJS.Workbook(); wb.creator = "Robinson Apulia – Sound&Light";
+  const stile = ws => { const h = ws.getRow(1); h.font = { bold: true, color: { argb: "FFFFFFFF" } }; h.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0047AB" } }; h.alignment = { vertical: "middle", wrapText: true }; ws.views = [{ state: "frozen", ySplit: 1 }]; };
+  const ws = wb.addWorksheet("Movimenti");
+  ws.columns = [{ header: "Tipo batteria", width: 14 }, { header: "Operazione", width: 12 }, { header: "Giacenza", width: 11 }, { header: "Q.tà prelevata", width: 14 }, { header: "Q.tà caricata", width: 14 }, { header: "Q.tà residua", width: 13 }, { header: "Data", width: 12 }, { header: "Note", width: 46 }, { header: "Chi", width: 18 }];
+  rows.forEach(r => ws.addRow([r.tipo, r.az === "carico" ? "Carico" : "Prelievo", r.giac, r.az === "prelievo" ? r.q : null, r.az === "carico" ? r.q : null, r.res, dataIt(r.data), r.note || "", r.u || ""]));
+  stile(ws);
+  const rs = wb.addWorksheet("Giacenze");
+  rs.columns = [{ header: "Tipo batteria", width: 14 }, { header: "Giacenza attuale", width: 17 }, { header: "Soglia avviso", width: 14 }, { header: "Stato", width: 18 }];
+  TIPI_B.forEach(t => { const g = tot[t] || 0, s = n0(Batt.soglie[t]); rs.addRow([t, g, s, s && g < s ? "Scorta bassa" : "Ok"]); });
+  stile(rs);
+  const buf = await wb.xlsx.writeBuffer();
+  await salvaFile("SL_Batterie_" + today() + ".xlsx", new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+}
+
+/* --- show / live: archivio degli schemi di montaggio (immagini convertite in WebP) --- */
+const Show = {
+  lista: [], ok: false, err: "", cache: new Map(),
+  async idbLista() { return (await Img.tx("readonly", s => s.get("show_meta"))) || []; },
+  async carica() {
+    try {
+      if (Repo.mode === "cloud") this.lista = (await Repo.call("GET", null, "?show=1")).lista || [];
+      else this.lista = (await this.idbLista()).slice().sort((a, b) => b.id - a.id);
+      this.ok = true; this.err = "";
+    } catch (e) { this.ok = false; this.err = e.message || "Archivio non disponibile."; }
+  },
+  async aggiungi(m, dati, thumb) {
+    if (Repo.mode === "cloud") { await Repo.call("POST", { ...m, u: Reg.nome(), dati, thumb }, "?show=1"); return; }
+    const L = await this.idbLista(), id = L.reduce((t, x) => Math.max(t, x.id), 0) + 1;
+    L.push({ id, t: new Date().toISOString(), titolo: m.titolo, show: m.show, note: m.note, u: Reg.nome(), thumb });
+    await Img.tx("readwrite", s => s.put(dati, "show:" + id)); await Img.tx("readwrite", s => s.put(L, "show_meta"));
+  },
+  async modifica(id, m) {
+    if (Repo.mode === "cloud") { await Repo.call("POST", { id, ...m }, "?show=1"); return; }
+    const L = await this.idbLista(), x = L.find(y => y.id === id); if (x) Object.assign(x, m); await Img.tx("readwrite", s => s.put(L, "show_meta"));
+  },
+  async elimina(id) {
+    if (Repo.mode === "cloud") await Repo.call("DELETE", null, "?show=1&id=" + id);
+    else { const L = (await this.idbLista()).filter(y => y.id !== id); await Img.tx("readwrite", s => s.put(L, "show_meta")); await Img.tx("readwrite", s => s.delete("show:" + id)); }
+    this.cache.delete(id);
+  },
+  async dati(id) {
+    if (this.cache.has(id)) return this.cache.get(id);
+    const d = Repo.mode === "cloud" ? (await Repo.call("GET", null, "?show=1&id=" + id)).dati : await Img.tx("readonly", s => s.get("show:" + id));
+    if (d) this.cache.set(id, d); return d || null;
+  }
+};
+const showNomi = () => [...new Set(Show.lista.map(x => x.show).filter(Boolean))].sort((a, b) => a.localeCompare(b, "it"));
+function viewShow(v) {
+  v.innerHTML = `<div class="bar"><button class="btn pri" data-act="showAdd">+ Carica schemi</button>
+    <select id="fSh" aria-label="Show"><option value="">Tutti gli show</option></select>
+    <input type="search" class="grow" id="qS" placeholder="Cerca titolo, show, note…" value="${esc(ui3.qs)}" aria-label="Cerca"></div><div id="list"><div class="empty">Caricamento…</div></div>`;
+  Show.carica().then(() => { if (ui.tab === "show") listShow(); });
+}
+function listShow() {
+  const L = $("#list"), sel = $("#fSh"); if (!L || !sel) return;
+  if (!Show.ok) { L.innerHTML = `<div class="empty">${esc(Show.err || "Caricamento…")}${/404/.test(Show.err) ? "<br>Ricarica su GitHub anche <b>api/data.js</b> (versione nuova) e fai Redeploy." : ""}</div>`; return; }
+  sel.innerHTML = `<option value="">Tutti gli show</option>` + showNomi().map(n => `<option value="${esc(n)}" ${n === ui3.sh ? "selected" : ""}>${esc(n)}</option>`).join("");
+  const q = norm(ui3.qs), R = Show.lista.filter(x => (!ui3.sh || x.show === ui3.sh) && (!q || norm([x.titolo, x.show, x.note, x.u].join(" ")).includes(q)));
+  L.innerHTML = R.length ? `<div class="sg">${R.map(x => `<div class="sc" data-act="showOpen" data-id="${x.id}" role="button" tabindex="0"><img src="${esc(x.thumb || "")}" alt="${esc(x.titolo || "Schema")}" loading="lazy"><div class="i"><b>${esc(x.titolo || "Senza titolo")}</b>${x.show ? `<span class="chip">${esc(x.show)}</span>` : ""}<span class="sub">${quando(x.t)} · ${esc(x.u || "")}</span></div></div>`).join("")}</div>` : `<div class="empty">${Show.lista.length ? "Nessuno schema con questi filtri." : "Archivio vuoto: carica i primi schemi di montaggio con «+ Carica schemi»."}</div>`;
+}
+function dlgShowAdd() {
+  dlg("Carica schemi di montaggio", `<div class="f"><label for="sF">Immagini (JPG, PNG…)</label><input type="file" id="sF" accept="image/*" multiple></div>
+    <div class="hint">Vengono convertite in WebP per occupare poco spazio nel database. Puoi sceglierne più di una.</div>
+    <div class="f"><label for="sS">Show / Live</label><input type="text" id="sS" list="dlSh" maxlength="80" placeholder="es. Serata Gala 12/12" autocomplete="off"><datalist id="dlSh">${showNomi().map(n => `<option value="${esc(n)}">`).join("")}</datalist></div>
+    <div class="f"><label for="sT">Titolo (facoltativo)</label><input type="text" id="sT" maxlength="120" placeholder="se vuoto uso il nome del file"></div>
+    <div class="f"><label for="sN">Note</label><textarea id="sN" rows="2" maxlength="400"></textarea></div>`, {
+    ok: "Carica", onOk: d => {
+      const files = [...$("#sF", d).files]; if (!files.length) throw new Err("Scegli almeno un'immagine.");
+      const show = $("#sS", d).value.trim(), titolo = $("#sT", d).value.trim(), note = $("#sN", d).value.trim(), btn = $("#dok", d); btn.disabled = true;
+      (async () => {
+        let n = 0, jpeg = false;
+        for (const f of files) {
+          btn.textContent = "Carico " + (n + 1) + "/" + files.length + "…";
+          const dati = await comprimi(f, 1800, 0.82), thumb = await comprimi(f, 360, 0.7); if (!dati.startsWith("data:image/webp")) jpeg = true;
+          const t = titolo ? (files.length > 1 ? titolo + " " + (n + 1) : titolo) : f.name.replace(/\.[^.]+$/, "");
+          await Show.aggiungi({ titolo: t, show, note }, dati, thumb); n++;
+        }
+        d.close(); Reg.aggiungi([{ a: "Aggiunto", o: "Show/Live", d: n + (n === 1 ? " schema" : " schemi") + (show ? " — " + show : "") }]);
+        await Show.carica(); render(); toast(n + (n === 1 ? " schema caricato." : " schemi caricati.") + (jpeg ? " (Questo browser non crea WebP: salvati come JPEG.)" : ""));
+      })().catch(e => { $("#derr", d).textContent = e.message || "Caricamento non riuscito."; btn.disabled = false; btn.textContent = "Carica"; Show.carica().then(() => { if (ui.tab === "show") listShow(); }); });
+      return false;
+    }
+  });
+}
+function dlgShowVedi(id) {
+  const x = Show.lista.find(y => y.id === id); if (!x) return;
+  dlg(esc(x.titolo || "Schema"), `<div class="zv" id="zv"><div class="empty">Carico l'immagine…</div></div>
+    <div class="sub">${x.show ? "<b>" + esc(x.show) + "</b> · " : ""}${quando(x.t)} · ${esc(x.u || "")}</div>${x.note ? `<div>${esc(x.note)}</div>` : ""}
+    <div class="acts" style="justify-content:flex-start;margin-top:8px"><button type="button" class="btn sm" id="zZ">Ingrandisci</button><button type="button" class="btn sm" id="zE">Modifica</button><button type="button" class="btn sm" id="zD">Scarica</button><button type="button" class="btn sm dng" id="zX">Elimina</button></div>`, {
+    wide: true, noCancel: true, ok: "Chiudi", onOk: () => {}, init: d => {
+      const zv = $("#zv", d); let z = 1;
+      Show.dati(id).then(u => { zv.innerHTML = u ? `<img src="${u}" alt="${esc(x.titolo || "Schema")}">` : `<div class="empty">Immagine non trovata.</div>`; }).catch(e => { zv.innerHTML = `<div class="empty">${esc(e.message)}</div>`; });
+      $("#zZ", d).onclick = () => { z = z % 3 + 1; zv.className = "zv z" + z; $("#zZ", d).textContent = z === 3 ? "Riduci" : "Ingrandisci"; };
+      $("#zE", d).onclick = () => { d.close(); dlgShowModifica(id); };
+      $("#zD", d).onclick = async () => { try { const u = await Show.dati(id); if (!u) return; const b = await (await fetch(u)).blob(); await salvaFile((x.titolo || "schema").replace(/[^\w\- ]+/g, "_") + (b.type === "image/webp" ? ".webp" : ".jpg"), b); } catch (e) { toast(e.message || "Download non riuscito."); } };
+      $("#zX", d).onclick = () => { d.close(); dlgConferma("Elimina schema", `Eliminare «${esc(x.titolo || "Schema")}» dall'archivio? Non si può annullare.`, "Elimina", () => { Show.elimina(id).then(async () => { Reg.aggiungi([{ a: "Eliminato", o: "Show/Live", d: x.titolo || "Schema" }]); await Show.carica(); render(); toast("Schema eliminato."); }).catch(e => toast(e.message)); }); };
+    }
+  });
+}
+function dlgShowModifica(id) {
+  const x = Show.lista.find(y => y.id === id); if (!x) return;
+  dlg("Modifica schema", `<div class="f"><label for="mT">Titolo</label><input type="text" id="mT" maxlength="120" value="${esc(x.titolo)}"></div>
+    <div class="f"><label for="mS">Show / Live</label><input type="text" id="mS" list="dlSh2" maxlength="80" value="${esc(x.show)}" autocomplete="off"><datalist id="dlSh2">${showNomi().map(n => `<option value="${esc(n)}">`).join("")}</datalist></div>
+    <div class="f"><label for="mN">Note</label><textarea id="mN" rows="3" maxlength="400">${esc(x.note)}</textarea></div>`, {
+    ok: "Salva", onOk: d => {
+      const m = { titolo: $("#mT", d).value.trim(), show: $("#mS", d).value.trim(), note: $("#mN", d).value.trim() }; $("#dok", d).disabled = true;
+      Show.modifica(id, m).then(async () => { d.close(); Reg.aggiungi([{ a: "Modificato", o: "Show/Live", d: (m.titolo || "Schema") + (m.show ? " — " + m.show : "") }]); await Show.carica(); render(); toast("Salvato."); }).catch(e => { $("#derr", d).textContent = e.message; $("#dok", d).disabled = false; });
+      return false;
+    }
+  });
+}
+function dlgAltro() {
+  const { g, m } = (() => { const L = anomalie(); return { g: L.filter(x => x.gr === 3).length, m: L.filter(x => x.gr === 2).length }; })();
+  const voci = [["uni", "Unisci articoli simili", gruppiSimili().length], ["rie", "Riepilogo", 0], ["log", "Registro modifiche", 0], ["con", "Controlli", g || m]];
+  dlg("Altre sezioni", `<div class="menu">${voci.map(([k, t, n]) => `<button class="btn" data-tab="${k}">${t}${n ? ` <span class="badge ${k === "con" && g ? "" : "o"}">${n}</span>` : ""}</button>`).join("")}</div>`, { noCancel: true });
+}
+
 /* --- registro --- */
 const ui2 = { lu: "", la: "", ql: "" };
 function viewLog(v) {
@@ -1198,7 +1467,7 @@ $("#fileIn").onchange = async ev => {
 /* ---------- eventi ---------- */
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-tab],[data-area],[data-act],[data-gr]"); if (!t) return;
-  if (t.dataset.tab) { ui.tab = t.dataset.tab; render(); inCima(); return; }
+  if (t.dataset.tab) { closeDlg(); ui.tab = t.dataset.tab; render(); inCima(); return; }
   if (t.dataset.area != null) { ui.area = t.dataset.area; render(); return; }
   if (t.dataset.gr) { const g = Number(t.dataset.gr); ui.gr.has(g) ? ui.gr.delete(g) : ui.gr.add(g); render(); return; }
   const id = Number(t.dataset.id);
@@ -1209,6 +1478,14 @@ document.addEventListener("click", e => {
     case "move": dlgSposta(id); break;
     case "stato": dlgStato(id); break;
     case "delInv": { const r = invRow(id); dlgConferma("Elimina articolo", `Eliminare «${esc(r.articolo)}» (${r.qty} pz, ${esc(r.area || "Da assegnare")}) dall'inventario? Gli acquisti collegati restano ma risulteranno non collegati.`, "Elimina", () => run(() => eliminaRiga(id), "Articolo eliminato.")); break; }
+    case "altro": dlgAltro(); break;
+    case "battPrel": dlgBatMov("prelievo"); break;
+    case "battCar": dlgBatMov("carico"); break;
+    case "battSog": dlgBatSoglie(); break;
+    case "battExp": esportaBatterie().catch(er => toast(er.message || "Esportazione non riuscita.")); break;
+    case "battDel": battElimina(id); break;
+    case "showAdd": dlgShowAdd(); break;
+    case "showOpen": dlgShowVedi(id); break;
     case "uni": dlgUnisci(t.dataset.k); break;
     case "uniIgn": { const s2 = ignUni(); s2.add(t.dataset.k); salvaIgnUni(s2); toast("Gruppo nascosto."); render(); break; }
     case "uniReset": salvaIgnUni(new Set()); render(); break;
@@ -1233,11 +1510,15 @@ document.addEventListener("input", e => {
   else if (id === "qr") { ui.qr = e.target.value; listRie(); }
   else if (id === "qc") { ui.qc = e.target.value; listCon(); }
   else if (id === "qL") { ui2.ql = e.target.value; listLog(); }
+  else if (id === "qB") { ui3.qb = e.target.value; listBat(); }
+  else if (id === "qS") { ui3.qs = e.target.value; listShow(); }
 });
 document.addEventListener("change", e => {
   const id = e.target.id;
   if (id === "fSt") { ui.stato = e.target.value; listInv(); }
   else if (id === "fAn") { ui.anno = e.target.value; listAcq(); }
+  else if (id === "fBt") { ui3.bt = e.target.value; listBat(); }
+  else if (id === "fSh") { ui3.sh = e.target.value; listShow(); }
   else if (id === "fLu") { ui2.lu = e.target.value; listLog(); }
   else if (id === "fLa") { ui2.la = e.target.value; listLog(); }
   else if (id === "areaSel") { ui.area = e.target.value; render(); }
@@ -1297,6 +1578,7 @@ async function boot() {
     if (r) S = fixS(r); else { S = Repo.fresh(); if (Repo.mode === "cloud") { await Repo.push(S); toast("Dati iniziali caricati nel database."); } }
     undo.length = 0; Repo.saveLocal(S); render();
     setStato(Repo.mode === "cloud" ? "Cloud collegato" : "Solo questo browser", false);
+    Batt.carica().then(() => { render(); const b = battBassi(); if (b.length) toast("⚠ Scorte batterie in esaurimento: " + txtBassi(b)); });
   } catch (e) { render(); toast(e.message || "Errore di avvio"); setStato("Errore", true); }
 }
 S = fixS(Repo.loadLocal() || Repo.fresh()); render(); boot();
