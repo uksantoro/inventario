@@ -20,6 +20,10 @@ Da quel momento ogni modifica va nel database e si vede su PC e telefono. La tab
 - Ogni articolo ha **marca**, **modello**, **foto** (tocca la riga per aprire il dettaglio) e può provenire da **più Einkauf**, ognuno con la sua quantità.
 - Le foto stanno nella tabella `immagini` (creata da sola), ridimensionate a circa 100 KB ciascuna.
 
+## App Windows collegata (tempo quasi reale)
+Nel programma Windows: **Strumenti → Sincronizzazione online (web app)…**, inserisci l'indirizzo del sito Vercel e la password (`APP_PASSWORD`).
+Le modifiche partono dopo circa 2 secondi e ogni 15 secondi si controlla se ci sono novità: stessa cosa nella web app. Lo stato si legge nel titolo della finestra.
+
 ## Note
 - Lo spazio usato è minuscolo (circa 100 KB) rispetto ai 0,5 GB del piano Free.
 - Se modifichi i dati da due dispositivi insieme, l'app ti avvisa e ti chiede di ricaricare, per non perdere modifiche.
