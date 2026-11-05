@@ -451,11 +451,26 @@ function salvaRiga(id, d) {
   if (!r) { r = { id: nid(S.inv), ord: nextOrd() }; S.inv.push(r); }
   Object.assign(r, { articolo: d.articolo.trim().replace(/\s+/g, " "), area: d.area || null, qty: d.qty, rotto: nz(d.rotto), ripar: nz(d.ripar), dismesso: nz(d.dismesso), note: d.note || null, marca: d.marca || null, modello: d.modello || null });
   setOrigini(r, d.origini);
-  fuse(r);
+  sincAcq(fuse(r));
+}
+/* un articolo assegnato a un Einkauf compare anche nell'elenco di quell'Einkauf (riga "man" creata in automatico) */
+function sincAcq(r) {
+  const per = {};
+  for (const x of (r.rip || (r.origine ? [{ o: r.origine, q: r.qty }] : []))) { const m = /^Einkauf (\d{4})$/.exec(x.o || ""); if (m) per[+m[1]] = n0(x.q); }
+  S.acq = S.acq.filter(a => !(a.inv_id === r.id && a.man && per[a.anno] == null));
+  S.acq.forEach(a => { if (a.inv_id === r.id && per[a.anno] == null) a.inv_id = null; });
+  for (const k of Object.keys(per)) {
+    const anno = +k, ex = S.acq.find(a => a.inv_id === r.id && a.anno === anno);
+    if (ex) { if (ex.man) Object.assign(ex, { articolo: r.articolo, area: r.area, qty: per[k], note: r.note }); continue; }
+    let best = null, bs = 0;
+    for (const a of S.acq) if (a.anno === anno && (a.inv_id == null || !invRow(a.inv_id))) { const s = norm(a.articolo) === norm(r.articolo) ? 1 + (a.area === r.area ? 1 : 0) : sim(a.articolo, r.articolo); if (s >= 0.6 && s > bs) { bs = s; best = a; } }
+    if (best) { best.inv_id = r.id; continue; }
+    if (per[k] > 0) S.acq.push({ id: nid(S.acq), anno, articolo: r.articolo, area: r.area || null, qty: per[k], note: r.note || null, rotto: null, dismesso: null, ripar: null, inv_id: r.id, ord: anno * 1000 + S.acq.filter(a => a.anno === anno).length + 1, man: true });
+  }
 }
 function eliminaRiga(id) {
   const r = invRow(id);
-  S.acq.forEach(a => { if (a.inv_id === id) a.inv_id = null; }); S.inv = S.inv.filter(x => x.id !== id);
+  S.acq = S.acq.filter(a => !(a.inv_id === id && a.man)); S.acq.forEach(a => { if (a.inv_id === id) a.inv_id = null; }); S.inv = S.inv.filter(x => x.id !== id);
   if (r && !S.inv.some(x => norm(x.articolo) === norm(r.articolo))) { S.imgs = S.imgs.filter(k => k !== norm(r.articolo)); delete S.imgv[norm(r.articolo)]; }
 }
 /* se l'articolo cambia nome la sua foto lo segue */
