@@ -1000,10 +1000,11 @@ function dlgCollega(id) {
   dlg("Collega acquisto", `<div><b>${esc(a.articolo)}</b> · ${a.anno} · ${esc(a.area || "senza area")} · ${a.qty} pz</div>
    <div class="f"><label for="cdQ">Cerca nell'inventario</label><input type="search" id="cdQ" placeholder="Nome, marca, modello, area…" autocomplete="off"></div>
    <div class="lab" id="cdT">Righe simili in ${orgDi(a.anno)}</div><div id="cdL">${lista("")}</div>
-   <label class="opt"><input type="radio" name="cd" value="new" ${c.length ? "" : "checked"}><span><b>Crea una nuova riga nell'inventario</b><br><span class="sub">${a.qty} pz in ${esc(a.area || "Da assegnare")}</span></span></label>`, {
+   <label class="opt"><input type="radio" name="cd" value="new" ${c.length ? "" : "checked"}><span><b>Crea una nuova riga nell'inventario</b><br><span class="sub">${a.qty} pz in ${esc(a.area || "Da assegnare")}</span></span></label>
+   <label class="optn"><input type="checkbox" id="cdAdd"><span>Se la riga è già collegata a un altro Einkauf: <b>aggiungi i ${a.qty} pz</b> di questo acquisto alla riga (quantità + provenienza per anno). Se non lo spunti, collego soltanto.</span></label>`, {
     ok: "Collega",
     init: d => { $("#cdQ", d).oninput = e => { const q = e.target.value; $("#cdT", d).textContent = q.trim() ? "Risultati della ricerca" : "Righe simili in " + orgDi(a.anno); $("#cdL", d).innerHTML = lista(q); const f = d.querySelector("#cdL input[name=cd]"); if (f) f.checked = true; else if (!c.length || q.trim()) d.querySelector("input[value=new]").checked = true; }; },
-    onOk: d => { const v = d.querySelector("input[name=cd]:checked").value; run(() => { const x = S.acq.find(z => z.id === id); delete x.fuori; if (v === "new") creaRigaDaAcq(x); else x.inv_id = Number(v); }, "Collegato."); }
+    onOk: d => { const v = d.querySelector("input[name=cd]:checked").value, add = $("#cdAdd", d).checked; run(() => { const x = S.acq.find(z => z.id === id); delete x.fuori; if (v === "new") { creaRigaDaAcq(x); return; } const r = invRow(Number(v)), altri = S.acq.some(z => z.id !== id && z.inv_id === r.id); x.inv_id = r.id; if (add && altri) { const P = provDi(r); const f = P.find(y => y.o === orgDi(x.anno)); if (f) f.q += n0(x.qty); else P.push({ o: orgDi(x.anno), q: n0(x.qty) }); r.qty = n0(r.qty) + n0(x.qty); setOrigini(r, P); } }, "Collegato."); }
   });
 }
 
