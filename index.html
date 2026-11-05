@@ -606,6 +606,7 @@ const closeDlg = () => { const d = $("#dlg"); if (d.open) d.close(); };
 const intOrNull = v => { v = String(v ?? "").trim(); if (v === "") return null; const n = Number(v); return Number.isFinite(n) ? n : NaN; };
 const areaOpts = (sel, vuoto) => (vuoto ? `<option value="">${vuoto}</option>` : "") + S.aree.map(a => `<option ${a === sel ? "selected" : ""}>${esc(a)}</option>`).join("");
 const origini = () => [...new Set([...S.inv.flatMap(r => r.rip ? r.rip.map(x => x.o) : [r.origine]), ...S.acq.map(a => orgDi(a.anno))].filter(Boolean))].sort();
+const einkaufPresenti = () => [...new Set(S.acq.map(a => a.anno))].sort((a, b) => b - a).map(orgDi);
 const marche = () => [...new Set(S.inv.map(r => r.marca).filter(Boolean))].sort((a, b) => a.localeCompare(b, "it"));
 const nomi = () => [...new Set(S.inv.map(r => r.articolo))].sort((a, b) => a.localeCompare(b, "it"));
 const datalists = () => `<datalist id="dlOr">${origini().map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlMa">${marche().map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlNo">${nomi().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`;
@@ -683,7 +684,8 @@ function listInv(SM) {
   $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> righe</span><span><b>${tot}</b> pezzi</span><span><b>${tr("rotto")}</b> rotti</span><span><b>${tr("ripar")}</b> <span class="lg">in riparazione</span><span class="sh">in rip.</span></span><span><b>${tr("dismesso")}</b> <span class="lg">dismessi</span><span class="sh">dism.</span></span></div><div class="list">${html}</div>`;
 }
 
-const pvRowHtml = (x = {}) => `<div class="prv"><input type="text" class="pO" list="dlOr" placeholder="es. Einkauf 2024" value="${esc(x.o)}" aria-label="Einkauf di provenienza" autocomplete="off"><input type="number" class="pQ" min="1" inputmode="numeric" placeholder="pz" value="${x.q ?? ""}" aria-label="Pezzi"><button type="button" class="btn sm dng pX" aria-label="Togli questa riga">✕</button></div>`;
+const pvOpts = sel => { const l = einkaufPresenti(); if (sel && !l.includes(sel)) l.push(sel); return `<option value="">— Scegli Einkauf —</option>` + l.map(o => `<option value="${esc(o)}" ${o === sel ? "selected" : ""}>${esc(o)}</option>`).join(""); };
+const pvRowHtml = (x = {}) => `<div class="prv"><select class="pO" aria-label="Einkauf di provenienza">${pvOpts(x.o || "")}</select><input type="number" class="pQ" min="1" inputmode="numeric" placeholder="pz" value="${x.q ?? ""}" aria-label="Pezzi"><button type="button" class="btn sm dng pX" aria-label="Togli questa riga">✕</button></div>`;
 function pvSync(d) {
   const rows = d.querySelectorAll(".prv"); rows.forEach(r => r.classList.toggle("one", rows.length === 1));
   const h = $("#pvHint", d); if (!h) return;
