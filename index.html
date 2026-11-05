@@ -68,7 +68,8 @@ input[type=text],input[type=number],input[type=search],select,textarea{width:100
 .gr{border-bottom:1px solid var(--line)}
 .gr:last-child{border-bottom:0}
 .gr.s1{background:var(--y)}.gr.s2{background:var(--o)}.gr.s3{background:var(--r)}
-.cols-inv{grid-template-columns:minmax(0,2.2fr) minmax(0,1.2fr) 56px 56px 56px 56px minmax(0,1.6fr) 262px}
+.cols-inv{grid-template-columns:minmax(0,2.2fr) minmax(0,1.2fr) 56px 56px 56px 56px minmax(0,1.6fr) 284px}
+.cols-inv .acts{flex-wrap:nowrap}
 .cols-acq{grid-template-columns:70px minmax(0,2.2fr) minmax(0,1.2fr) 56px minmax(0,1.6fr) 110px 232px}
 .cols-rie{grid-template-columns:minmax(0,2.4fr) 70px 60px 60px 60px minmax(0,2fr)}
 .num{text-align:center;font-variant-numeric:tabular-nums}
@@ -155,6 +156,47 @@ dialog::backdrop{background:rgba(10,20,40,.5)}
   .card{grid-template-columns:minmax(0,1fr)}
   .bar .btn.fl{display:none}
 }
+/* dettaglio, foto, provenienza multipla */
+.cam{display:inline-block;margin-left:6px;color:var(--teal);vertical-align:-2px}
+.cam svg{width:15px;height:15px}
+.mq,.mch,.mnote{display:none}
+.gr.ri{cursor:pointer}
+.ph{display:grid;place-items:center;min-height:150px;border:1px dashed var(--line);border-radius:12px;background:var(--bg);color:var(--muted);overflow:hidden;text-align:center;padding:10px}
+.ph img{display:block;max-width:100%;max-height:46dvh;object-fit:contain;border-radius:8px}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px;margin:0}
+.kv dt{color:var(--muted);font-size:12.5px;font-weight:700;padding-top:1px}
+.kv dd{margin:0;overflow-wrap:anywhere}
+.dacts{display:flex;flex-wrap:wrap;gap:8px}
+.prv{display:grid;grid-template-columns:minmax(0,1fr) 90px auto;gap:8px;margin-bottom:8px;align-items:center}
+.prv.one{grid-template-columns:minmax(0,1fr)}
+.prv.one .pQ,.prv.one .pX{display:none}
+.sum .sh{display:none}
+@media (max-width:760px){
+  .top .in{flex-wrap:nowrap;gap:8px;padding-block:8px}
+  .brand{flex:1}
+  .brand img{height:34px}
+  .brand b{font-size:14px}
+  .brand span{font-size:10px;letter-spacing:.05em}
+  .tools{gap:6px;margin-left:0}
+  .tools .tx{display:none}
+  .tools .btn{padding:7px 13px;font-size:17px;line-height:1.1}
+  main{padding-block:12px 24px}
+  .sum{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;text-align:center;margin-bottom:10px;padding:8px 4px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+  .sum>span{display:flex;flex-direction:column;font-size:11px;line-height:1.25}
+  .sum b{font-size:18px}
+  .sum .lg{display:none}.sum .sh{display:inline}
+  .gr.ri{grid-template-columns:minmax(0,1fr) auto!important;gap:3px 12px;padding:10px 14px}
+  .gr.ri .c-or,.gr.ri .c-no,.gr.ri .nums,.gr.ri .acts{display:none!important}
+  .gr.ri .c-art{font-size:15.5px;grid-column:1;grid-row:1}
+  .gr.ri .mq{display:block;text-align:right;font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;grid-row:1;grid-column:2}
+  .gr.ri .mq small{display:block;font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.04em}
+  .gr.ri .mch{display:flex;grid-column:1/-1;gap:6px;flex-wrap:wrap;align-items:center}
+  .gr.ri .mnote{display:block;grid-column:1/-1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fab .txt{display:none}
+  .fab{width:56px;height:56px;padding:0;justify-content:center;align-items:center;font-size:30px;line-height:1}
+  .prv{grid-template-columns:minmax(0,1fr) 76px auto}
+  .ph img{max-height:38dvh}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -163,10 +205,10 @@ dialog::backdrop{background:rgba(10,20,40,.5)}
   <nav class="tabs" id="tabs" aria-label="Sezioni"></nav>
   <div class="tools">
     <span class="sub dsk" id="stato" aria-live="polite"></span>
-    <button class="btn sm" id="bUndo" title="Annulla (Ctrl+Z)">↶ Annulla</button>
+    <button class="btn sm" id="bUndo" title="Annulla (Ctrl+Z)" aria-label="Annulla"><span aria-hidden="true">↶</span><span class="tx"> Annulla</span></button>
     <button class="btn sm dsk" id="bAree">Aree</button>
     <button class="btn sm dsk pri" id="bExp">Esporta Excel</button>
-    <button class="btn sm" id="bMenu" aria-label="Menu">⋯ Menu</button>
+    <button class="btn sm" id="bMenu" aria-label="Menu"><span aria-hidden="true">⋯</span><span class="tx"> Menu</span></button>
   </div>
 </div></div>
 <div class="wrap"><main id="view"></main></div>
@@ -201,14 +243,14 @@ const today = () => new Date().toISOString().slice(0, 10);
 /* ---------- archivio dati (sostituibile con Supabase) ---------- */
 const Repo = {
   key: "sl_inventario_v1", cfg: window.SL_CONFIG || {}, mode: "local", ver: 0, busy: false, again: false,
-  fresh() { const d = JSON.parse(JSON.stringify(SEED)); return { aree: d.aree, inv: d.inventario, acq: d.acquisti }; },
+  fresh() { const d = JSON.parse(JSON.stringify(SEED)); return { aree: d.aree, inv: d.inventario, acq: d.acquisti, imgs: [] }; },
   loadLocal() { try { const t = localStorage.getItem(this.key); if (t) { const s = JSON.parse(t); if (s.inv && s.acq && s.aree) return s; } } catch (e) {} return null; },
   saveLocal(s) { try { localStorage.setItem(this.key, JSON.stringify(s)); return true; } catch (e) { return false; } },
   pwd() { try { return localStorage.getItem("sl_pwd") || ""; } catch (e) { return ""; } },
   /* "cloud" se config.js indica l'indirizzo dell'API (database Neon su Vercel), altrimenti "local" (solo questo browser) */
-  async call(method, body) {
+  async call(method, body, qs) {
     let r;
-    try { r = await fetch(this.cfg.api, { method, headers: { "content-type": "application/json", "x-app-key": this.pwd() }, body: body ? JSON.stringify(body) : undefined }); }
+    try { r = await fetch(this.cfg.api + (qs || ""), { method, headers: { "content-type": "application/json", "x-app-key": this.pwd() }, body: body ? JSON.stringify(body) : undefined }); }
     catch (e) { throw new Err("Server non raggiungibile. Controlla la connessione."); }
     if (r.status === 401) throw Object.assign(new Err("Password errata."), { auth: true });
     if (r.status === 409) throw Object.assign(new Err("I dati sono stati modificati da un altro dispositivo. Ricarica la pagina."), { conflict: true });
@@ -239,11 +281,54 @@ const Repo = {
   },
   async push(s) { const r = await this.call("PUT", { version: this.ver, data: s }); this.ver = r.version; }
 };
+const fixS = s => { if (!Array.isArray(s.imgs)) s.imgs = []; return s; };
 let S = Repo.fresh();
 function setStato(t, err) { const e = $("#stato"); if (e) { e.textContent = t; e.style.color = err ? "var(--danger)" : "var(--muted)"; } }
 const undo = [];
 const snap = () => { undo.push(JSON.stringify(S)); if (undo.length > 15) undo.shift(); };
 
+/* ---------- foto degli articoli (chiave = nome articolo normalizzato) ---------- */
+const Img = {
+  cache: new Map(), dbp: null,
+  idb() { return this.dbp || (this.dbp = new Promise((res, rej) => { const q = indexedDB.open("sl_img", 1); q.onupgradeneeded = () => q.result.createObjectStore("i"); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); })); },
+  async tx(mode, fn) { const db = await this.idb(); return new Promise((res, rej) => { const q = fn(db.transaction("i", mode).objectStore("i")); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); },
+  async get(k) {
+    if (this.cache.has(k)) return this.cache.get(k);
+    let v = null;
+    if (Repo.mode === "cloud") { const r = await Repo.call("GET", null, "?img=" + encodeURIComponent(k)); v = r.dati || null; }
+    else v = (await this.tx("readonly", s => s.get(k))) || null;
+    this.cache.set(k, v); return v;
+  },
+  async set(k, dati) {
+    try {
+      if (Repo.mode === "cloud") await Repo.call("PUT", { dati }, "?img=" + encodeURIComponent(k));
+      else await this.tx("readwrite", s => s.put(dati, k));
+    } catch (e) { throw e instanceof Err ? e : new Err("Foto non salvata: archivio non disponibile."); }
+    this.cache.set(k, dati);
+  },
+  async del(k) {
+    if (Repo.mode === "cloud") await Repo.call("DELETE", null, "?img=" + encodeURIComponent(k));
+    else await this.tx("readwrite", s => s.delete(k));
+    this.cache.delete(k);
+  },
+  async move(a, b) { const v = await this.get(a); if (v) await this.set(b, v); await this.del(a); }
+};
+/* converte in WebP (il più leggero); dove il browser non sa produrlo (es. alcuni Safari) ripiega su JPEG */
+function comprimi(file, max = 1024, q = 0.75) {
+  return new Promise((res, rej) => {
+    const u = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight));
+      const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k));
+      const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u);
+      let d = c.toDataURL("image/webp", q);
+      if (!d.startsWith("data:image/webp")) d = c.toDataURL("image/jpeg", 0.72);
+      res(d);
+    };
+    im.onerror = () => { URL.revokeObjectURL(u); rej(new Err("Questo file non è un'immagine valida.")); };
+    im.src = u;
+  });
+}
 /* ---------- regole ---------- */
 const orgDi = anno => "Einkauf " + anno;
 const invRow = id => S.inv.find(r => r.id === id);
@@ -262,13 +347,26 @@ function validaRiga(r) {
   for (const k of ["rotto", "ripar", "dismesso"]) if (r[k] != null && (!Number.isInteger(r[k]) || r[k] < 0)) throw new Err("I pezzi rotti, in riparazione e dismessi devono essere numeri interi.");
   if (n0(r.rotto) + n0(r.ripar) > r.qty) throw new Err("Rotti + in riparazione non possono superare la quantità (" + r.qty + ").");
   if (n0(r.dismesso) > r.qty) throw new Err("I dismessi non possono superare la quantità (" + r.qty + ").");
+  const L = (r.origini || []).filter(x => (x.o || "").trim() || n0(x.q));
+  if (L.length > 1) {
+    let tot = 0;
+    for (const x of L) {
+      if (!(x.o || "").trim()) throw new Err("Scegli l'Einkauf per ogni riga di provenienza.");
+      if (!Number.isInteger(x.q) || x.q < 1) throw new Err("Indica i pezzi (almeno 1) per «" + x.o.trim() + "».");
+      tot += x.q;
+    }
+    if (tot > r.qty) throw new Err("Hai assegnato " + tot + " pezzi agli Einkauf, ma l'articolo ne ha " + r.qty + ".");
+  }
 }
-function fuse(r) { // unisce r in una riga identica (stesso articolo, area, origine)
-  const o = S.inv.find(x => x.id !== r.id && sameKey(x, r));
+function fuse(r) { // unisce r in una riga identica (stesso articolo, area, origine); le righe ripartite su più Einkauf non si uniscono
+  if (r.rip) return r;
+  const o = S.inv.find(x => x.id !== r.id && !x.rip && sameKey(x, r));
   if (!o) return r;
   o.qty = n0(o.qty) + n0(r.qty);
   for (const k of ["rotto", "ripar", "dismesso"]) o[k] = nz(n0(o[k]) + n0(r[k]));
   if (!o.note && r.note) o.note = r.note;
+  if (!o.marca && r.marca) o.marca = r.marca;
+  if (!o.modello && r.modello) o.modello = r.modello;
   S.acq.forEach(a => { if (a.inv_id === r.id) a.inv_id = o.id; });
   S.inv = S.inv.filter(x => x.id !== r.id);
   clampStati(o);
@@ -300,6 +398,7 @@ function delAcq(id) {
   S.acq = S.acq.filter(x => x.id !== id);
   if (r) {
     r.qty = n0(r.qty) - n0(a.qty);
+    if (r.rip) { const x = r.rip.find(y => y.o === orgDi(a.anno)); if (x) x.q = Math.max(0, x.q - n0(a.qty)); setOrigini(r, r.rip.filter(y => y.q > 0)); }
     if (r.qty <= 0) { S.acq.forEach(x => { if (x.inv_id === r.id) x.inv_id = null; }); S.inv = S.inv.filter(x => x.id !== r.id); }
     else clampStati(r);
   }
@@ -313,6 +412,7 @@ function editAcq(id, p) {
     const nuova = n0(r.qty) + p.qty - n0(a.qty);
     if (nuova < 1) throw new Err("La riga di inventario collegata scenderebbe a zero. Usa Elimina.");
     r.qty = nuova; clampStati(r);
+    if (r.rip) { const x = r.rip.find(y => y.o === orgDi(a.anno)); if (x) { x.q = Math.max(1, x.q + p.qty - n0(a.qty)); setOrigini(r, r.rip); } }
     Object.assign(a, { qty: p.qty, note: p.note || null, rotto: nz(n0(p.rotto)), dismesso: nz(n0(p.dismesso)), ripar: nz(n0(p.ripar)) });
   } else {
     const ord = a.ord, old = a.id;
@@ -321,21 +421,42 @@ function editAcq(id, p) {
     S.inv.forEach(x => {}); // collegamento già impostato da addAcq
   }
 }
+/* provenienza: elenco [{o: "Einkauf 2024", q: pezzi}]; con più voci la riga è "ripartita" (r.rip) */
+function setOrigini(r, list) {
+  const m = [];
+  for (const x of list || []) { const o = (x.o || "").trim(); if (!o) continue; const f = m.find(y => y.o === o); if (f) f.q += n0(x.q); else m.push({ o, q: n0(x.q) }); }
+  if (m.length > 1) { r.rip = m; r.origine = m.map(x => x.o + " (" + x.q + ")").join(" + "); }
+  else { r.rip = null; r.origine = m.length ? m[0].o : null; }
+}
 function salvaRiga(id, d) {
   validaRiga(d);
   let r = id == null ? null : invRow(id);
   if (!r) { r = { id: nid(S.inv), ord: nextOrd() }; S.inv.push(r); }
-  Object.assign(r, { articolo: d.articolo.trim().replace(/\s+/g, " "), area: d.area || null, origine: d.origine || null, qty: d.qty, rotto: nz(d.rotto), ripar: nz(d.ripar), dismesso: nz(d.dismesso), note: d.note || null });
+  Object.assign(r, { articolo: d.articolo.trim().replace(/\s+/g, " "), area: d.area || null, qty: d.qty, rotto: nz(d.rotto), ripar: nz(d.ripar), dismesso: nz(d.dismesso), note: d.note || null, marca: d.marca || null, modello: d.modello || null });
+  setOrigini(r, d.origini);
   fuse(r);
 }
-function eliminaRiga(id) { S.acq.forEach(a => { if (a.inv_id === id) a.inv_id = null; }); S.inv = S.inv.filter(r => r.id !== id); }
+function eliminaRiga(id) {
+  const r = invRow(id);
+  S.acq.forEach(a => { if (a.inv_id === id) a.inv_id = null; }); S.inv = S.inv.filter(x => x.id !== id);
+  if (r && !S.inv.some(x => norm(x.articolo) === norm(r.articolo))) S.imgs = S.imgs.filter(k => k !== norm(r.articolo));
+}
+/* se l'articolo cambia nome la sua foto lo segue */
+function migraFoto(vecchio, nuovo) {
+  if (!vecchio || norm(vecchio) === norm(nuovo)) return;
+  const a = norm(vecchio), b = norm(nuovo);
+  if (!S.imgs.includes(a) || S.inv.some(x => norm(x.articolo) === a)) return;
+  S.imgs = S.imgs.filter(k => k !== a);
+  if (!S.imgs.includes(b)) { S.imgs.push(b); Img.move(a, b).catch(() => {}); }
+}
 function sposta(id, dest, n) {
   const r = invRow(id); if (!r) return;
   if (!Number.isInteger(n) || n < 1 || n > n0(r.qty)) throw new Err("Quantità da spostare non valida (1–" + n0(r.qty) + ").");
   if ((r.area || "") === (dest || "")) throw new Err("L'articolo è già in quest'area.");
   if (n === n0(r.qty)) { r.area = dest || null; fuse(r); return; }
-  let t = S.inv.find(x => x.id !== r.id && norm(x.articolo) === norm(r.articolo) && (x.area || "") === (dest || "") && norm(x.origine) === norm(r.origine));
-  if (!t) { t = { id: nid(S.inv), articolo: r.articolo, area: dest || null, rotto: null, ripar: null, dismesso: null, note: r.note, qty: 0, origine: r.origine, ord: nextOrd() }; S.inv.push(t); }
+  if (r.rip) throw new Err("Questo articolo è ripartito su più Einkauf: puoi spostarlo solo per intero (oppure togli prima la ripartizione).");
+  let t = S.inv.find(x => x.id !== r.id && !x.rip && norm(x.articolo) === norm(r.articolo) && (x.area || "") === (dest || "") && norm(x.origine) === norm(r.origine));
+  if (!t) { t = { id: nid(S.inv), articolo: r.articolo, area: dest || null, rotto: null, ripar: null, dismesso: null, note: r.note, marca: r.marca || null, modello: r.modello || null, qty: 0, origine: r.origine, ord: nextOrd() }; S.inv.push(t); }
   t.qty = n0(t.qty) + n; r.qty = n0(r.qty) - n; clampStati(r);
 }
 function segnaStato(id, tipo, n) {
@@ -373,7 +494,7 @@ function aggiungiArea(nome) {
 function candidati(a) {
   const org = orgDi(a.anno), res = [];
   for (const r of S.inv) {
-    if (r.origine !== org) continue;
+    if (!(r.origine === org || (r.rip && r.rip.some(x => x.o === org)))) continue;
     let liv = 0;
     if (norm(r.articolo) === norm(a.articolo) && r.area === a.area) liv = 1;
     else if (norm(r.articolo) === norm(a.articolo)) liv = 2;
@@ -449,7 +570,7 @@ function annulla() {
 
 function dlg(title, body, o = {}) {
   const d = $("#dlg");
-  d.className = o.wide ? "wide" : "";
+  d.className = o.wide ? "wide" : ""; delete d.dataset.inv;
   d.innerHTML = `<form class="dform" method="dialog"><header><h2>${title}</h2><button type="button" class="x" data-close aria-label="Chiudi">✕</button></header><div class="dbody">${body}<div class="derr" id="derr" role="alert"></div></div><footer>${o.noCancel ? "" : '<button type="button" class="btn ghost" data-close>Annulla</button>'}${o.onOk ? `<button type="submit" class="btn pri" id="dok">${o.ok || "Salva"}</button>` : ""}</footer></form>`;
   d.querySelectorAll("[data-close]").forEach(b => b.onclick = () => d.close());
   const f = d.querySelector("form");
@@ -466,9 +587,10 @@ function dlg(title, body, o = {}) {
 const closeDlg = () => { const d = $("#dlg"); if (d.open) d.close(); };
 const intOrNull = v => { v = String(v ?? "").trim(); if (v === "") return null; const n = Number(v); return Number.isFinite(n) ? n : NaN; };
 const areaOpts = (sel, vuoto) => (vuoto ? `<option value="">${vuoto}</option>` : "") + S.aree.map(a => `<option ${a === sel ? "selected" : ""}>${esc(a)}</option>`).join("");
-const origini = () => [...new Set(S.inv.map(r => r.origine).filter(Boolean))].sort();
+const origini = () => [...new Set([...S.inv.flatMap(r => r.rip ? r.rip.map(x => x.o) : [r.origine]), ...S.acq.map(a => orgDi(a.anno))].filter(Boolean))].sort();
+const marche = () => [...new Set(S.inv.map(r => r.marca).filter(Boolean))].sort((a, b) => a.localeCompare(b, "it"));
 const nomi = () => [...new Set(S.inv.map(r => r.articolo))].sort((a, b) => a.localeCompare(b, "it"));
-const datalists = () => `<datalist id="dlOr">${origini().map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlNo">${nomi().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`;
+const datalists = () => `<datalist id="dlOr">${origini().map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlMa">${marche().map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlNo">${nomi().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`;
 
 /* tabs */
 function drawTabs(L) {
@@ -493,7 +615,7 @@ function render() {
 function rowsInv() {
   let R = S.inv.filter(r => ui.area === "*" ? true : ui.area === "-" ? !r.area : r.area === ui.area);
   const q = norm(ui.q);
-  if (q) R = R.filter(r => norm([r.articolo, r.note, r.origine, r.area].join(" ")).includes(q));
+  if (q) R = R.filter(r => norm([r.articolo, r.marca, r.modello, r.note, r.origine, r.area].join(" ")).includes(q));
   if (ui.stato === "rotti") R = R.filter(r => n0(r.rotto) > 0);
   if (ui.stato === "rip") R = R.filter(r => n0(r.ripar) > 0);
   if (ui.stato === "dis") R = R.filter(r => n0(r.dismesso) > 0);
@@ -509,48 +631,126 @@ function viewInv(v, SM) {
   v.innerHTML = `<div class="inv"><aside class="areas" aria-label="Aree">${side.map(([k, n]) => `<button class="area" aria-pressed="${ui.area === k}" data-area="${esc(k)}"><span>${esc(n)}</span><small>${pz(k)}</small></button>`).join("")}</aside>
   <section style="min-width:0">
     <select class="areasel" id="areaSel" aria-label="Area" style="margin-bottom:10px">${side.map(([k, n]) => `<option value="${esc(k)}" ${ui.area === k ? "selected" : ""}>${esc(n)} (${pz(k)} pz)</option>`).join("")}</select>
-    <div class="bar"><input type="search" class="grow" id="q" placeholder="Cerca articolo, nota, origine…" value="${esc(ui.q)}" aria-label="Cerca">
+    <div class="bar"><input type="search" class="grow" id="q" placeholder="Cerca articolo, marca, modello…" value="${esc(ui.q)}" aria-label="Cerca">
       <select id="fSt" aria-label="Filtro stato"><option value="">Tutti gli stati</option><option value="rotti" ${ui.stato === "rotti" ? "selected" : ""}>Con rotti</option><option value="rip" ${ui.stato === "rip" ? "selected" : ""}>In riparazione</option><option value="dis" ${ui.stato === "dis" ? "selected" : ""}>Con dismessi</option><option value="noorg" ${ui.stato === "noorg" ? "selected" : ""}>Senza origine</option></select>
       <button class="btn pri fl" data-act="newInv">+ Articolo</button></div>
     <div id="list"></div></section></div>
-  <button class="btn pri fab" data-act="newInv">+ Articolo</button>`;
+  <button class="btn pri fab" data-act="newInv" aria-label="Nuovo articolo"><span aria-hidden="true">+</span><span class="txt"> Articolo</span></button>`;
   listInv(SM);
 }
+const CAM = '<span class="cam" title="Con foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3l2-3h8l2 3h3v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg></span>';
 function listInv(SM) {
   SM = SM || sevMap(anomalie());
   const R = rowsInv(); const tot = R.reduce((s, r) => s + n0(r.qty), 0);
   const tr = k => R.reduce((s, r) => s + n0(r[k]), 0);
   const html = R.length ? `<div class="gh cols-inv"><div>Articolo</div><div class="c-or">Origine</div><div class="num">Qtà</div><div class="num">Rotti</div><div class="num">Rip.</div><div class="num">Dism.</div><div class="c-no">Note</div><div></div></div>` + R.map(r => {
     const s = SM.inv.get(r.id) || 0;
-    return `<div class="gr cols-inv ${s ? "s" + s : ""}"><div class="art cell c-art">${esc(r.articolo)}${ui.area === "*" ? `<div class="sub">${esc(r.area || "Da assegnare")}</div>` : ""}</div>
+    const mv = [r.marca, r.modello].filter(Boolean).join(" ");
+    const sub = [mv, ui.area === "*" ? (r.area || "Da assegnare") : ""].filter(Boolean).join(" · ");
+    const cam = S.imgs.includes(norm(r.articolo)) ? CAM : "";
+    const ch = [];
+    if (r.rip) r.rip.forEach(x => ch.push(`<span class="chip">${esc(x.o)} · ${x.q}</span>`)); else if (r.origine) ch.push(`<span class="chip">${esc(r.origine)}</span>`);
+    if (n0(r.rotto)) ch.push(`<span class="chip r">${r.rotto} rotti</span>`);
+    if (n0(r.ripar)) ch.push(`<span class="chip o">${r.ripar} in rip.</span>`);
+    if (n0(r.dismesso)) ch.push(`<span class="chip y">${r.dismesso} dismessi</span>`);
+    return `<div class="gr ri cols-inv ${s ? "s" + s : ""}" data-act="det" data-id="${r.id}"><div class="art cell c-art">${esc(r.articolo)}${cam}${sub ? `<div class="sub">${esc(sub)}</div>` : ""}</div>
       <div class="c-or cell sub" data-l="Origine">${esc(r.origine || "—")}</div>
       <div class="nums" style="display:contents"><div class="num cell c-q" data-l="Qtà"><b>${r.qty ?? "—"}</b></div><div class="num cell" data-l="Rotti">${r.rotto ?? "·"}</div><div class="num cell" data-l="Rip.">${r.ripar ?? "·"}</div><div class="num cell" data-l="Dism.">${r.dismesso ?? "·"}</div></div>
-      <div class="c-no cell sub" ${r.note ? 'data-l="Note"' : ""}>${esc(r.note || "")}</div>
-      <div class="acts"><button class="btn sm" data-act="editInv" data-id="${r.id}">Modifica</button><button class="btn sm" data-act="move" data-id="${r.id}">Sposta</button><button class="btn sm" data-act="stato" data-id="${r.id}">Stato</button><button class="btn sm dng" data-act="delInv" data-id="${r.id}" aria-label="Elimina">✕</button></div></div>`;
+      <div class="c-no cell sub">${esc(r.note || "")}</div>
+      <div class="acts"><button class="btn sm" data-act="editInv" data-id="${r.id}">Modifica</button><button class="btn sm" data-act="move" data-id="${r.id}">Sposta</button><button class="btn sm" data-act="stato" data-id="${r.id}">Stato</button><button class="btn sm dng" data-act="delInv" data-id="${r.id}" aria-label="Elimina">✕</button></div>
+      <div class="mq">${r.qty ?? "—"}<small>pz</small></div>${ch.length ? `<div class="mch">${ch.join("")}</div>` : ""}${r.note ? `<div class="mnote sub">${esc(r.note)}</div>` : ""}</div>`;
   }).join("") : `<div class="empty">Nessun articolo trovato.</div>`;
-  $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> righe</span><span><b>${tot}</b> pezzi</span><span>rotti <b>${tr("rotto")}</b></span><span>in riparazione <b>${tr("ripar")}</b></span><span>dismessi <b>${tr("dismesso")}</b></span></div><div class="list">${html}</div>`;
+  $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> righe</span><span><b>${tot}</b> pezzi</span><span><b>${tr("rotto")}</b> rotti</span><span><b>${tr("ripar")}</b> <span class="lg">in riparazione</span><span class="sh">in rip.</span></span><span><b>${tr("dismesso")}</b> <span class="lg">dismessi</span><span class="sh">dism.</span></span></div><div class="list">${html}</div>`;
 }
 
+const pvRowHtml = (x = {}) => `<div class="prv"><input type="text" class="pO" list="dlOr" placeholder="es. Einkauf 2024" value="${esc(x.o)}" aria-label="Einkauf di provenienza" autocomplete="off"><input type="number" class="pQ" min="1" inputmode="numeric" placeholder="pz" value="${x.q ?? ""}" aria-label="Pezzi"><button type="button" class="btn sm dng pX" aria-label="Togli questa riga">✕</button></div>`;
+function pvSync(d) {
+  const rows = d.querySelectorAll(".prv"); rows.forEach(r => r.classList.toggle("one", rows.length === 1));
+  const h = $("#pvHint", d); if (!h) return;
+  if (rows.length < 2) { h.textContent = "Se i pezzi vengono da più Einkauf, aggiungi una riga per ciascuno con la sua quantità."; h.className = "hint"; return; }
+  let t = 0; rows.forEach(r => { t += n0($(".pQ", r).value); });
+  const q = n0($("#fQ", d).value);
+  h.textContent = "Assegnati " + t + " di " + q + " pezzi"; h.className = t > q ? "hint w" : "hint";
+}
 function formRiga(r) {
+  const prov = r.rip ? r.rip : [{ o: r.origine || "", q: r.origine ? r.qty : null }];
   return `<div class="f"><label for="fA">Articolo</label><input type="text" id="fA" list="dlNo" value="${esc(r.articolo)}" autocomplete="off"></div>
-  <div class="g2"><div class="f"><label for="fAr">Area di destinazione</label><select id="fAr">${areaOpts(r.area, "— Da assegnare —")}</select></div>
-  <div class="f"><label for="fO">Einkauf / origine</label><input type="text" id="fO" list="dlOr" value="${esc(r.origine)}" placeholder="es. Einkauf 2024"></div></div>
+  <div class="g2"><div class="f"><label for="fMa">Marca</label><input type="text" id="fMa" list="dlMa" value="${esc(r.marca)}" autocomplete="off"></div>
+  <div class="f"><label for="fMo">Modello</label><input type="text" id="fMo" value="${esc(r.modello)}" autocomplete="off"></div></div>
+  <div class="f"><label for="fAr">Area di destinazione</label><select id="fAr">${areaOpts(r.area, "— Da assegnare —")}</select></div>
   <div class="g4"><div class="f"><label for="fQ">Quantità</label><input type="number" id="fQ" min="0" inputmode="numeric" value="${r.qty ?? ""}"></div>
   <div class="f"><label for="fR">Rotti</label><input type="number" id="fR" min="0" inputmode="numeric" value="${r.rotto ?? ""}"></div>
   <div class="f"><label for="fP">In riparaz.</label><input type="number" id="fP" min="0" inputmode="numeric" value="${r.ripar ?? ""}"></div>
   <div class="f"><label for="fD">Dismessi</label><input type="number" id="fD" min="0" inputmode="numeric" value="${r.dismesso ?? ""}"></div></div>
+  <div class="f"><span class="lab">Einkauf di provenienza</span><div id="pv">${prov.map(pvRowHtml).join("")}</div>
+  <div><button type="button" class="btn sm" id="pvAdd">+ Altro Einkauf</button></div><div class="hint" id="pvHint"></div></div>
   <div class="f"><label for="fN">Note</label><textarea id="fN" rows="2">${esc(r.note)}</textarea></div>${datalists()}`;
 }
 function leggiRiga(d) {
   const q = intOrNull($("#fQ", d).value);
-  const o = { articolo: $("#fA", d).value, area: $("#fAr", d).value || null, origine: $("#fO", d).value.trim() || null, qty: q, rotto: intOrNull($("#fR", d).value), ripar: intOrNull($("#fP", d).value), dismesso: intOrNull($("#fD", d).value), note: $("#fN", d).value.trim() || null };
+  const o = { articolo: $("#fA", d).value, marca: $("#fMa", d).value.trim() || null, modello: $("#fMo", d).value.trim() || null, area: $("#fAr", d).value || null,
+    origini: [...d.querySelectorAll(".prv")].map(r => ({ o: $(".pO", r).value.trim(), q: intOrNull($(".pQ", r).value) })),
+    qty: q, rotto: intOrNull($("#fR", d).value), ripar: intOrNull($("#fP", d).value), dismesso: intOrNull($("#fD", d).value), note: $("#fN", d).value.trim() || null };
   if (q === null || Number.isNaN(q)) throw new Err("Inserisci la quantità (numero intero).");
   return o;
 }
 function dlgRiga(id) {
   const r = id == null ? { articolo: "", area: ui.area !== "*" && ui.area !== "-" ? ui.area : "", origine: "", qty: 1 } : invRow(id);
-  dlg(id == null ? "Nuovo articolo" : "Modifica articolo", formRiga(r), { onOk: d => { const o = leggiRiga(d); run(() => salvaRiga(id, o), "Salvato."); } });
+  const vecchio = id == null ? null : r.articolo;
+  dlg(id == null ? "Nuovo articolo" : "Modifica articolo", formRiga(r), {
+    onOk: d => { const o = leggiRiga(d); run(() => { salvaRiga(id, o); migraFoto(vecchio, o.articolo); }, "Salvato."); },
+    init: d => {
+      pvSync(d);
+      $("#pvAdd", d).onclick = () => { $("#pv", d).insertAdjacentHTML("beforeend", pvRowHtml({})); pvSync(d); };
+      d.oninput = () => pvSync(d);
+      $("#pv", d).onclick = e => { const b = e.target.closest(".pX"); if (!b) return; b.closest(".prv").remove(); pvSync(d); };
+    }
+  });
 }
+function dlgDettaglio(id) {
+  const r = invRow(id); if (!r) return;
+  const key = norm(r.articolo), has = S.imgs.includes(key);
+  const prov = r.rip ? r.rip.map(x => esc(x.o) + " · " + x.q + " pz").join("<br>") : esc(r.origine || "");
+  const kv = (k, v) => v || v === 0 ? `<dt>${k}</dt><dd>${v}</dd>` : "";
+  const d = dlg(esc(r.articolo), `<div class="ph" id="phBox">${has ? "Carico la foto…" : "Nessuna foto"}</div>
+   <div class="dacts"><button type="button" class="btn sm" id="bFoto">${has ? "Cambia foto" : "Aggiungi foto"}</button>${has ? `<button type="button" class="btn sm dng" id="bFotoDel">Rimuovi foto</button>` : ""}</div>
+   <input type="file" id="fImg" accept="image/*" hidden>
+   <dl class="kv">${kv("Area", esc(r.area || "Da assegnare"))}${kv("Marca", esc(r.marca))}${kv("Modello", esc(r.modello))}${kv("Quantità", `<b>${r.qty ?? "—"}</b>`)}${kv("Rotti", n0(r.rotto) ? r.rotto : "")}${kv("In riparazione", n0(r.ripar) ? r.ripar : "")}${kv("Dismessi", n0(r.dismesso) ? r.dismesso : "")}${kv("Einkauf", prov)}${kv("Note", esc(r.note))}</dl>
+   <div class="dacts"><button type="button" class="btn pri" data-x="edit">Modifica</button><button type="button" class="btn" data-x="move">Sposta</button><button type="button" class="btn" data-x="stato">Stato</button><button type="button" class="btn dng" data-x="del">Elimina</button></div>`, {
+    noCancel: true, ok: "Chiudi", onOk: () => {},
+    init: d => {
+      d.dataset.inv = id;
+      if (has) Img.get(key).then(u => { const b = $("#phBox", d); if (!b) return; if (u) { b.innerHTML = `<img alt="">`; b.firstChild.src = u; } else b.textContent = "Foto non disponibile"; }).catch(() => { const b = $("#phBox", d); if (b) b.textContent = "Foto non disponibile"; });
+      $("#bFoto", d).onclick = () => $("#fImg", d).click();
+      $("#fImg", d).onchange = ev => { const f = ev.target.files[0]; ev.target.value = ""; if (f) salvaFoto(id, f); };
+      const del = $("#bFotoDel", d); if (del) del.onclick = () => rimuoviFoto(id);
+      d.querySelectorAll("[data-x]").forEach(b => b.onclick = () => {
+        const x = b.dataset.x; closeDlg();
+        if (x === "edit") dlgRiga(id); else if (x === "move") dlgSposta(id); else if (x === "stato") dlgStato(id);
+        else dlgConferma("Elimina articolo", `Eliminare «${esc(r.articolo)}» (${r.qty} pz, ${esc(r.area || "Da assegnare")}) dall'inventario? Gli acquisti collegati restano ma risulteranno non collegati.`, "Elimina", () => run(() => eliminaRiga(id), "Eliminato."));
+      });
+    }
+  });
+}
+async function salvaFoto(id, file) {
+  const r = invRow(id); if (!r) return; const key = norm(r.articolo);
+  try {
+    const u = await comprimi(file); await Img.set(key, u);
+    go(() => { if (!S.imgs.includes(key)) S.imgs.push(key); }, "Foto salvata.");
+    dlgDettaglio(id);
+  } catch (e) { toast(e instanceof Err ? e.message : "Impossibile salvare la foto."); }
+}
+async function rimuoviFoto(id) {
+  const r = invRow(id); if (!r) return; const key = norm(r.articolo);
+  try { await Img.del(key); } catch (e) { toast(e instanceof Err ? e.message : "Impossibile rimuovere la foto."); return; }
+  go(() => { S.imgs = S.imgs.filter(k => k !== key); }, "Foto rimossa.");
+  dlgDettaglio(id);
+}
+document.addEventListener("paste", e => {
+  const d = $("#dlg"); if (!d.open || !d.dataset.inv) return;
+  const it = [...((e.clipboardData && e.clipboardData.items) || [])].find(i => i.type.startsWith("image/")); if (!it) return;
+  e.preventDefault(); salvaFoto(Number(d.dataset.inv), it.getAsFile());
+});
 function dlgSposta(id) {
   const r = invRow(id);
   dlg("Sposta «" + esc(r.articolo) + "»", `<div class="hint">Ora in <b>${esc(r.area || "Da assegnare")}</b> · ${r.qty} pezzi</div>
@@ -576,7 +776,7 @@ function viewAcq(v, SM) {
   const anni = [...new Set(S.acq.map(a => a.anno))].sort((a, b) => b - a);
   v.innerHTML = `<div class="bar"><select id="fAn" aria-label="Anno"><option value="*">Tutti gli anni</option>${anni.map(a => `<option ${String(a) === String(ui.anno) ? "selected" : ""}>${a}</option>`).join("")}</select>
    <input type="search" class="grow" id="qa" placeholder="Cerca acquisto…" value="${esc(ui.qa)}" aria-label="Cerca"><button class="btn pri fl" data-act="newAcq">+ Nuovo acquisto</button></div><div id="list"></div>
-   <button class="btn pri fab" data-act="newAcq">+ Acquisto</button>`;
+   <button class="btn pri fab" data-act="newAcq" aria-label="Nuovo acquisto"><span aria-hidden="true">+</span><span class="txt"> Acquisto</span></button>`;
   listAcq(SM);
 }
 function listAcq(SM) {
@@ -812,7 +1012,7 @@ $("#fileIn").onchange = async ev => {
   try {
     const d = JSON.parse(await f.text());
     if (!Array.isArray(d.aree) || !Array.isArray(d.inv) || !Array.isArray(d.acq)) throw new Err("Il file non è un backup valido.");
-    go(() => { S = { aree: d.aree, inv: d.inv, acq: d.acq }; }, "Backup importato.");
+    go(() => { S = { aree: d.aree, inv: d.inv, acq: d.acq, imgs: Array.isArray(d.imgs) ? d.imgs : [] }; }, "Backup importato.");
   } catch (e) { toast(e instanceof Err ? e.message : "Il file non è un backup valido."); }
 };
 
@@ -825,6 +1025,7 @@ document.addEventListener("click", e => {
   const id = Number(t.dataset.id);
   switch (t.dataset.act) {
     case "newInv": dlgRiga(null); break;
+    case "det": dlgDettaglio(id); break;
     case "editInv": dlgRiga(id); break;
     case "move": dlgSposta(id); break;
     case "stato": dlgStato(id); break;
@@ -874,12 +1075,12 @@ async function boot() {
     const m = await Repo.init();
     if (m === "login") { render(); return chiediAccesso(); }
     const r = await Repo.load();
-    if (r) S = r; else { S = Repo.fresh(); if (Repo.mode === "cloud") { await Repo.push(S); toast("Dati iniziali caricati nel database."); } }
+    if (r) S = fixS(r); else { S = Repo.fresh(); if (Repo.mode === "cloud") { await Repo.push(S); toast("Dati iniziali caricati nel database."); } }
     undo.length = 0; Repo.saveLocal(S); render();
     setStato(Repo.mode === "cloud" ? "Cloud collegato" : "Solo questo browser", false);
   } catch (e) { render(); toast(e.message || "Errore di avvio"); setStato("Errore", true); }
 }
-S = Repo.loadLocal() || Repo.fresh(); render(); boot();
+S = fixS(Repo.loadLocal() || Repo.fresh()); render(); boot();
 </script>
 
 </body></html>
