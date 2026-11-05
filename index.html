@@ -67,6 +67,7 @@ input[type=text],input[type=number],input[type=search],select,textarea{width:100
 .gh{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--bg);border-bottom:1px solid var(--line)}
 .gr{border-bottom:1px solid var(--line)}
 .gr:last-child{border-bottom:0}
+.gr.dis{background:color-mix(in srgb,var(--muted) 16%,transparent)}.gr.dis .art,.gr.dis .cell{color:var(--muted)}
 .gr.s1{background:var(--y)}.gr.s2{background:var(--o)}.gr.s3{background:var(--r)}
 .cols-inv{grid-template-columns:minmax(0,1.8fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) 52px 52px 52px 52px minmax(0,1.3fr) 284px}
 .mvs{display:none}
@@ -660,7 +661,8 @@ function anomalie() {
     const base = { dove: "acq", id: a.id, articolo: a.articolo, area: a.area, qty: a.qty };
     if (a.inv_id == null || !invRow(a.inv_id)) push({ ...base, gr: 2, tipo: "NONCOLL", testo: "Acquisto " + a.anno + " non collegato a una riga di inventario.", sugg: "Usa «Collega» per scegliere la riga in " + orgDi(a.anno) + ", oppure creala." });
     if (!a.area) push({ ...base, gr: 2, tipo: "AREA", testo: "L'acquisto " + a.anno + " non ha un'area.", sugg: "Apri l'acquisto e scegli l'area." });
-    const prima = S.acq.find(b => b.anno < a.anno && sim(b.articolo, a.articolo) >= 0.85);
+    const stessoArt = b => { const ra = invRow(a.inv_id), rb = b.inv_id != null ? invRow(b.inv_id) : null; return !!(ra && rb && (ra.id === rb.id || norm(ra.articolo) === norm(rb.articolo))); };   // già collegati allo stesso articolo (es. dopo «Unisci»): non è un doppione
+    const prima = S.acq.find(b => b.anno < a.anno && !stessoArt(b) && sim(b.articolo, a.articolo) >= 0.85);
     if (prima) push({ ...base, gr: 1, tipo: "SIMILE", testo: "Acquistato anche nel " + prima.anno + " («" + prima.articolo + "»).", sugg: "Se è un riacquisto va bene. Se il nome è scritto in modo diverso, uniformalo." });
   }
   return L.sort((a, b) => b.gr - a.gr);
@@ -792,7 +794,7 @@ function listInv(SM) {
     if (n0(r.rotto)) ch.push(`<span class="chip r">${r.rotto} rotti</span>`);
     if (n0(r.ripar)) ch.push(`<span class="chip o">${r.ripar} in rip.</span>`);
     if (n0(r.dismesso)) ch.push(`<span class="chip y">${r.dismesso} dismessi</span>`);
-    return `<div class="gr ri cols-inv ${s ? "s" + s : ""}" data-act="det" data-id="${r.id}"><div class="art cell c-art">${esc(r.articolo)}${cam}${sub ? `<div class="sub">${sub}</div>` : ""}</div>
+    return `<div class="gr ri cols-inv ${s ? "s" + s : n0(r.dismesso) ? "dis" : ""}" data-act="det" data-id="${r.id}"><div class="art cell c-art">${esc(r.articolo)}${cam}${sub ? `<div class="sub">${sub}</div>` : ""}</div>
       <div class="c-ma cell">${esc(r.marca || "")}</div><div class="c-mo cell">${esc(r.modello || "")}</div>
       <div class="c-or cell sub" data-l="Origine">${esc(r.origine || "—")}</div>
       <div class="nums" style="display:contents"><div class="num cell c-q" data-l="Qtà"><b>${r.qty ?? "—"}</b></div><div class="num cell" data-l="Rotti">${r.rotto ?? "·"}</div><div class="num cell" data-l="Rip.">${r.ripar ?? "·"}</div><div class="num cell" data-l="Dism.">${r.dismesso ?? "·"}</div></div>
