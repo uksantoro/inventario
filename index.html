@@ -78,8 +78,7 @@ input[type=text],input[type=number],input[type=search],select,textarea{width:100
 .gr:last-child{border-bottom:0}
 .gr.dis{background:color-mix(in srgb,var(--muted) 16%,transparent)}.gr.dis .art,.gr.dis .cell{color:var(--muted)}
 .gr.s1{background:var(--y)}.gr.s2{background:var(--o)}.gr.s3{background:var(--r)}
-.gr.prv,.gr.prv.dis{background:color-mix(in srgb,#38b6ff 24%,var(--bg))}.fxsum{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;display:grid;gap:8px}.fxbig{font-size:16px}.fxbig b{font-size:30px;font-variant-numeric:tabular-nums;color:var(--brand)}.fxrow{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
-.fxit{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}.fxit:last-child{border-bottom:0}.fxit.dis{opacity:.6}.fxm{flex:1 1 180px;min-width:0}.fxc{display:grid;gap:3px;min-width:70px}.fxn{font-size:20px;font-variant-numeric:tabular-nums}.stp{display:inline-flex;align-items:center;gap:8px}.stp b{min-width:22px;text-align:center;font-size:18px;font-variant-numeric:tabular-nums}
+.gr.prv,.gr.prv.dis{background:color-mix(in srgb,#38b6ff 24%,var(--bg))}.fxcard{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;display:grid;gap:10px;margin-bottom:12px}.fxcard h3{margin:0;font-size:16px}.fxbig{font-size:15px}.fxbig b{font-size:34px;font-variant-numeric:tabular-nums;color:var(--brand)}.fxline{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px}.stp{display:inline-flex;align-items:center;gap:10px}.stp b{min-width:30px;text-align:center;font-size:22px;font-variant-numeric:tabular-nums}.stp .btn{min-width:44px;min-height:40px;font-size:20px}
 .chip.pv{background:color-mix(in srgb,#38b6ff 38%,var(--bg));color:var(--fg)}.selchk{accent-color:#1c7ed6}
 .gr.ver{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.gr.ver,.gr.ver.dis{background:color-mix(in srgb,#2e9e5b 24%,var(--bg))}.vchk{width:18px;height:18px;margin:0 8px 0 0;vertical-align:-3px;accent-color:#2e9e5b;cursor:pointer}
 .cols-inv{grid-template-columns:minmax(0,1.8fr) minmax(0,.9fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) 52px 52px 52px 52px minmax(0,1.3fr) 284px}
@@ -343,7 +342,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 /* ---------- archivio dati (sostituibile con Supabase) ---------- */
 const Repo = {
   key: "sl_inventario_v1", cfg: window.SL_CONFIG || {}, mode: "local", ver: 0, busy: false, again: false,
-  fresh() { const d = JSON.parse(JSON.stringify(SEED)); return { aree: d.aree, inv: d.inventario, acq: d.acquisti, imgs: [], imgv: {}, int: [], fx: { pol: [], sp: [], sch: [], bomb: [], fumo: [] }, bud: { anni: {}, forn: [], mov: [] } }; },
+  fresh() { const d = JSON.parse(JSON.stringify(SEED)); return { aree: d.aree, inv: d.inventario, acq: d.acquisti, imgs: [], imgv: {}, int: [], fx: { sk: { g: 0, p: 0, s: 0 }, fu: { piene: 0, mezze: 0 }, fm: { taniche: 0 } }, bud: { anni: {}, forn: [], mov: [] } }; },
   loadLocal() { try { const t = localStorage.getItem(this.key); if (t) { const s = JSON.parse(t); if (s.inv && s.acq && s.aree) return s; } } catch (e) {} return null; },
   saveLocal(s) { try { localStorage.setItem(this.key, JSON.stringify(s)); return true; } catch (e) { return false; } },
   pwd() { try { return localStorage.getItem("sl_pwd") || ""; } catch (e) { return ""; } },
@@ -385,7 +384,7 @@ const Repo = {
   },
   async push(s) { const r = await this.call("PUT", { version: this.ver, data: s }); this.ver = r.version; }
 };
-const fixS = s => { if (!Array.isArray(s.int)) s.int = []; if (!s.fx || typeof s.fx !== "object") s.fx = {}; for (const q of ["pol", "sp", "sch", "bomb", "fumo"]) if (!Array.isArray(s.fx[q])) s.fx[q] = []; if (!s.bud || typeof s.bud !== "object") s.bud = {}; if (!s.bud.anni || typeof s.bud.anni !== "object" || Array.isArray(s.bud.anni)) s.bud.anni = {}; if (!Array.isArray(s.bud.forn)) s.bud.forn = []; if (!Array.isArray(s.bud.mov)) s.bud.mov = []; if (!Array.isArray(s.imgs)) s.imgs = []; if (!s.imgv || typeof s.imgv !== "object" || Array.isArray(s.imgv)) s.imgv = {}; return s; };
+const fixS = s => { if (!Array.isArray(s.int)) s.int = []; if (!s.fx || typeof s.fx !== "object" || Array.isArray(s.fx)) s.fx = {}; { const f = s.fx, som = (a, k) => Array.isArray(a) ? a.reduce((t, x) => t + (Number(x[k]) || 0), 0) : 0; if (!f.sk) f.sk = { g: som(f.pol, "grandi"), p: som(f.pol, "piccole"), s: 0 }; if (typeof f.sk.s !== "number") f.sk.s = 0; if (!f.fu) f.fu = { piene: som(f.bomb, "piene"), mezze: 0 }; if (!f.fm) f.fm = { taniche: som(f.fumo, "piene") }; for (const q of ["pol", "sp", "sch", "bomb", "fumo"]) delete f[q]; } if (!s.bud || typeof s.bud !== "object") s.bud = {}; if (!s.bud.anni || typeof s.bud.anni !== "object" || Array.isArray(s.bud.anni)) s.bud.anni = {}; if (!Array.isArray(s.bud.forn)) s.bud.forn = []; if (!Array.isArray(s.bud.mov)) s.bud.mov = []; if (!Array.isArray(s.imgs)) s.imgs = []; if (!s.imgv || typeof s.imgv !== "object" || Array.isArray(s.imgv)) s.imgv = {}; return s; };
 let S = Repo.fresh();
 function setStato(t, err) { const e = $("#stato"); if (e) { e.textContent = t; e.style.color = err ? "var(--danger)" : "var(--muted)"; } }
 /* ---------- registro: chi ha fatto cosa e quando ---------- */
@@ -1749,14 +1748,10 @@ document.addEventListener("click", e => {
     case "ver": go(() => { const r = invRow(id); if (r) { if (r.ver) delete r.ver; else r.ver = Date.now(); } }); break;
     case "sort": { const v = t.dataset.v, k = t.dataset.k, o = ui.sort[v]; ui.sort[v] = o && o.k === k ? { k, d: -o.d } : { k, d: 1 }; if (v === "inv") listInv(); else if (v === "acq") listAcq(); else if (v === "int") listInt(); else if (v === "mov") listMov(); else listRie(); break; }
     case "det": dlgDettaglio(id); break;
-    case "fxSez": uiF.sez = t.dataset.k; render(); break;
-    case "fxNew": dlgFx(uiF.sez, null); break;
-    case "fxEdit": dlgFx(t.dataset.k, id); break;
-    case "fxDel": { const k = t.dataset.k, x = S.fx[k].find(i => i.id === id); if (x) dlgConferma("Elimina", `Eliminare «${esc(x.nome || x.tipo)}»?`, "Elimina", () => go(() => { S.fx[k] = S.fx[k].filter(i => i.id !== id); }, "Eliminato.")); break; }
-    case "fxAdj": { const k = t.dataset.k, f = t.dataset.f, d = Number(t.dataset.d); go(() => { const x = S.fx[k].find(i => i.id === id); if (x) x[f] = Math.max(0, ni(x[f]) + d); }); break; }
-    case "fxUsa": dlgFxMin(id, false); break;
-    case "fxRic": dlgFxMin(id, true); break;
-    case "fxRiempi": go(() => fxRiempi(id), "Sparkular riempita: polvere scalata."); break;
+    case "fxAdj": { const k = t.dataset.k, c = t.dataset.f, d = Number(t.dataset.d); go(() => { S.fx[k][c] = Math.max(0, ni(S.fx[k][c]) + d); }); break; }
+    case "fxCarica": dlgCarica(); break;
+    case "fxMezza": go(() => { if (!ni(S.fx.fu.piene)) throw new Err("Non ci sono bombolette piene."); S.fx.fu.piene = ni(S.fx.fu.piene) - 1; S.fx.fu.mezze = ni(S.fx.fu.mezze) + 1; }); break;
+    case "fxFinita": go(() => { if (!ni(S.fx.fu.mezze)) throw new Err("Non ci sono bombolette a metà."); S.fx.fu.mezze = ni(S.fx.fu.mezze) - 1; }); break;
     case "selMode": ui.sel = ui.sel ? null : new Set(); listInv(); break;
     case "selRow": if (ui.sel) { ui.sel.has(id) ? ui.sel.delete(id) : ui.sel.add(id); listInv(); } break;
     case "selAll": if (ui.sel) { rowsInv().forEach(r => ui.sel.add(r.id)); listInv(); } break;
@@ -2004,90 +1999,39 @@ async function esportaBud() {
   stileXl(rs); await salvaFile("SL_Budget_" + today() + ".xlsx", await xlBlob(wb));
 }
 
-/* ======================= EFFETTI SPECIALI ======================= */
-const uiF = { sez: "pol" };
-const USURA = ["Nuova", "Media", "Usurata"], STSP = ["ok", "da riempire", "fuori uso"];
-const FXSEZ = [["pol", "Polvere"], ["sp", "Sparkular"], ["sch", "Schede minuti"], ["bomb", "Bombolette fuoco"], ["fumo", "Taniche fumo"]];
-const FXNEW = { pol: "+ Polvere", sp: "+ Sparkular", sch: "+ Scheda", bomb: "+ Bomboletta", fumo: "+ Tanica" };
+/* ======================= EFFETTI SPECIALI (solo materiali di consumo) ======================= */
 const ni = v => Math.max(0, Math.floor(Number(v) || 0));
-const fxIdNuovo = a => a.reduce((m, x) => Math.max(m, x.id || 0), 0) + 1;
-const fxRes = c => Math.max(0, ni(c.minuti) - ni(c.usati));   // minuti residui sulla scheda
-const fxCap = p => ni(p.grandi) * 4 + ni(p.piccole);   // busta grande = 4 sparkular, piccola = 1
-function fxBilancio() {
-  const T = new Map(), get = t => { const k = norm(t || "") || "—"; if (!T.has(k)) T.set(k, { tipo: (t || "").trim() || "—", cap: 0, grandi: 0, piccole: 0, serve: 0 }); return T.get(k); };
-  S.fx.pol.forEach(p => { const o = get(p.tipo); o.cap += fxCap(p); o.grandi += ni(p.grandi); o.piccole += ni(p.piccole); });
-  S.fx.sp.forEach(s => { if (s.stato === "da riempire") get(s.polvere).serve++; });
-  return [...T.values()];
-}
+const fxCap = () => ni(S.fx.sk.g) * 4 + ni(S.fx.sk.p);   // busta grande = 4 sparkler, piccola = 1
 function viewFx(v) {
-  const B = fxBilancio(), tot = B.reduce((s, o) => s + o.cap, 0);
-  v.innerHTML = `<div class="fxsum"><div class="fxbig"><b>${tot}</b> sparkular riempibili con la polvere rimasta</div>
-   ${S.fx.sch.length ? `<div class="fxrow"><b>Schede minuti</b><span class="sub"><b>${S.fx.sch.reduce((t, c) => t + fxRes(c), 0)}</b> minuti residui su ${S.fx.sch.length} schede</span>${S.fx.sch.some(c => ni(c.min) && fxRes(c) <= ni(c.min)) ? `<span class="chip r">${S.fx.sch.filter(c => ni(c.min) && fxRes(c) <= ni(c.min)).length} da ricaricare</span>` : ""}</div>` : ""}${B.filter(o => o.cap || o.serve).map(o => `<div class="fxrow"><b>${esc(o.tipo)}</b><span class="sub">${o.grandi} grandi · ${o.piccole} piccole → <b>${o.cap}</b> riempimenti${o.serve ? ` · ${o.serve} sparkular da riempire` : ""}</span>${o.serve > o.cap ? `<span class="chip r">mancano ${o.serve - o.cap}</span>` : o.serve ? `<span class="chip g">bastano</span>` : ""}</div>`).join("")}</div>
-   <div class="chips" style="margin:12px 0">${FXSEZ.map(([k, t]) => `<button class="fchip" aria-pressed="${uiF.sez === k}" data-act="fxSez" data-k="${k}">${t}</button>`).join("")}</div>
-   <div class="bar"><span class="grow sub">${uiF.sez === "pol" ? "Busta grande = 4 sparkular · busta piccola = 1 sparkular" : uiF.sez === "sp" ? "Ogni sparkular ha il suo tipo di polvere (cambia con l'usura)" : uiF.sez === "sch" ? "Schede con i minuti di funzionamento: «Usa minuti» li scala, «Ricarica» li ricarica" : ""}</span><button class="btn pri fl" data-act="fxNew">${FXNEW[uiF.sez]}</button></div>
-   <div id="list"></div><button class="btn pri fab" data-act="fxNew" aria-label="Aggiungi"><span aria-hidden="true">+</span><span class="txt"> ${FXNEW[uiF.sez].slice(2)}</span></button>`;
-  listFx();
+  const f = S.fx;
+  const stp = (k, c, val) => `<span class="stp"><button type="button" class="btn sm" data-act="fxAdj" data-k="${k}" data-f="${c}" data-d="-1" aria-label="Meno">−</button><b>${val}</b><button type="button" class="btn sm" data-act="fxAdj" data-k="${k}" data-f="${c}" data-d="1" aria-label="Più">+</button></span>`;
+  v.innerHTML = `<div class="fxcard"><h3>Sparkler</h3>
+     <div class="fxbig"><b>${fxCap()}</b> sparkler riempibili con le bustine rimaste</div>
+     <div class="fxline"><span>Bustine grandi <small class="sub">(4 sparkler)</small></span>${stp("sk", "g", ni(f.sk.g))}</div>
+     <div class="fxline"><span>Bustine piccole <small class="sub">(1 sparkler)</small></span>${stp("sk", "p", ni(f.sk.p))}</div>
+     <div class="fxline"><span>Schede rimaste <small class="sub">(1 per sparkler caricata)</small></span>${stp("sk", "s", ni(f.sk.s))}</div>
+     <div class="dacts"><button class="btn pri" data-act="fxCarica">Carica macchine</button></div></div>
+   <div class="fxcard"><h3>Bombolette fuoco</h3>
+     <div class="fxline"><span>Piene</span>${stp("fu", "piene", ni(f.fu.piene))}</div>
+     <div class="fxline"><span>A metà</span>${stp("fu", "mezze", ni(f.fu.mezze))}</div>
+     <div class="dacts"><button class="btn sm" data-act="fxMezza">Una piena è diventata a metà</button><button class="btn sm" data-act="fxFinita">Una a metà è finita</button></div></div>
+   <div class="fxcard"><h3>Liquido fumo</h3>
+     <div class="fxline"><span>Taniche</span>${stp("fm", "taniche", ni(f.fm.taniche))}</div></div>`;
 }
-const stp = (k, id, f, val) => `<span class="stp"><button type="button" class="btn sm" data-act="fxAdj" data-k="${k}" data-id="${id}" data-f="${f}" data-d="-1" aria-label="Meno">−</button><b>${val}</b><button type="button" class="btn sm" data-act="fxAdj" data-k="${k}" data-id="${id}" data-f="${f}" data-d="1" aria-label="Più">+</button></span>`;
-function listFx() {
-  const k = uiF.sez; let h = "";
-  const fine = (k2, id) => `<button class="btn sm" data-act="fxEdit" data-k="${k2}" data-id="${id}">Modifica</button><button class="btn sm dng" data-act="fxDel" data-k="${k2}" data-id="${id}">Elimina</button>`;
-  if (k === "pol") h = S.fx.pol.map(p => `<div class="fxit"><div class="fxm"><b>${esc(p.tipo)}</b><div class="sub">${esc(p.note || "")}</div></div>
-     <div class="fxc"><span class="sub">Buste grandi</span>${stp("pol", p.id, "grandi", ni(p.grandi))}</div><div class="fxc"><span class="sub">Buste piccole</span>${stp("pol", p.id, "piccole", ni(p.piccole))}</div>
-     <div class="fxc"><span class="sub">Riempimenti</span><b class="fxn">${fxCap(p)}</b></div><div class="acts">${fine("pol", p.id)}</div></div>`).join("");
-  else if (k === "sch") h = S.fx.sch.slice().sort((a, b) => String(a.nome).localeCompare(String(b.nome), "it", { numeric: true })).map(c => { const rs = fxRes(c), low = ni(c.min) && rs <= ni(c.min); return `<div class="fxit"><div class="fxm"><b>${esc(c.nome)}</b>${low ? ` <span class="chip r">da ricaricare</span>` : ""}<div class="sub">${esc(c.sparkular ? "Sparkular: " + c.sparkular : "")}${c.note ? " · " + esc(c.note) : ""}</div></div>
-     <div class="fxc"><span class="sub">Caricati</span><b>${ni(c.minuti)} min</b></div><div class="fxc"><span class="sub">Usati</span><b>${ni(c.usati)} min</b></div>
-     <div class="fxc"><span class="sub">Residui</span><b class="fxn" ${low ? 'style="color:var(--danger)"' : ""}>${rs} min</b></div>
-     <div class="fxc"><span class="sub">Ultima ricarica</span>${c.ric ? dataIt(new Date(c.ric).toISOString().slice(0, 10)) : "—"}</div>
-     <div class="acts"><button class="btn sm pri" data-act="fxUsa" data-id="${c.id}">Usa minuti</button><button class="btn sm" data-act="fxRic" data-id="${c.id}">Ricarica</button>${fine("sch", c.id)}</div></div>`; }).join("");
-  else if (k === "sp") h = S.fx.sp.slice().sort((a, b) => String(a.nome).localeCompare(String(b.nome), "it", { numeric: true })).map(s => `<div class="fxit${s.stato === "fuori uso" ? " dis" : ""}"><div class="fxm"><b>${esc(s.nome)}</b><div class="sub">${esc(s.note || "")}</div></div>
-     <div class="fxc"><span class="sub">Polvere</span><b>${esc(s.polvere || "—")}</b></div><div class="fxc"><span class="sub">Usura</span><span class="chip ${s.usura === "Usurata" ? "r" : s.usura === "Media" ? "o" : "g"}">${esc(s.usura || "—")}</span></div>
-     <div class="fxc"><span class="sub">Stato</span><span class="chip ${s.stato === "da riempire" ? "o" : s.stato === "fuori uso" ? "r" : "g"}">${esc(s.stato || "ok")}</span></div>
-     <div class="fxc"><span class="sub">Ultimo riempimento</span>${s.riemp ? dataIt(new Date(s.riemp).toISOString().slice(0, 10)) : "—"}</div>
-     <div class="acts">${s.stato !== "fuori uso" ? `<button class="btn sm pri" data-act="fxRiempi" data-id="${s.id}">Riempita</button>` : ""}${fine("sp", s.id)}</div></div>`).join("");
-  else h = S.fx[k].map(x => { const low = ni(x.min) && ni(x.piene) <= ni(x.min); return `<div class="fxit"><div class="fxm"><b>${esc(x.nome)}</b>${low ? ` <span class="chip r">sotto scorta</span>` : ""}<div class="sub">${esc(x.note || "")}</div></div>
-     <div class="fxc"><span class="sub">${k === "bomb" ? "Piene" : "Piene"}</span>${stp(k, x.id, "piene", ni(x.piene))}</div><div class="fxc"><span class="sub">Vuote</span>${stp(k, x.id, "vuote", ni(x.vuote))}</div>
-     <div class="fxc"><span class="sub">Minimo</span>${ni(x.min) || "—"}</div><div class="acts">${fine(k, x.id)}</div></div>`; }).join("");
-  $("#list").innerHTML = h ? `<div class="list">${h}</div>` : `<div class="empty">Nessun elemento. Usa il pulsante "${FXNEW[k]}".</div>`;
-}
-const numF = (id, lab, val) => `<div class="f"><label for="${id}">${lab}</label><input type="text" id="${id}" inputmode="numeric" value="${val}" autocomplete="off"></div>`;
-function dlgFx(k, id) {
-  const arr = S.fx[k], x = id ? arr.find(i => i.id === id) : null;
-  const sal = (o, extra) => go(() => { if (id) Object.assign(x, o); else arr.push({ id: fxIdNuovo(arr), ...o }); }, "Salvato.");
-  const dls = f => [...new Set(S.fx.pol.map(p => p.tipo).concat(S.fx.sp.map(s => s.polvere)).filter(Boolean))];
-  if (k === "pol") dlg(id ? "Modifica polvere" : "Nuova polvere", `<div class="f"><label for="fT">Tipo di polvere</label><input type="text" id="fT" value="${esc(x ? x.tipo : "")}" autocomplete="off" list="dlFx"></div>
-    <div class="g2">${numF("fG", "Buste grandi (4 sparkular)", x ? ni(x.grandi) : 0)}${numF("fP", "Buste piccole (1 sparkular)", x ? ni(x.piccole) : 0)}</div>
-    <div class="f"><label for="fN">Note</label><input type="text" id="fN" value="${esc(x ? x.note || "" : "")}" autocomplete="off"></div><datalist id="dlFx">${dls().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`, {
-    ok: "Salva", onOk: d => { const tipo = $("#fT", d).value.trim(); if (!tipo) throw new Err("Scrivi il tipo di polvere."); sal({ tipo, grandi: ni($("#fG", d).value), piccole: ni($("#fP", d).value), note: $("#fN", d).value.trim() }); } });
-  else if (k === "sch") dlg(id ? "Modifica scheda" : "Nuova scheda minuti", `<div class="f"><label for="fT">Nome / numero scheda</label><input type="text" id="fT" value="${esc(x ? x.nome : "")}" autocomplete="off"></div>
-    <div class="f"><label for="fU">Sparkular abbinata (facoltativo)</label><input type="text" id="fU" value="${esc(x ? x.sparkular || "" : "")}" autocomplete="off" list="dlSp"></div>
-    <div class="g2">${numF("fG", "Minuti caricati", x ? ni(x.minuti) : 0)}${numF("fP", "Minuti già usati", x ? ni(x.usati) : 0)}</div>${numF("fM", "Avviso se i minuti residui scendono a (0 = nessun avviso)", x ? ni(x.min) : 0)}
-    <div class="f"><label for="fN">Note</label><input type="text" id="fN" value="${esc(x ? x.note || "" : "")}" autocomplete="off"></div><datalist id="dlSp">${S.fx.sp.map(q => `<option value="${esc(q.nome)}">`).join("")}</datalist>`, {
-    ok: "Salva", onOk: d => { const nome = $("#fT", d).value.trim(); if (!nome) throw new Err("Scrivi il nome della scheda."); const m = ni($("#fG", d).value); sal({ nome, sparkular: $("#fU", d).value.trim(), minuti: m, usati: Math.min(ni($("#fP", d).value), m), min: ni($("#fM", d).value), note: $("#fN", d).value.trim() }); } });
-  else if (k === "sp") dlg(id ? "Modifica sparkular" : "Nuova sparkular", `<div class="f"><label for="fT">Nome / numero</label><input type="text" id="fT" value="${esc(x ? x.nome : "")}" autocomplete="off"></div>
-    <div class="g2"><div class="f"><label for="fU">Tipo di polvere</label><input type="text" id="fU" value="${esc(x ? x.polvere || "" : "")}" autocomplete="off" list="dlFx"></div><div class="f"><label for="fW">Usura</label><select id="fW">${USURA.map(u => `<option ${x && x.usura === u ? "selected" : ""}>${u}</option>`).join("")}</select></div></div>
-    <div class="f"><label for="fS">Stato</label><select id="fS">${STSP.map(u => `<option ${(x ? x.stato : "ok") === u ? "selected" : ""}>${u}</option>`).join("")}</select></div>
-    <div class="f"><label for="fN">Note</label><input type="text" id="fN" value="${esc(x ? x.note || "" : "")}" autocomplete="off"></div><datalist id="dlFx">${dls().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`, {
-    ok: "Salva", onOk: d => { const nome = $("#fT", d).value.trim(); if (!nome) throw new Err("Scrivi il nome della sparkular."); sal({ nome, polvere: $("#fU", d).value.trim(), usura: $("#fW", d).value, stato: $("#fS", d).value, note: $("#fN", d).value.trim() }); } });
-  else dlg((id ? "Modifica " : "Nuova ") + (k === "bomb" ? "bomboletta fuoco" : "tanica fumo"), `<div class="f"><label for="fT">${k === "bomb" ? "Tipo bomboletta" : "Tipo di fumo / capacità"}</label><input type="text" id="fT" value="${esc(x ? x.nome : "")}" autocomplete="off"></div>
-    <div class="g2">${numF("fG", "Piene", x ? ni(x.piene) : 0)}${numF("fP", "Vuote", x ? ni(x.vuote) : 0)}</div>${numF("fM", "Scorta minima (avviso se le piene arrivano a questo numero)", x ? ni(x.min) : 0)}
-    <div class="f"><label for="fN">Note</label><input type="text" id="fN" value="${esc(x ? x.note || "" : "")}" autocomplete="off"></div>`, {
-    ok: "Salva", onOk: d => { const nome = $("#fT", d).value.trim(); if (!nome) throw new Err("Scrivi il tipo."); sal({ nome, piene: ni($("#fG", d).value), vuote: ni($("#fP", d).value), min: ni($("#fM", d).value), note: $("#fN", d).value.trim() }); } });
-}
-function dlgFxMin(id, ric) {
-  const c = S.fx.sch.find(x => x.id === id); if (!c) return;
-  dlg(ric ? "Ricarica scheda " + esc(c.nome) : "Usa minuti · " + esc(c.nome), `<p class="sub">Residui adesso: <b>${fxRes(c)} min</b> (caricati ${ni(c.minuti)}, usati ${ni(c.usati)})</p>${numF("fMin", ric ? "Minuti da caricare sulla scheda" : "Minuti di funzionamento usati", "")}${ric ? `<div class="hint">La ricarica azzera i minuti usati e imposta i minuti caricati al valore inserito.</div>` : ""}`, {
-    ok: ric ? "Ricarica" : "Scala", init: d => setTimeout(() => $("#fMin", d).focus(), 50),
-    onOk: d => { const n = ni($("#fMin", d).value); if (!n) throw new Err("Inserisci i minuti."); go(() => { if (ric) { c.minuti = n; c.usati = 0; c.ric = Date.now(); } else c.usati = Math.min(ni(c.minuti), ni(c.usati) + n); }, ric ? "Scheda ricaricata." : "Minuti scalati."); }
+function dlgCarica() {
+  const prev = n => { n = ni(n); if (!n) return ""; const c = fxCalc(n); return c ? `Scala ${c.g ? c.g + " bust" + (c.g === 1 ? "ina grande" : "ine grandi") : ""}${c.g && c.p ? " e " : ""}${c.p ? c.p + " bust" + (c.p === 1 ? "ina piccola" : "ine piccole") : ""}${c.resto ? ` · ${c.resto} sparkler restano nella busta aperta` : ""} · ${n} schede.` : `Non bastano: puoi riempire al massimo ${fxCap()} sparkler.`; };
+  dlg("Carica macchine", `<p class="sub">Disponibili: <b>${fxCap()}</b> sparkler (${ni(S.fx.sk.g)} grandi, ${ni(S.fx.sk.p)} piccole) · ${ni(S.fx.sk.s)} schede</p><div class="f"><label for="fMac">Quante sparkler hai caricato?</label><input type="text" id="fMac" inputmode="numeric" autocomplete="off"></div><div class="hint" id="fPrev"></div>`, {
+    ok: "Scala le bustine", init: d => { const i = $("#fMac", d); i.oninput = () => { $("#fPrev", d).textContent = prev(i.value); }; setTimeout(() => i.focus(), 50); },
+    onOk: d => { const n = ni($("#fMac", d).value); if (!n) throw new Err("Scrivi quante sparkler hai caricato."); if (!fxCalc(n)) throw new Err("Non bastano le bustine: puoi riempire al massimo " + fxCap() + " sparkler."); go(() => fxScala(n), n + " sparkler caricate: scalate bustine e " + n + " schede."); }
   });
 }
-function fxRiempi(id) {
-  const s = S.fx.sp.find(x => x.id === id); if (!s) return;
-  const p = S.fx.pol.find(q => norm(q.tipo) === norm(s.polvere) && fxCap(q) > 0);
-  if (!p) throw new Err("Polvere «" + (s.polvere || "?") + "» finita: impossibile riempire " + s.nome + ".");
-  if (ni(p.piccole) > 0) p.piccole = ni(p.piccole) - 1; else { p.grandi = ni(p.grandi) - 1; p.piccole = 3; }   // apre una busta grande: 1 usata, 3 restano
-  s.riemp = Date.now(); s.stato = "ok";
+/* calcolo: usa prima le piccole, poi apre le grandi (quello che avanza in una busta aperta diventa "piccole") */
+function fxCalc(n) {
+  let g = ni(S.fx.sk.g), p = ni(S.fx.sk.p); if (n > g * 4 + p) return null;
+  const up = Math.min(p, n); let r = n - up, ug = Math.ceil(r / 4), resto = ug * 4 - r;
+  return { g: ug, p: up, resto, nuovoG: g - ug, nuovoP: p - up + resto };
 }
+function fxScala(n) { const c = fxCalc(n); if (!c) throw new Err("Non bastano le bustine."); S.fx.sk.g = c.nuovoG; S.fx.sk.p = c.nuovoP; S.fx.sk.s = Math.max(0, ni(S.fx.sk.s) - n); }
 
 /* ======================= OGGI (avvisi) ======================= */
 let ALERTS = [];
@@ -2109,9 +2053,6 @@ function calcolaAvvisi() {
   if (senzaData.length) L.push({ lv: 1, t: senzaData.length + " articoli in riparazione senza data di invio", d: "Indica fornitore e data per tenerli sotto controllo", tab: "inv", q: "", stato: "rip" });
   const nv = S.inv.filter(r => r.ver).length; if (nv) L.push({ lv: 1, t: nv + " righe da verificare", d: "Spuntate in inventario", tab: "inv", q: "" });
   const g = anomalie().filter(x => x.gr === 3).length; if (g) L.push({ lv: 3, t: g + " controlli gravi", d: "Anomalie dei dati", tab: "con", q: "" });
-  fxBilancio().forEach(o => { if (o.serve > o.cap) L.push({ lv: 2, t: "Polvere «" + o.tipo + "» insufficiente", d: "Mancano " + (o.serve - o.cap) + " riempimenti (" + o.serve + " sparkular da riempire)", tab: "fx", q: "" }); });
-  S.fx.sch.filter(c => ni(c.min) && fxRes(c) <= ni(c.min)).forEach(c => L.push({ lv: 2, t: "Scheda " + c.nome + " da ricaricare", d: fxRes(c) + " minuti residui (avviso a " + ni(c.min) + ")", tab: "fx", q: "" }));
-  ["bomb", "fumo"].forEach(k => S.fx[k].filter(x => ni(x.min) && ni(x.piene) <= ni(x.min)).forEach(x => L.push({ lv: 2, t: (k === "bomb" ? "Bombolette " : "Taniche ") + x.nome + " in esaurimento", d: ni(x.piene) + " piene (minimo " + ni(x.min) + ")", tab: "fx", q: "" })));
   return L.sort((a, b) => b.lv - a.lv);
 }
 function viewOggi(v) {
