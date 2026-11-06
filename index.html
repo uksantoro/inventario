@@ -115,6 +115,7 @@ dialog::backdrop{background:rgba(10,20,40,.5)}
 .f{display:grid;gap:4px;min-width:0}
 .f label,.lab{font-size:12.5px;color:var(--muted);font-weight:700}
 .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.nrow{display:grid;grid-template-columns:90px minmax(0,1fr) minmax(0,1fr) 40px;gap:8px;align-items:end;padding:8px 0;border-bottom:1px solid var(--line)}.nrow.one .nX{visibility:hidden}.nrow .f{margin:0}@media (max-width:640px){.nrow{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 40px}.nrow .f:nth-child(1){grid-column:1/2}.nrow .f:nth-child(2){grid-column:2/4}.nrow .f:nth-child(3){grid-column:1/3}.nrow .nX{grid-row:2;grid-column:3}}
 .g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .prow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.3fr) 80px minmax(0,1.3fr) auto;gap:8px;align-items:start}
 .hint{font-size:12.5px;color:var(--muted)}
@@ -722,7 +723,7 @@ function annulla() {
 }
 
 function dlg(title, body, o = {}) {
-  const d = $("#dlg");
+  const d = $("#dlg"); ui.dlgS = null;
   d.className = o.wide ? "wide" : ""; delete d.dataset.inv;
   d.innerHTML = `<form class="dform" method="dialog"><header><h2>${title}</h2><button type="button" class="x" data-close aria-label="Chiudi">✕</button></header><div class="dbody">${body}<div class="derr" id="derr" role="alert"></div></div><footer>${o.noCancel ? "" : '<button type="button" class="btn ghost" data-close>Annulla</button>'}${o.onOk ? `<button type="submit" class="btn pri" id="dok">${o.ok || "Salva"}</button>` : ""}</footer></form>`;
   d.querySelectorAll("[data-close]").forEach(b => b.onclick = () => d.close());
@@ -741,7 +742,8 @@ const inCima = () => { scrollTo({ top: 0 }); const w = $(".wrap"); if (w) w.scro
 const closeDlg = () => { const d = $("#dlg"); if (d.open) d.close(); };
 const intOrNull = v => { v = String(v ?? "").trim(); if (v === "") return null; const n = Number(v); return Number.isFinite(n) ? n : NaN; };
 const areaOpts = (sel, vuoto) => (vuoto ? `<option value="">${vuoto}</option>` : "") + S.aree.map(a => `<option ${a === sel ? "selected" : ""}>${esc(a)}</option>`).join("");
-const origini = () => [...new Set([...S.inv.flatMap(r => r.rip ? r.rip.map(x => x.o) : [r.origine]), ...S.acq.map(a => orgDi(a.anno))].filter(Boolean))].sort();
+const MANUALE = "Inserimento manuale";
+const origini = () => [...new Set([...S.inv.flatMap(r => r.rip ? r.rip.map(x => x.o) : [r.origine]), ...S.acq.map(a => orgDi(a.anno)), MANUALE].filter(Boolean))].sort();
 const einkaufPresenti = () => [...new Set(S.acq.map(a => a.anno))].sort((a, b) => b - a).map(orgDi);
 const marche = () => [...new Set(S.inv.map(r => r.marca).filter(Boolean))].sort((a, b) => a.localeCompare(b, "it"));
 const nomi = () => [...new Set(S.inv.map(r => r.articolo))].sort((a, b) => a.localeCompare(b, "it"));
@@ -826,7 +828,7 @@ function listInv(SM) {
   $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> righe</span><span><b>${tot}</b> pezzi</span><span><b>${tr("rotto")}</b> rotti</span><span><b>${tr("ripar")}</b> <span class="lg">in riparazione</span><span class="sh">in rip.</span></span><span><b>${tr("dismesso")}</b> <span class="lg">dismessi</span><span class="sh">dism.</span></span></div><div class="list">${html}</div>`;
 }
 
-const pvOpts = sel => { const l = einkaufPresenti(); if (sel && !l.includes(sel)) l.push(sel); return `<option value="">— Scegli Einkauf —</option>` + l.map(o => `<option value="${esc(o)}" ${o === sel ? "selected" : ""}>${esc(o)}</option>`).join(""); };
+const pvOpts = sel => { const l = [...einkaufPresenti(), MANUALE]; if (sel && !l.includes(sel)) l.push(sel); return `<option value="">— Scegli origine —</option>` + l.map(o => `<option value="${esc(o)}" ${o === sel ? "selected" : ""}>${esc(o)}</option>`).join(""); };
 const pvRowHtml = (x = {}) => `<div class="prv"><select class="pO" aria-label="Einkauf di provenienza">${pvOpts(x.o || "")}</select><input type="number" class="pQ" min="1" inputmode="numeric" placeholder="pz" value="${x.q ?? ""}" aria-label="Pezzi"><button type="button" class="btn sm dng pX" aria-label="Togli questa riga">✕</button></div>`;
 function pvSync(d) {
   const rows = d.querySelectorAll(".prv"); rows.forEach(r => r.classList.toggle("one", rows.length === 1));
@@ -858,7 +860,37 @@ function leggiRiga(d) {
   if (q === null || Number.isNaN(q)) throw new Err("Inserisci la quantità (numero intero).");
   return o;
 }
+const nrowHtml = (x = {}) => `<div class="nrow"><div class="f"><label>Quantità</label><input type="number" class="nQ" min="1" inputmode="numeric" value="${x.q ?? 1}"></div>
+  <div class="f"><label>Area di destinazione</label><select class="nA">${areaOpts(x.a || "", "— Da assegnare —")}</select></div>
+  <div class="f"><label>Area di origine</label><select class="nO">${pvOpts(x.o || "")}</select></div>
+  <button type="button" class="btn sm dng nX" aria-label="Togli questa riga">✕</button></div>`;
+function dlgNuovo() {
+  const a0 = ui.area !== "*" && ui.area !== "-" ? ui.area : "";
+  dlg("Nuovo articolo", `<div class="f"><label for="nA0">Articolo</label><input type="text" id="nA0" list="dlNo" autocomplete="off"></div>
+   <div class="g2"><div class="f"><label for="nMa">Marca</label><input type="text" id="nMa" list="dlMa" autocomplete="off"></div><div class="f"><label for="nMo">Modello</label><input type="text" id="nMo" autocomplete="off"></div></div>
+   <div class="f"><span class="lab">Righe: quantità, area di destinazione e area di origine</span><div id="nr">${nrowHtml({ a: a0 })}</div>
+   <div><button type="button" class="btn sm" id="nrAdd">+ Aggiungi riga</button></div><div class="hint" id="nrHint"></div></div>
+   <div class="f"><label for="nNo">Note</label><textarea id="nNo" rows="2"></textarea></div>${datalists()}`, {
+    onOk: d => {
+      const nome = $("#nA0", d).value.trim().replace(/\s+/g, " ");
+      if (!nome) throw new Err("Inserisci il nome dell'articolo.");
+      const righe = [...d.querySelectorAll(".nrow")].map(r => ({ q: intOrNull($(".nQ", r).value), a: $(".nA", r).value || null, o: $(".nO", r).value }));
+      if (!righe.length) throw new Err("Aggiungi almeno una riga.");
+      righe.forEach((x, i) => { if (!Number.isInteger(x.q) || x.q < 1) throw new Err("Riga " + (i + 1) + ": indica la quantità (almeno 1)."); });
+      const marca = $("#nMa", d).value.trim() || null, modello = $("#nMo", d).value.trim() || null, note = $("#nNo", d).value.trim() || null;
+      run(() => righe.forEach(x => salvaRiga(null, { articolo: nome, marca, modello, area: x.a, qty: x.q, rotto: null, ripar: null, dismesso: null, note, origini: x.o ? [{ o: x.o, q: x.q }] : [] })), righe.length > 1 ? righe.length + " righe aggiunte." : "Articolo aggiunto.");
+    },
+    init: d => {
+      const sync = () => { const n = d.querySelectorAll(".nrow").length; d.querySelectorAll(".nrow").forEach(r => r.classList.toggle("one", n === 1)); const t = [...d.querySelectorAll(".nQ")].reduce((s, e) => s + n0(e.value), 0); $("#nrHint", d).textContent = n > 1 ? "Totale " + t + " pezzi in " + n + " righe." : ""; };
+      sync();
+      $("#nrAdd", d).onclick = () => { const l = d.querySelectorAll(".nrow"), last = l[l.length - 1]; $("#nr", d).insertAdjacentHTML("beforeend", nrowHtml({ a: last ? $(".nA", last).value : "", o: last ? $(".nO", last).value : "" })); sync(); const q = d.querySelectorAll(".nQ"); q[q.length - 1].select(); };
+      d.oninput = sync;
+      $("#nr", d).onclick = e => { const b = e.target.closest(".nX"); if (!b) return; b.closest(".nrow").remove(); sync(); };
+    }
+  });
+}
 function dlgRiga(id, back) {
+  if (id == null) return dlgNuovo();
   const r = id == null ? { articolo: "", area: ui.area !== "*" && ui.area !== "-" ? ui.area : "", origine: "", qty: 1 } : invRow(id);
   const vecchio = id == null ? null : r.articolo;
   dlg(id == null ? "Nuovo articolo" : "Modifica articolo", formRiga(r), {
@@ -879,18 +911,20 @@ function dlgDettaglio(id) {
   const pos = righeKey(grpKey(r)).sort((a, b) => (a.area || "~").localeCompare(b.area || "~", "it")), multiN = new Set(pos.map(x => norm(x.articolo))).size > 1;
   const dove = `<div class="lab">Dove si trova · totale <b>${pos.reduce((t, x) => t + n0(x.qty), 0)} pz</b></div><div class="un">${pos.map(x => `<div class="r"${x.id !== id ? ` data-pos="${x.id}" style="cursor:pointer"` : ` style="border-color:var(--brand)"`}><b>${esc(x.area || "Da assegnare")}</b><span class="sub"><b style="color:var(--fg)">${n0(x.qty)}</b> pz</span>${provHtml(x)}${multiN ? `<span class="sub">«${esc(x.articolo)}»</span>` : ""}${n0(x.rotto) ? `<span class="chip r">${x.rotto} rotti</span>` : ""}${x.id === id ? `<span class="chip">questa riga</span>` : ""}</div>`).join("")}</div>`;
   const d = dlg(esc(r.articolo), dove + `<div class="ph" id="phBox">${has ? "Carico la foto…" : "Nessuna foto"}</div>
-   <div class="dacts"><button type="button" class="btn sm" id="bFoto">${has ? "Cambia foto" : "Aggiungi foto"}</button>${has ? `<button type="button" class="btn sm dng" id="bFotoDel">Rimuovi foto</button>` : ""}</div>
-   <input type="file" id="fImg" accept="image/*" hidden>
+   <div class="dacts"><button type="button" class="btn sm" id="bCam">📷 Scatta foto</button><button type="button" class="btn sm" id="bFoto">${has ? "Cambia dalla galleria" : "Dalla galleria"}</button>${has ? `<button type="button" class="btn sm dng" id="bFotoDel">Rimuovi foto</button>` : ""}</div>
+   <input type="file" id="fImg" accept="image/*" hidden><input type="file" id="fCam" accept="image/*" capture="environment" hidden>
    <dl class="kv">${kv("Area", esc(r.area || "Da assegnare"))}${kv("Marca", esc(r.marca))}${kv("Modello", esc(r.modello))}${kv("Quantità", `<b>${r.qty ?? "—"}</b>`)}${kv("Rotti", n0(r.rotto) ? r.rotto : "")}${kv("In riparazione", n0(r.ripar) ? r.ripar : "")}${kv("Dismessi", n0(r.dismesso) ? r.dismesso : "")}${kv("Einkauf", prov)}${kv("Note", esc(r.note))}</dl>
    ${r.grp != null ? `<div class="hint">Collegato con: ${righeKey(grpKey(r)).filter(x => x.id !== r.id).map(x => `<b>${esc(x.articolo)}</b> (${esc(x.area || "Da assegnare")}, ${n0(x.qty)} pz)`).join(", ")}</div>` : ""}
    <div class="dacts"><button type="button" class="btn pri" data-x="edit">Modifica</button><button type="button" class="btn" data-x="move">Sposta</button><button type="button" class="btn" data-x="stato">Stato</button><button type="button" class="btn" data-x="ver">${r.ver ? "Togli da verificare" : "Da verificare"}</button><button type="button" class="btn" data-x="sim">Collega a simile…</button>${r.grp != null ? `<button type="button" class="btn" data-x="unsim">Scollega</button>` : ""}<button type="button" class="btn dng" data-x="del">Elimina</button></div>`, {
     noCancel: true, ok: "Chiudi", onOk: () => {},
     init: d => {
-      d.dataset.inv = id;
+      d.dataset.inv = id; ui.dlgS = { t: "det", id };
       if (has) Img.get(key).then(u => { const b = $("#phBox", d); if (!b) return; if (u) { b.innerHTML = `<img alt="">`; b.firstChild.src = u; } else b.textContent = "Foto non disponibile"; }).catch(() => { const b = $("#phBox", d); if (b) b.textContent = "Foto non disponibile"; });
       $("#phBox", d).onclick = ev => { const im = ev.target.closest("img"); if (im && im.src) apriFoto(im.src); };
       d.querySelectorAll("[data-pos]").forEach(b => b.onclick = () => { closeDlg(); dlgDettaglio(Number(b.dataset.pos)); });
       $("#bFoto", d).onclick = () => $("#fImg", d).click();
+      $("#bCam", d).onclick = () => $("#fCam", d).click();
+      $("#fCam", d).onchange = ev => { const f = ev.target.files[0]; ev.target.value = ""; if (f) salvaFoto(id, f); };
       $("#fImg", d).onchange = ev => { const f = ev.target.files[0]; ev.target.value = ""; if (f) salvaFoto(id, f); };
       const del = $("#bFotoDel", d); if (del) del.onclick = () => rimuoviFoto(id);
       d.querySelectorAll("[data-x]").forEach(b => b.onclick = () => {
@@ -1096,10 +1130,10 @@ function dlgArticoloAree(k) {
     <div class="un">${rows.map(r => `<div class="r"><b>${esc(r.area || "Da assegnare")}</b>${multi ? `<span class="sub">«${esc(r.articolo)}»</span>` : ""}<span class="sub"><b style="color:var(--fg)">${n0(r.qty)}</b> pz</span>${provHtml(r)}${n0(r.rotto) ? `<span class="chip r">${r.rotto} rotti</span>` : ""}${n0(r.ripar) ? `<span class="chip o">${r.ripar} in rip.</span>` : ""}${n0(r.dismesso) ? `<span class="chip y">${r.dismesso} dismessi</span>` : ""}
       <span style="margin-left:auto;display:flex;gap:6px"><button type="button" class="btn sm" data-x="edit" data-id="${r.id}">Modifica</button><button type="button" class="btn sm" data-x="move" data-id="${r.id}">Sposta</button><button type="button" class="btn sm" data-x="det" data-id="${r.id}">Scheda</button></span></div>`).join("")}</div>
     <div class="hint">«Modifica» cambia area, Einkauf di provenienza e quantità di quella riga; «Sposta» porta alcuni pezzi in un'altra area.</div>`,
-    { noCancel: true, ok: "Chiudi", wide: true, onOk: () => {}, init: d => d.querySelectorAll("[data-x]").forEach(b => b.onclick = () => {
+    { noCancel: true, ok: "Chiudi", wide: true, onOk: () => {}, init: d => { ui.dlgS = { t: "aree", k }; d.querySelectorAll("[data-x]").forEach(b => b.onclick = () => {
       const id = Number(b.dataset.id), x = b.dataset.x; closeDlg();
       if (x === "edit") dlgRiga(id, nm); else if (x === "move") dlgSposta(id); else dlgDettaglio(id);
-    }) });
+    }); } });
 }
 
 /* --- Controlli --- */
@@ -1739,7 +1773,41 @@ async function boot() {
     Batt.carica().then(() => { render(); const b = battBassi(); if (b.length) toast("⚠ Scorte batterie in esaurimento: " + txtBassi(b)); });
   } catch (e) { render(); toast(e.message || "Errore di avvio"); setStato("Errore", true); }
 }
-S = fixS(Repo.loadLocal() || Repo.fresh()); render(); boot();
+/* si riparte dall'ultima schermata (schede, filtri, posizione, scheda articolo aperta) */
+const VISTA = "sl_vista_v1";
+function salvaVista() {
+  try {
+    const d = $("#dlg");
+    localStorage.setItem(VISTA, JSON.stringify({ t: Date.now(), ui: { ...ui, gr: [...ui.gr], dlgS: undefined }, ui3, ui2, y: window.scrollY, dlg: d.open ? ui.dlgS : null }));
+  } catch (e) {}
+}
+let vistaT = 0; const salvaVistaDopo = () => { clearTimeout(vistaT); vistaT = setTimeout(salvaVista, 350); };
+function leggiVista() { try { const v = JSON.parse(localStorage.getItem(VISTA) || "null"); return v && Date.now() - v.t < 14 * 864e5 ? v : null; } catch (e) { return null; } }
+let vistaRip = false;
+function ripristinaVista() {
+  const v = leggiVista(); if (!v) return;
+  const TABS_OK = ["inv", "acq", "rie", "con", "uni", "bat", "show", "log"];
+  if (v.ui) { Object.assign(ui, v.ui, { gr: new Set(Array.isArray(v.ui.gr) && v.ui.gr.length ? v.ui.gr : [3, 2, 1]) }); if (!TABS_OK.includes(ui.tab)) ui.tab = "inv"; }
+  if (v.ui3) Object.assign(ui3, v.ui3); if (v.ui2) Object.assign(ui2, v.ui2);
+  vistaRip = v;
+}
+function applicaVistaDopoRender() {
+  const v = vistaRip; if (!v) return; vistaRip = false;
+  setTimeout(() => {
+    window.scrollTo(0, v.y || 0);
+    const d = v.dlg;
+    if (d && !$("#dlg").open) {
+      if (d.t === "det" && invRow(d.id)) dlgDettaglio(d.id);
+      else if (d.t === "aree" && righeKey(d.k).length) dlgArticoloAree(d.k);
+    }
+  }, 60);
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") salvaVista(); });
+window.addEventListener("pagehide", salvaVista);
+["click", "input", "change"].forEach(t => document.addEventListener(t, salvaVistaDopo, true));
+window.addEventListener("scroll", salvaVistaDopo, { passive: true });
+$("#dlg").addEventListener("close", salvaVistaDopo);
+S = fixS(Repo.loadLocal() || Repo.fresh()); ripristinaVista(); render(); applicaVistaDopoRender(); boot();
 </script>
 
 </body></html>
