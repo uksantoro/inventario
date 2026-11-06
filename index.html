@@ -1724,12 +1724,13 @@ document.addEventListener("click", e => {
     case "editInt": dlgInt(id); break;
     case "intPri": { go(() => { const x = S.int.find(i => i.id === id); if (x) x.pri = x.pri % 3 + 1; }); break; }
     case "intDone": { const x0 = S.int.find(i => i.id === id); go(() => { const x = S.int.find(i => i.id === id); if (x) { if (x.fatto) delete x.fatto; else x.fatto = Date.now(); } }, x0 && x0.fatto ? "Intervento riaperto." : "Intervento completato ✓"); break; }
-    case "delInt": { const x = S.int.find(i => i.id === id); dlgConferma("Elimina intervento", `Eliminare «${esc(x.tipo)}»?`, "Elimina", () => go(() => { S.int = S.int.filter(i => i.id !== id); }, "Eliminato.")); break; }
+    case "delInt": { const x = S.int.find(i => i.id === id); dlgConferma("Elimina intervento", `Eliminare «${esc(x.tipo)}»?`, "Elimina", () => { const k = "int:" + id; if (S.imgs.includes(k)) Img.del(k).catch(() => {}); go(() => { S.int = S.int.filter(i => i.id !== id); S.imgs = S.imgs.filter(q => q !== k); delete S.imgv[k]; }, "Eliminato."); }); break; }
     case "intF": { const p = Number(t.dataset.p); uiI.pri.has(p) ? uiI.pri.delete(p) : uiI.pri.add(p); t.setAttribute("aria-pressed", uiI.pri.has(p)); listInt(); break; }
     case "newMov": dlgMov(null); break;
     case "editMov": dlgMov(id); break;
     case "delMov": eliminaMov(id); break;
     case "movFoto": vediFotoMov(id); break;
+    case "intFoto": Img.get("int:" + id).then(u => u ? apriFoto(u) : toast("Foto non disponibile.")).catch(() => toast("Foto non disponibile.")); break;
     case "budReset": Object.assign(uiB, { da: "", a: "", forn: "", q: "", ddt: "" }); render(); break;
     case "budForn": dlgBudForn(); break;
     case "budImp": dlgBudImp(); break;
@@ -1910,11 +1911,12 @@ function listInt() {
     `<div class="gr ra cols-int ${x.fatto ? "dis" : ""}" data-act="editInt" data-id="${x.id}"><div class="cell"><input type="checkbox" class="vchk" data-act="intDone" data-id="${x.id}" ${x.fatto ? "checked" : ""} aria-label="Lavoro completato" title="${x.fatto ? "Completato il " + dataIt(new Date(x.fatto).toISOString().slice(0, 10)) : "Segna come completato"}"><button type="button" class="semb" data-act="intPri" data-id="${x.id}" aria-label="Cambia priorità">${sem(x.pri)}</button></div>
      <div class="art cell">${esc(x.tipo)}${x.fatto ? ` <span class="chip g">fatto il ${dataIt(new Date(x.fatto).toISOString().slice(0, 10))}</span>` : ""}${x.note ? `<div class="sub">Note: ${esc(x.note)}</div>` : ""}${x.art ? `<div class="sub">Articolo: ${esc(x.art)}</div>` : ""}</div><div class="cell" data-l="Dove">${esc(x.dove || "—")}</div><div class="cell" data-l="Chi">${esc(x.chi || "—")}</div>
      <div class="cell" ${x.scad ? 'data-l="Scadenza"' : ""}>${x.scad ? (scaduto(x) ? `<span class="chip r">${dataIt(x.scad)}</span>` : dataIt(x.scad)) : ""}</div><div class="cell sub" ${x.serve ? 'data-l="Serve"' : ""}>${esc(x.serve || "")}</div>
-     <div class="acts"><button class="btn sm dng" data-act="delInt" data-id="${x.id}">Elimina</button></div></div>`).join("") : `<div class="empty">Nessun intervento.</div>`;
+     <div class="acts">${S.imgs.includes("int:" + x.id) ? `<button type="button" class="btn sm" data-act="intFoto" data-id="${x.id}">📷 Foto</button>` : ""}<button class="btn sm dng" data-act="delInt" data-id="${x.id}">Elimina</button></div></div>`).join("") : `<div class="empty">Nessun intervento.</div>`;
   $("#list").innerHTML = sum + `<div class="list">${html}</div>`;
   const qi = $("#qi"); if (qi) { qi.oninput = () => { uiI.q = qi.value; listInt(); }; $("#fiF").onchange = e => { uiI.fatti = e.target.value; listInt(); }; $("#fiC").onchange = e => { uiI.chi = e.target.value; listInt(); }; }
 }
 function dlgInt(id, pre) {
+  const nid = id || intId(), key = "int:" + nid; let nuova = null, togli = false;
   const x = id ? S.int.find(i => i.id === id) : { tipo: "", dove: "", chi: "", serve: "", note: "", pri: 2, scad: "", art: "", ...(pre || {}) };
   const dls = k => [...new Set(S.int.map(i => i[k]).filter(Boolean))].sort((a, b) => a.localeCompare(b, "it"));
   dlg(id ? "Modifica intervento" : "Nuovo intervento", `<div class="f"><label for="iT">Tipo di intervento</label><input type="text" id="iT" value="${esc(x.tipo)}" autocomplete="off" list="dlIt"></div>
@@ -1922,14 +1924,37 @@ function dlgInt(id, pre) {
    <div class="g2"><div class="f"><label for="iX">Scadenza (facoltativa)</label><input type="date" id="iX" value="${esc(x.scad || "")}"></div><div class="f"><label for="iA">Articolo collegato</label><input type="text" id="iA" value="${esc(x.art || "")}" list="dlIa" autocomplete="off"></div></div>
    <div class="f"><label for="iS">Cosa serve</label><textarea id="iS" rows="3">${esc(x.serve)}</textarea></div>
    <div class="f"><label for="iN">Note</label><textarea id="iN" rows="3">${esc(x.note || "")}</textarea></div>
+   <div class="lab">Foto (salvata in WebP)</div><div class="ph" id="iPh">Nessuna foto</div>
+   <div class="dacts"><button type="button" class="btn sm" id="iCam">📷 Scatta foto</button><button type="button" class="btn sm" id="iGal">Dalla galleria</button><button type="button" class="btn sm dng" id="iDel" hidden>Rimuovi foto</button></div>
+   <input type="file" id="iF1" accept="image/*" hidden><input type="file" id="iF2" accept="image/*" capture="environment" hidden>
    <div class="f"><label>Priorità</label><div class="chips" id="iP">${[3, 2, 1].map(p => `<button type="button" class="fchip" data-p="${p}" aria-pressed="${x.pri === p}">${sem(p)} ${PRI[p][0]}</button>`).join("")}</div></div>
    <datalist id="dlIt">${dls("tipo").map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlId">${[...new Set([...S.aree, ...dls("dove")])].map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlIc">${dls("chi").map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlIa">${nomi().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`, {
-    ok: "Salva", init: d => { d.querySelectorAll("#iP .fchip").forEach(b => b.onclick = () => { d.querySelectorAll("#iP .fchip").forEach(c => c.setAttribute("aria-pressed", c === b)); }); },
+    ok: "Salva", init: d => {
+      const ph = $("#iPh", d), del = $("#iDel", d);
+      const mostra = u => { if (u) { ph.innerHTML = `<img alt="">`; ph.firstChild.src = u; del.hidden = false; } else { ph.textContent = "Nessuna foto"; del.hidden = true; } };
+      ph.onclick = ev => { const im = ev.target.closest("img"); if (im && im.src) apriFoto(im.src); };
+      if (id && S.imgs.includes(key)) { ph.textContent = "Carico la foto…"; Img.get(key).then(u => mostra(u)).catch(() => { ph.textContent = "Foto non disponibile"; }); }
+      const sceglie = async ev => { const f = ev.target.files[0]; ev.target.value = ""; if (!f) return; try { nuova = await comprimi(f, 1800, 0.82); for (const [mx, q] of [[1400, 0.7], [1100, 0.6], [900, 0.5]]) { if (nuova.length <= 850000) break; nuova = await comprimi(f, mx, q); } if (nuova.length > 880000) throw new Err("Foto troppo pesante: provane una più piccola."); togli = false; mostra(nuova); } catch (e) { $("#derr", d).textContent = e.message || "Foto non valida."; } };
+      $("#iGal", d).onclick = () => $("#iF1", d).click(); $("#iCam", d).onclick = () => $("#iF2", d).click();
+      $("#iF1", d).onchange = sceglie; $("#iF2", d).onchange = sceglie;
+      del.onclick = () => { nuova = null; togli = true; mostra(null); };
+      d.querySelectorAll("#iP .fchip").forEach(b => b.onclick = () => { d.querySelectorAll("#iP .fchip").forEach(c => c.setAttribute("aria-pressed", c === b)); }); },
     onOk: d => {
       const tipo = $("#iT", d).value.trim(); if (!tipo) throw new Err("Scrivi il tipo di intervento.");
       const p = Number((d.querySelector("#iP [aria-pressed=true]") || {}).dataset?.p) || 2;
       const o = { tipo, dove: $("#iD", d).value.trim(), chi: $("#iC", d).value.trim(), serve: $("#iS", d).value.trim(), pri: p, scad: $("#iX", d).value || undefined, art: $("#iA", d).value.trim() || undefined, note: $("#iN", d).value.trim() || undefined };
-      go(() => { if (id) { const t = S.int.find(i => i.id === id); Object.assign(t, o); if (!o.scad) delete t.scad; if (!o.art) delete t.art; if (!o.note) delete t.note; } else S.int.push({ id: intId(), ...o, creato: Date.now() }); }, "Salvato.");
+      $("#dok", d).disabled = true;
+      (async () => {
+        try {
+          if (nuova) await Img.set(key, nuova); else if (togli && S.imgs.includes(key)) await Img.del(key);
+          go(() => {
+            if (id) { const t = S.int.find(i => i.id === id); Object.assign(t, o); if (!o.scad) delete t.scad; if (!o.art) delete t.art; if (!o.note) delete t.note; } else S.int.push({ id: nid, ...o, creato: Date.now() });
+            if (nuova) { if (!S.imgs.includes(key)) S.imgs.push(key); S.imgv[key] = Date.now(); } else if (togli) { S.imgs = S.imgs.filter(q => q !== key); delete S.imgv[key]; }
+          }, "Salvato.");
+          d.close();
+        } catch (e) { $("#derr", d).textContent = e.message || "Salvataggio non riuscito."; $("#dok", d).disabled = false; }
+      })();
+      return false;
     }
   });
 }
