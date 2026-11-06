@@ -95,7 +95,8 @@ input[type=text],input[type=number],input[type=search],select,textarea{width:100
 .empty{padding:36px 16px;text-align:center;color:var(--muted)}
 .sum{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-bottom:10px}
 .sum b{color:var(--fg);font-variant-numeric:tabular-nums}
-.cols-int{grid-template-columns:70px minmax(0,1.5fr) minmax(0,1.1fr) minmax(0,.9fr) 100px minmax(0,1.6fr) 170px}
+.sum2{display:flex;gap:6px 16px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:13px;margin-bottom:10px}.sum2 b{color:var(--fg);font-variant-numeric:tabular-nums}
+.cols-int{grid-template-columns:96px minmax(0,1.5fr) minmax(0,1.1fr) minmax(0,.9fr) 100px minmax(0,1.6fr) 170px}
 .oggi{display:grid;gap:8px}.avv{display:grid;gap:2px;text-align:left;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:10px;padding:10px 14px;cursor:pointer;font:inherit;color:var(--fg)}.avv:hover{background:var(--soft)}
 .gres{display:grid;gap:4px;max-height:55vh;overflow:auto}.gri{text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 2px;font:inherit;color:var(--fg);cursor:pointer}.gri:hover{background:var(--soft)}
 .cols-mov{grid-template-columns:90px minmax(0,1.2fr) minmax(0,1.8fr) 110px minmax(0,.8fr) 52px 90px}
@@ -161,6 +162,8 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
 }
 @media (max-width:760px){
   .bcards b{font-size:15px}
+  .bfil{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.bfil label{flex-direction:column;align-items:stretch;gap:2px;font-size:12px}.bfil select,.bfil input[type=date],.bfil .btn{width:100%;min-width:0}
+  .bcards{gap:6px}.bc{padding:8px 10px}
   .pie{margin:0 auto}
   .foot{display:none}
   /* telefono: la pagina non scorre, scorre solo il contenuto; intestazione e barra in basso restano sempre ferme */
@@ -1720,7 +1723,7 @@ document.addEventListener("click", e => {
     case "conta": dlgConta(ui.area); break;
     case "editInt": dlgInt(id); break;
     case "intPri": { go(() => { const x = S.int.find(i => i.id === id); if (x) x.pri = x.pri % 3 + 1; }); break; }
-    case "intDone": go(() => { const x = S.int.find(i => i.id === id); if (x) { if (x.fatto) delete x.fatto; else x.fatto = Date.now(); } }); break;
+    case "intDone": { const x0 = S.int.find(i => i.id === id); go(() => { const x = S.int.find(i => i.id === id); if (x) { if (x.fatto) delete x.fatto; else x.fatto = Date.now(); } }, x0 && x0.fatto ? "Intervento riaperto." : "Intervento completato ✓"); break; }
     case "delInt": { const x = S.int.find(i => i.id === id); dlgConferma("Elimina intervento", `Eliminare «${esc(x.tipo)}»?`, "Elimina", () => go(() => { S.int = S.int.filter(i => i.id !== id); }, "Eliminato.")); break; }
     case "intF": { const p = Number(t.dataset.p); uiI.pri.has(p) ? uiI.pri.delete(p) : uiI.pri.add(p); t.setAttribute("aria-pressed", uiI.pri.has(p)); listInt(); break; }
     case "newMov": dlgMov(null); break;
@@ -1896,36 +1899,37 @@ function viewInt(v) {
 }
 function intFiltrati() {
   let R = S.int.filter(x => uiI.pri.has(x.pri) && (uiI.fatti === "tutti" || (uiI.fatti === "fatti") === !!x.fatto) && (!uiI.chi || x.chi === uiI.chi));
-  const q = norm(uiI.q); if (q) { const T = q.split(" ").filter(Boolean); R = R.filter(x => { const h = norm([x.tipo, x.dove, x.chi, x.serve, x.art].join(" ")); return T.every(t => h.includes(t)); }); }
+  const q = norm(uiI.q); if (q) { const T = q.split(" ").filter(Boolean); R = R.filter(x => { const h = norm([x.tipo, x.dove, x.chi, x.serve, x.art, x.note].join(" ")); return T.every(t => h.includes(t)); }); }
   return R.sort((a, b) => (!!a.fatto - !!b.fatto) || (b.pri - a.pri) || String(a.scad || "9").localeCompare(String(b.scad || "9")) || a.id - b.id);
 }
 function listInt() {
   let R = intFiltrati();
   R = ordina("int", R, { pri: x => x.pri, tipo: x => x.tipo || "", dove: x => x.dove || "", chi: x => x.chi || "", scad: x => x.scad || "9", serve: x => x.serve || "" });
-  const sum = `<div class="sum"><span><b>${R.length}</b> interventi</span>${[3, 2, 1].map(p => `<span class="sc">${sem(p)} <b>${R.filter(x => x.pri === p).length}</b></span>`).join("")}${R.some(scaduto) ? `<span class="chip r">${R.filter(scaduto).length} scaduti</span>` : ""}</div>`;
+  const sum = `<div class="sum2"><span><b>${R.length}</b> interventi</span>${[3, 2, 1].map(p => `<span class="sc">${sem(p)} <b>${R.filter(x => x.pri === p).length}</b></span>`).join("")}${R.some(scaduto) ? `<span class="chip r">${R.filter(scaduto).length} scaduti</span>` : ""}</div>`;
   const html = R.length ? `<div class="gh cols-int">${hd("int", "pri", "Priorità")}${hd("int", "tipo", "Intervento")}${hd("int", "dove", "Dove")}${hd("int", "chi", "Chi")}${hd("int", "scad", "Scadenza")}${hd("int", "serve", "Cosa serve")}<div></div></div>` + R.map(x =>
-    `<div class="gr ra cols-int ${x.fatto ? "dis" : ""}" data-act="editInt" data-id="${x.id}"><div class="cell"><button type="button" class="semb" data-act="intPri" data-id="${x.id}" aria-label="Cambia priorità">${sem(x.pri)}</button></div>
-     <div class="art cell">${esc(x.tipo)}${x.fatto ? ` <span class="chip g">fatto</span>` : ""}${x.art ? `<div class="sub">Articolo: ${esc(x.art)}</div>` : ""}</div><div class="cell" data-l="Dove">${esc(x.dove || "—")}</div><div class="cell" data-l="Chi">${esc(x.chi || "—")}</div>
+    `<div class="gr ra cols-int ${x.fatto ? "dis" : ""}" data-act="editInt" data-id="${x.id}"><div class="cell"><input type="checkbox" class="vchk" data-act="intDone" data-id="${x.id}" ${x.fatto ? "checked" : ""} aria-label="Lavoro completato" title="${x.fatto ? "Completato il " + dataIt(new Date(x.fatto).toISOString().slice(0, 10)) : "Segna come completato"}"><button type="button" class="semb" data-act="intPri" data-id="${x.id}" aria-label="Cambia priorità">${sem(x.pri)}</button></div>
+     <div class="art cell">${esc(x.tipo)}${x.fatto ? ` <span class="chip g">fatto il ${dataIt(new Date(x.fatto).toISOString().slice(0, 10))}</span>` : ""}${x.note ? `<div class="sub">Note: ${esc(x.note)}</div>` : ""}${x.art ? `<div class="sub">Articolo: ${esc(x.art)}</div>` : ""}</div><div class="cell" data-l="Dove">${esc(x.dove || "—")}</div><div class="cell" data-l="Chi">${esc(x.chi || "—")}</div>
      <div class="cell" ${x.scad ? 'data-l="Scadenza"' : ""}>${x.scad ? (scaduto(x) ? `<span class="chip r">${dataIt(x.scad)}</span>` : dataIt(x.scad)) : ""}</div><div class="cell sub" ${x.serve ? 'data-l="Serve"' : ""}>${esc(x.serve || "")}</div>
-     <div class="acts"><button class="btn sm" data-act="intDone" data-id="${x.id}">${x.fatto ? "Riapri" : "Fatto ✓"}</button><button class="btn sm dng" data-act="delInt" data-id="${x.id}">Elimina</button></div></div>`).join("") : `<div class="empty">Nessun intervento.</div>`;
+     <div class="acts"><button class="btn sm dng" data-act="delInt" data-id="${x.id}">Elimina</button></div></div>`).join("") : `<div class="empty">Nessun intervento.</div>`;
   $("#list").innerHTML = sum + `<div class="list">${html}</div>`;
   const qi = $("#qi"); if (qi) { qi.oninput = () => { uiI.q = qi.value; listInt(); }; $("#fiF").onchange = e => { uiI.fatti = e.target.value; listInt(); }; $("#fiC").onchange = e => { uiI.chi = e.target.value; listInt(); }; }
 }
 function dlgInt(id, pre) {
-  const x = id ? S.int.find(i => i.id === id) : { tipo: "", dove: "", chi: "", serve: "", pri: 2, scad: "", art: "", ...(pre || {}) };
+  const x = id ? S.int.find(i => i.id === id) : { tipo: "", dove: "", chi: "", serve: "", note: "", pri: 2, scad: "", art: "", ...(pre || {}) };
   const dls = k => [...new Set(S.int.map(i => i[k]).filter(Boolean))].sort((a, b) => a.localeCompare(b, "it"));
   dlg(id ? "Modifica intervento" : "Nuovo intervento", `<div class="f"><label for="iT">Tipo di intervento</label><input type="text" id="iT" value="${esc(x.tipo)}" autocomplete="off" list="dlIt"></div>
    <div class="g2"><div class="f"><label for="iD">Dove</label><input type="text" id="iD" value="${esc(x.dove)}" list="dlId" autocomplete="off"></div><div class="f"><label for="iC">Chi lo deve fare</label><input type="text" id="iC" value="${esc(x.chi)}" list="dlIc" autocomplete="off"></div></div>
    <div class="g2"><div class="f"><label for="iX">Scadenza (facoltativa)</label><input type="date" id="iX" value="${esc(x.scad || "")}"></div><div class="f"><label for="iA">Articolo collegato</label><input type="text" id="iA" value="${esc(x.art || "")}" list="dlIa" autocomplete="off"></div></div>
    <div class="f"><label for="iS">Cosa serve</label><textarea id="iS" rows="3">${esc(x.serve)}</textarea></div>
+   <div class="f"><label for="iN">Note</label><textarea id="iN" rows="3">${esc(x.note || "")}</textarea></div>
    <div class="f"><label>Priorità</label><div class="chips" id="iP">${[3, 2, 1].map(p => `<button type="button" class="fchip" data-p="${p}" aria-pressed="${x.pri === p}">${sem(p)} ${PRI[p][0]}</button>`).join("")}</div></div>
    <datalist id="dlIt">${dls("tipo").map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlId">${[...new Set([...S.aree, ...dls("dove")])].map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlIc">${dls("chi").map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlIa">${nomi().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`, {
     ok: "Salva", init: d => { d.querySelectorAll("#iP .fchip").forEach(b => b.onclick = () => { d.querySelectorAll("#iP .fchip").forEach(c => c.setAttribute("aria-pressed", c === b)); }); },
     onOk: d => {
       const tipo = $("#iT", d).value.trim(); if (!tipo) throw new Err("Scrivi il tipo di intervento.");
       const p = Number((d.querySelector("#iP [aria-pressed=true]") || {}).dataset?.p) || 2;
-      const o = { tipo, dove: $("#iD", d).value.trim(), chi: $("#iC", d).value.trim(), serve: $("#iS", d).value.trim(), pri: p, scad: $("#iX", d).value || undefined, art: $("#iA", d).value.trim() || undefined };
-      go(() => { if (id) { const t = S.int.find(i => i.id === id); Object.assign(t, o); if (!o.scad) delete t.scad; if (!o.art) delete t.art; } else S.int.push({ id: intId(), ...o, creato: Date.now() }); }, "Salvato.");
+      const o = { tipo, dove: $("#iD", d).value.trim(), chi: $("#iC", d).value.trim(), serve: $("#iS", d).value.trim(), pri: p, scad: $("#iX", d).value || undefined, art: $("#iA", d).value.trim() || undefined, note: $("#iN", d).value.trim() || undefined };
+      go(() => { if (id) { const t = S.int.find(i => i.id === id); Object.assign(t, o); if (!o.scad) delete t.scad; if (!o.art) delete t.art; if (!o.note) delete t.note; } else S.int.push({ id: intId(), ...o, creato: Date.now() }); }, "Salvato.");
     }
   });
 }
@@ -1935,8 +1939,8 @@ const xlBlob = async wb => new Blob([await wb.xlsx.writeBuffer()], { type: "appl
 async function esportaInt() {
   if (typeof ExcelJS === "undefined") throw new Err("La libreria Excel non si è caricata. Controlla la connessione e riprova.");
   const wb = new ExcelJS.Workbook(); wb.creator = "Robinson Apulia – Sound&Light"; const ws = wb.addWorksheet("Interventi");
-  ws.columns = [{ header: "Priorità", width: 11 }, { header: "Intervento", width: 34 }, { header: "Dove", width: 22 }, { header: "Chi", width: 18 }, { header: "Scadenza", width: 12 }, { header: "Articolo", width: 24 }, { header: "Cosa serve", width: 40 }, { header: "Stato", width: 10 }];
-  intFiltrati().forEach(x => ws.addRow([PRI[x.pri][0], x.tipo, x.dove || "", x.chi || "", x.scad ? dataIt(x.scad) : "", x.art || "", x.serve || "", x.fatto ? "Fatto" : "Da fare"]));
+  ws.columns = [{ header: "Priorità", width: 11 }, { header: "Intervento", width: 34 }, { header: "Dove", width: 22 }, { header: "Chi", width: 18 }, { header: "Scadenza", width: 12 }, { header: "Articolo", width: 24 }, { header: "Cosa serve", width: 40 }, { header: "Stato", width: 10 }, { header: "Note", width: 40 }];
+  intFiltrati().forEach(x => ws.addRow([PRI[x.pri][0], x.tipo, x.dove || "", x.chi || "", x.scad ? dataIt(x.scad) : "", x.art || "", x.serve || "", x.fatto ? "Fatto il " + dataIt(new Date(x.fatto).toISOString().slice(0, 10)) : "Da fare", x.note || ""]));
   stileXl(ws); await salvaFile("SL_Interventi_" + today() + ".xlsx", await xlBlob(wb));
 }
 async function esportaBud() {
@@ -1976,7 +1980,7 @@ function calcolaAvvisi() {
 function viewOggi(v) {
   ALERTS = calcolaAvvisi();
   const col = { 3: "#d64545", 2: "#f0932b", 1: "#7a8aa0" };
-  v.innerHTML = `<div class="sum"><span><b>${ALERTS.length}</b> cose da guardare</span></div>` + (ALERTS.length ? `<div class="oggi">${ALERTS.map((a, i) => `<button class="avv" data-act="oggiVai" data-i="${i}" style="--c:${col[a.lv]}"><b>${esc(a.t)}</b><span class="sub">${esc(a.d)}</span></button>`).join("")}</div>` : `<div class="empty">Tutto a posto: nessun avviso. ✓</div>`);
+  v.innerHTML = `<div class="sum2"><span><b>${ALERTS.length}</b> cose da guardare</span></div>` + (ALERTS.length ? `<div class="oggi">${ALERTS.map((a, i) => `<button class="avv" data-act="oggiVai" data-i="${i}" style="--c:${col[a.lv]}"><b>${esc(a.t)}</b><span class="sub">${esc(a.d)}</span></button>`).join("")}</div>` : `<div class="empty">Tutto a posto: nessun avviso. ✓</div>`);
 }
 function vaiA(tab, q, extra) {
   closeDlg();
@@ -2078,7 +2082,7 @@ function listMov() {
     `<div class="gr ra cols-mov" data-act="editMov" data-id="${m.id}"><div class="cell" data-l="Data">${dataIt(m.data)}</div><div class="art cell">${esc(m.forn || "—")}</div><div class="cell" data-l="Cosa">${esc(m.art || "")}${m.note ? `<div class="sub">${esc(m.note)}</div>` : ""}</div>
      <div class="num cell" data-l="Importo"><b>${eur(m.imp)}</b></div><div class="cell sub" ${m.ddt ? 'data-l="DDT"' : ""}>${esc(m.ddt || "")}</div><div class="cell">${m.foto ? `<button type="button" class="btn sm" data-act="movFoto" data-id="${m.id}" title="Vedi foto DDT">📷</button>` : ""}</div>
      <div class="acts"><button class="btn sm dng" data-act="delMov" data-id="${m.id}">Elimina</button></div></div>`).join("") : `<div class="empty">Nessun movimento con questi filtri.</div>`;
-  $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> movimenti</span><span>Totale filtrato <b>${eur(tot)}</b></span></div><div class="list">${html}</div>`;
+  $("#list").innerHTML = `<div class="sum2"><span><b>${R.length}</b> movimenti</span><span>Totale filtrato <b>${eur(tot)}</b></span></div><div class="list">${html}</div>`;
 }
 const listMov2 = () => {};
 const PIEC = ["#2f6fdb", "#e8833a", "#2e9e5b", "#c0449e", "#8a6fe0", "#d6b21f", "#1fa8b8", "#d64545", "#7a8aa0", "#8c5a3a"];
@@ -2089,7 +2093,7 @@ function pieHtml(R) {
   if (uiB.grp !== "mese" && L.length > 9) { const alt = L.slice(9).reduce((s, x) => s + x[1], 0); L = L.slice(0, 9).concat([["Altri", alt]]); }
   const tot = L.reduce((s, x) => s + x[1], 0);
   const sw = `<div class="chips pieSw">${[["forn", "Per fornitore"], ["art", "Per articolo"], ["mese", "Per mese"]].map(([k, t]) => `<button class="fchip" aria-pressed="${uiB.grp === k}" data-g="${k}">${t}</button>`).join("")}</div>`;
-  if (!tot) return `<div class="pieBox">${sw}<div class="empty">Nessuna spesa da mostrare.</div></div>`;
+  if (!tot) return `<div class="pieBox"><div class="sub">Nessuna spesa da mostrare con questi filtri.</div></div>`;
   let a0 = -Math.PI / 2, paths = "";
   L.forEach(([n, val], i) => {
     const fr = val / tot, a1 = a0 + fr * 2 * Math.PI, c = PIEC[i % PIEC.length];
