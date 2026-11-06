@@ -343,7 +343,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 /* ---------- archivio dati (sostituibile con Supabase) ---------- */
 const Repo = {
   key: "sl_inventario_v1", cfg: window.SL_CONFIG || {}, mode: "local", ver: 0, busy: false, again: false,
-  fresh() { const d = JSON.parse(JSON.stringify(SEED)); return { aree: d.aree, inv: d.inventario, acq: d.acquisti, imgs: [], imgv: {}, int: [], fx: { pol: [], sp: [], bomb: [], fumo: [] }, bud: { anni: {}, forn: [], mov: [] } }; },
+  fresh() { const d = JSON.parse(JSON.stringify(SEED)); return { aree: d.aree, inv: d.inventario, acq: d.acquisti, imgs: [], imgv: {}, int: [], fx: { pol: [], sp: [], sch: [], bomb: [], fumo: [] }, bud: { anni: {}, forn: [], mov: [] } }; },
   loadLocal() { try { const t = localStorage.getItem(this.key); if (t) { const s = JSON.parse(t); if (s.inv && s.acq && s.aree) return s; } } catch (e) {} return null; },
   saveLocal(s) { try { localStorage.setItem(this.key, JSON.stringify(s)); return true; } catch (e) { return false; } },
   pwd() { try { return localStorage.getItem("sl_pwd") || ""; } catch (e) { return ""; } },
@@ -385,7 +385,7 @@ const Repo = {
   },
   async push(s) { const r = await this.call("PUT", { version: this.ver, data: s }); this.ver = r.version; }
 };
-const fixS = s => { if (!Array.isArray(s.int)) s.int = []; if (!s.fx || typeof s.fx !== "object") s.fx = {}; for (const q of ["pol", "sp", "bomb", "fumo"]) if (!Array.isArray(s.fx[q])) s.fx[q] = []; if (!s.bud || typeof s.bud !== "object") s.bud = {}; if (!s.bud.anni || typeof s.bud.anni !== "object" || Array.isArray(s.bud.anni)) s.bud.anni = {}; if (!Array.isArray(s.bud.forn)) s.bud.forn = []; if (!Array.isArray(s.bud.mov)) s.bud.mov = []; if (!Array.isArray(s.imgs)) s.imgs = []; if (!s.imgv || typeof s.imgv !== "object" || Array.isArray(s.imgv)) s.imgv = {}; return s; };
+const fixS = s => { if (!Array.isArray(s.int)) s.int = []; if (!s.fx || typeof s.fx !== "object") s.fx = {}; for (const q of ["pol", "sp", "sch", "bomb", "fumo"]) if (!Array.isArray(s.fx[q])) s.fx[q] = []; if (!s.bud || typeof s.bud !== "object") s.bud = {}; if (!s.bud.anni || typeof s.bud.anni !== "object" || Array.isArray(s.bud.anni)) s.bud.anni = {}; if (!Array.isArray(s.bud.forn)) s.bud.forn = []; if (!Array.isArray(s.bud.mov)) s.bud.mov = []; if (!Array.isArray(s.imgs)) s.imgs = []; if (!s.imgv || typeof s.imgv !== "object" || Array.isArray(s.imgv)) s.imgv = {}; return s; };
 let S = Repo.fresh();
 function setStato(t, err) { const e = $("#stato"); if (e) { e.textContent = t; e.style.color = err ? "var(--danger)" : "var(--muted)"; } }
 /* ---------- registro: chi ha fatto cosa e quando ---------- */
@@ -1754,6 +1754,8 @@ document.addEventListener("click", e => {
     case "fxEdit": dlgFx(t.dataset.k, id); break;
     case "fxDel": { const k = t.dataset.k, x = S.fx[k].find(i => i.id === id); if (x) dlgConferma("Elimina", `Eliminare «${esc(x.nome || x.tipo)}»?`, "Elimina", () => go(() => { S.fx[k] = S.fx[k].filter(i => i.id !== id); }, "Eliminato.")); break; }
     case "fxAdj": { const k = t.dataset.k, f = t.dataset.f, d = Number(t.dataset.d); go(() => { const x = S.fx[k].find(i => i.id === id); if (x) x[f] = Math.max(0, ni(x[f]) + d); }); break; }
+    case "fxUsa": dlgFxMin(id, false); break;
+    case "fxRic": dlgFxMin(id, true); break;
     case "fxRiempi": go(() => fxRiempi(id), "Sparkular riempita: polvere scalata."); break;
     case "selMode": ui.sel = ui.sel ? null : new Set(); listInv(); break;
     case "selRow": if (ui.sel) { ui.sel.has(id) ? ui.sel.delete(id) : ui.sel.add(id); listInv(); } break;
@@ -2005,10 +2007,11 @@ async function esportaBud() {
 /* ======================= EFFETTI SPECIALI ======================= */
 const uiF = { sez: "pol" };
 const USURA = ["Nuova", "Media", "Usurata"], STSP = ["ok", "da riempire", "fuori uso"];
-const FXSEZ = [["pol", "Polvere"], ["sp", "Schede sparkular"], ["bomb", "Bombolette fuoco"], ["fumo", "Taniche fumo"]];
-const FXNEW = { pol: "+ Polvere", sp: "+ Sparkular", bomb: "+ Bomboletta", fumo: "+ Tanica" };
+const FXSEZ = [["pol", "Polvere"], ["sp", "Sparkular"], ["sch", "Schede minuti"], ["bomb", "Bombolette fuoco"], ["fumo", "Taniche fumo"]];
+const FXNEW = { pol: "+ Polvere", sp: "+ Sparkular", sch: "+ Scheda", bomb: "+ Bomboletta", fumo: "+ Tanica" };
 const ni = v => Math.max(0, Math.floor(Number(v) || 0));
 const fxIdNuovo = a => a.reduce((m, x) => Math.max(m, x.id || 0), 0) + 1;
+const fxRes = c => Math.max(0, ni(c.minuti) - ni(c.usati));   // minuti residui sulla scheda
 const fxCap = p => ni(p.grandi) * 4 + ni(p.piccole);   // busta grande = 4 sparkular, piccola = 1
 function fxBilancio() {
   const T = new Map(), get = t => { const k = norm(t || "") || "—"; if (!T.has(k)) T.set(k, { tipo: (t || "").trim() || "—", cap: 0, grandi: 0, piccole: 0, serve: 0 }); return T.get(k); };
@@ -2019,9 +2022,9 @@ function fxBilancio() {
 function viewFx(v) {
   const B = fxBilancio(), tot = B.reduce((s, o) => s + o.cap, 0);
   v.innerHTML = `<div class="fxsum"><div class="fxbig"><b>${tot}</b> sparkular riempibili con la polvere rimasta</div>
-   ${B.filter(o => o.cap || o.serve).map(o => `<div class="fxrow"><b>${esc(o.tipo)}</b><span class="sub">${o.grandi} grandi · ${o.piccole} piccole → <b>${o.cap}</b> riempimenti${o.serve ? ` · ${o.serve} sparkular da riempire` : ""}</span>${o.serve > o.cap ? `<span class="chip r">mancano ${o.serve - o.cap}</span>` : o.serve ? `<span class="chip g">bastano</span>` : ""}</div>`).join("")}</div>
+   ${S.fx.sch.length ? `<div class="fxrow"><b>Schede minuti</b><span class="sub"><b>${S.fx.sch.reduce((t, c) => t + fxRes(c), 0)}</b> minuti residui su ${S.fx.sch.length} schede</span>${S.fx.sch.some(c => ni(c.min) && fxRes(c) <= ni(c.min)) ? `<span class="chip r">${S.fx.sch.filter(c => ni(c.min) && fxRes(c) <= ni(c.min)).length} da ricaricare</span>` : ""}</div>` : ""}${B.filter(o => o.cap || o.serve).map(o => `<div class="fxrow"><b>${esc(o.tipo)}</b><span class="sub">${o.grandi} grandi · ${o.piccole} piccole → <b>${o.cap}</b> riempimenti${o.serve ? ` · ${o.serve} sparkular da riempire` : ""}</span>${o.serve > o.cap ? `<span class="chip r">mancano ${o.serve - o.cap}</span>` : o.serve ? `<span class="chip g">bastano</span>` : ""}</div>`).join("")}</div>
    <div class="chips" style="margin:12px 0">${FXSEZ.map(([k, t]) => `<button class="fchip" aria-pressed="${uiF.sez === k}" data-act="fxSez" data-k="${k}">${t}</button>`).join("")}</div>
-   <div class="bar"><span class="grow sub">${uiF.sez === "pol" ? "Busta grande = 4 sparkular · busta piccola = 1 sparkular" : uiF.sez === "sp" ? "Ogni sparkular ha il suo tipo di polvere (cambia con l'usura)" : ""}</span><button class="btn pri fl" data-act="fxNew">${FXNEW[uiF.sez]}</button></div>
+   <div class="bar"><span class="grow sub">${uiF.sez === "pol" ? "Busta grande = 4 sparkular · busta piccola = 1 sparkular" : uiF.sez === "sp" ? "Ogni sparkular ha il suo tipo di polvere (cambia con l'usura)" : uiF.sez === "sch" ? "Schede con i minuti di funzionamento: «Usa minuti» li scala, «Ricarica» li ricarica" : ""}</span><button class="btn pri fl" data-act="fxNew">${FXNEW[uiF.sez]}</button></div>
    <div id="list"></div><button class="btn pri fab" data-act="fxNew" aria-label="Aggiungi"><span aria-hidden="true">+</span><span class="txt"> ${FXNEW[uiF.sez].slice(2)}</span></button>`;
   listFx();
 }
@@ -2032,6 +2035,11 @@ function listFx() {
   if (k === "pol") h = S.fx.pol.map(p => `<div class="fxit"><div class="fxm"><b>${esc(p.tipo)}</b><div class="sub">${esc(p.note || "")}</div></div>
      <div class="fxc"><span class="sub">Buste grandi</span>${stp("pol", p.id, "grandi", ni(p.grandi))}</div><div class="fxc"><span class="sub">Buste piccole</span>${stp("pol", p.id, "piccole", ni(p.piccole))}</div>
      <div class="fxc"><span class="sub">Riempimenti</span><b class="fxn">${fxCap(p)}</b></div><div class="acts">${fine("pol", p.id)}</div></div>`).join("");
+  else if (k === "sch") h = S.fx.sch.slice().sort((a, b) => String(a.nome).localeCompare(String(b.nome), "it", { numeric: true })).map(c => { const rs = fxRes(c), low = ni(c.min) && rs <= ni(c.min); return `<div class="fxit"><div class="fxm"><b>${esc(c.nome)}</b>${low ? ` <span class="chip r">da ricaricare</span>` : ""}<div class="sub">${esc(c.sparkular ? "Sparkular: " + c.sparkular : "")}${c.note ? " · " + esc(c.note) : ""}</div></div>
+     <div class="fxc"><span class="sub">Caricati</span><b>${ni(c.minuti)} min</b></div><div class="fxc"><span class="sub">Usati</span><b>${ni(c.usati)} min</b></div>
+     <div class="fxc"><span class="sub">Residui</span><b class="fxn" ${low ? 'style="color:var(--danger)"' : ""}>${rs} min</b></div>
+     <div class="fxc"><span class="sub">Ultima ricarica</span>${c.ric ? dataIt(new Date(c.ric).toISOString().slice(0, 10)) : "—"}</div>
+     <div class="acts"><button class="btn sm pri" data-act="fxUsa" data-id="${c.id}">Usa minuti</button><button class="btn sm" data-act="fxRic" data-id="${c.id}">Ricarica</button>${fine("sch", c.id)}</div></div>`; }).join("");
   else if (k === "sp") h = S.fx.sp.slice().sort((a, b) => String(a.nome).localeCompare(String(b.nome), "it", { numeric: true })).map(s => `<div class="fxit${s.stato === "fuori uso" ? " dis" : ""}"><div class="fxm"><b>${esc(s.nome)}</b><div class="sub">${esc(s.note || "")}</div></div>
      <div class="fxc"><span class="sub">Polvere</span><b>${esc(s.polvere || "—")}</b></div><div class="fxc"><span class="sub">Usura</span><span class="chip ${s.usura === "Usurata" ? "r" : s.usura === "Media" ? "o" : "g"}">${esc(s.usura || "—")}</span></div>
      <div class="fxc"><span class="sub">Stato</span><span class="chip ${s.stato === "da riempire" ? "o" : s.stato === "fuori uso" ? "r" : "g"}">${esc(s.stato || "ok")}</span></div>
@@ -2051,6 +2059,11 @@ function dlgFx(k, id) {
     <div class="g2">${numF("fG", "Buste grandi (4 sparkular)", x ? ni(x.grandi) : 0)}${numF("fP", "Buste piccole (1 sparkular)", x ? ni(x.piccole) : 0)}</div>
     <div class="f"><label for="fN">Note</label><input type="text" id="fN" value="${esc(x ? x.note || "" : "")}" autocomplete="off"></div><datalist id="dlFx">${dls().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`, {
     ok: "Salva", onOk: d => { const tipo = $("#fT", d).value.trim(); if (!tipo) throw new Err("Scrivi il tipo di polvere."); sal({ tipo, grandi: ni($("#fG", d).value), piccole: ni($("#fP", d).value), note: $("#fN", d).value.trim() }); } });
+  else if (k === "sch") dlg(id ? "Modifica scheda" : "Nuova scheda minuti", `<div class="f"><label for="fT">Nome / numero scheda</label><input type="text" id="fT" value="${esc(x ? x.nome : "")}" autocomplete="off"></div>
+    <div class="f"><label for="fU">Sparkular abbinata (facoltativo)</label><input type="text" id="fU" value="${esc(x ? x.sparkular || "" : "")}" autocomplete="off" list="dlSp"></div>
+    <div class="g2">${numF("fG", "Minuti caricati", x ? ni(x.minuti) : 0)}${numF("fP", "Minuti già usati", x ? ni(x.usati) : 0)}</div>${numF("fM", "Avviso se i minuti residui scendono a (0 = nessun avviso)", x ? ni(x.min) : 0)}
+    <div class="f"><label for="fN">Note</label><input type="text" id="fN" value="${esc(x ? x.note || "" : "")}" autocomplete="off"></div><datalist id="dlSp">${S.fx.sp.map(q => `<option value="${esc(q.nome)}">`).join("")}</datalist>`, {
+    ok: "Salva", onOk: d => { const nome = $("#fT", d).value.trim(); if (!nome) throw new Err("Scrivi il nome della scheda."); const m = ni($("#fG", d).value); sal({ nome, sparkular: $("#fU", d).value.trim(), minuti: m, usati: Math.min(ni($("#fP", d).value), m), min: ni($("#fM", d).value), note: $("#fN", d).value.trim() }); } });
   else if (k === "sp") dlg(id ? "Modifica sparkular" : "Nuova sparkular", `<div class="f"><label for="fT">Nome / numero</label><input type="text" id="fT" value="${esc(x ? x.nome : "")}" autocomplete="off"></div>
     <div class="g2"><div class="f"><label for="fU">Tipo di polvere</label><input type="text" id="fU" value="${esc(x ? x.polvere || "" : "")}" autocomplete="off" list="dlFx"></div><div class="f"><label for="fW">Usura</label><select id="fW">${USURA.map(u => `<option ${x && x.usura === u ? "selected" : ""}>${u}</option>`).join("")}</select></div></div>
     <div class="f"><label for="fS">Stato</label><select id="fS">${STSP.map(u => `<option ${(x ? x.stato : "ok") === u ? "selected" : ""}>${u}</option>`).join("")}</select></div>
@@ -2060,6 +2073,13 @@ function dlgFx(k, id) {
     <div class="g2">${numF("fG", "Piene", x ? ni(x.piene) : 0)}${numF("fP", "Vuote", x ? ni(x.vuote) : 0)}</div>${numF("fM", "Scorta minima (avviso se le piene arrivano a questo numero)", x ? ni(x.min) : 0)}
     <div class="f"><label for="fN">Note</label><input type="text" id="fN" value="${esc(x ? x.note || "" : "")}" autocomplete="off"></div>`, {
     ok: "Salva", onOk: d => { const nome = $("#fT", d).value.trim(); if (!nome) throw new Err("Scrivi il tipo."); sal({ nome, piene: ni($("#fG", d).value), vuote: ni($("#fP", d).value), min: ni($("#fM", d).value), note: $("#fN", d).value.trim() }); } });
+}
+function dlgFxMin(id, ric) {
+  const c = S.fx.sch.find(x => x.id === id); if (!c) return;
+  dlg(ric ? "Ricarica scheda " + esc(c.nome) : "Usa minuti · " + esc(c.nome), `<p class="sub">Residui adesso: <b>${fxRes(c)} min</b> (caricati ${ni(c.minuti)}, usati ${ni(c.usati)})</p>${numF("fMin", ric ? "Minuti da caricare sulla scheda" : "Minuti di funzionamento usati", "")}${ric ? `<div class="hint">La ricarica azzera i minuti usati e imposta i minuti caricati al valore inserito.</div>` : ""}`, {
+    ok: ric ? "Ricarica" : "Scala", init: d => setTimeout(() => $("#fMin", d).focus(), 50),
+    onOk: d => { const n = ni($("#fMin", d).value); if (!n) throw new Err("Inserisci i minuti."); go(() => { if (ric) { c.minuti = n; c.usati = 0; c.ric = Date.now(); } else c.usati = Math.min(ni(c.minuti), ni(c.usati) + n); }, ric ? "Scheda ricaricata." : "Minuti scalati."); }
+  });
 }
 function fxRiempi(id) {
   const s = S.fx.sp.find(x => x.id === id); if (!s) return;
@@ -2090,6 +2110,7 @@ function calcolaAvvisi() {
   const nv = S.inv.filter(r => r.ver).length; if (nv) L.push({ lv: 1, t: nv + " righe da verificare", d: "Spuntate in inventario", tab: "inv", q: "" });
   const g = anomalie().filter(x => x.gr === 3).length; if (g) L.push({ lv: 3, t: g + " controlli gravi", d: "Anomalie dei dati", tab: "con", q: "" });
   fxBilancio().forEach(o => { if (o.serve > o.cap) L.push({ lv: 2, t: "Polvere «" + o.tipo + "» insufficiente", d: "Mancano " + (o.serve - o.cap) + " riempimenti (" + o.serve + " sparkular da riempire)", tab: "fx", q: "" }); });
+  S.fx.sch.filter(c => ni(c.min) && fxRes(c) <= ni(c.min)).forEach(c => L.push({ lv: 2, t: "Scheda " + c.nome + " da ricaricare", d: fxRes(c) + " minuti residui (avviso a " + ni(c.min) + ")", tab: "fx", q: "" }));
   ["bomb", "fumo"].forEach(k => S.fx[k].filter(x => ni(x.min) && ni(x.piene) <= ni(x.min)).forEach(x => L.push({ lv: 2, t: (k === "bomb" ? "Bombolette " : "Taniche ") + x.nome + " in esaurimento", d: ni(x.piene) + " piene (minimo " + ni(x.min) + ")", tab: "fx", q: "" })));
   return L.sort((a, b) => b.lv - a.lv);
 }
