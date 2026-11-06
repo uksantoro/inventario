@@ -69,6 +69,7 @@ input[type=text],input[type=number],input[type=search],select,textarea{width:100
 .gr:last-child{border-bottom:0}
 .gr.dis{background:color-mix(in srgb,var(--muted) 16%,transparent)}.gr.dis .art,.gr.dis .cell{color:var(--muted)}
 .gr.s1{background:var(--y)}.gr.s2{background:var(--o)}.gr.s3{background:var(--r)}
+.gr.ver,.gr.ver.dis{background:color-mix(in srgb,#2e9e5b 24%,var(--bg))}.vchk{width:18px;height:18px;margin:0 8px 0 0;vertical-align:-3px;accent-color:#2e9e5b;cursor:pointer}
 .cols-inv{grid-template-columns:minmax(0,1.8fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) 52px 52px 52px 52px minmax(0,1.3fr) 284px}
 .mvs{display:none}
 .cols-inv .acts{flex-wrap:nowrap}
@@ -475,6 +476,7 @@ function fuse(r) { // unisce r in una riga identica (stesso articolo, area, orig
   if (!o) return r;
   o.qty = n0(o.qty) + n0(r.qty);
   for (const k of ["rotto", "ripar", "dismesso"]) o[k] = nz(n0(o[k]) + n0(r[k]));
+  if (r.ver) o.ver = true;
   if (!o.note && r.note) o.note = r.note;
   if (!o.marca && r.marca) o.marca = r.marca;
   if (!o.modello && r.modello) o.modello = r.modello;
@@ -588,7 +590,7 @@ function sposta(id, dest, n, take) {
     for (const x of take) { const f = P.find(y => y.o === x.o); if (!f || x.q > f.q) throw new Err("Da «" + x.o + "» non puoi prendere " + x.q + " pezzi."); }
   } else take = r.origine ? [{ o: r.origine, q: n }] : [];
   let t = S.inv.find(x => x.id !== r.id && norm(x.articolo) === norm(r.articolo) && (x.area || "") === (dest || "") && (x.grp ?? null) === (r.grp ?? null) && (r.rip || x.rip || norm(x.origine) === norm(r.origine)));
-  if (!t) { t = { id: nid(S.inv), articolo: r.articolo, area: dest || null, rotto: null, ripar: null, dismesso: null, note: r.note, marca: r.marca || null, modello: r.modello || null, qty: 0, origine: null, ord: nextOrd() }; if (r.grp != null) t.grp = r.grp; S.inv.push(t); }
+  if (!t) { t = { id: nid(S.inv), articolo: r.articolo, area: dest || null, rotto: null, ripar: null, dismesso: null, note: r.note, marca: r.marca || null, modello: r.modello || null, qty: 0, origine: null, ord: nextOrd() }; if (r.grp != null) t.grp = r.grp; if (r.ver) t.ver = true; S.inv.push(t); }
   const Pt = provDi(t);
   take.forEach(x => { const f = Pt.find(y => y.o === x.o); if (f) f.q += x.q; else Pt.push({ o: x.o, q: x.q }); });
   const Pr = P.map(x => { const k = take.find(y => y.o === x.o); return { o: x.o, q: x.q - (k ? k.q : 0) }; }).filter(x => x.q > 0);
@@ -772,6 +774,7 @@ function rowsInv() {
   if (ui.stato === "rip") R = R.filter(r => n0(r.ripar) > 0);
   if (ui.stato === "dis") R = R.filter(r => n0(r.dismesso) > 0);
   if (ui.stato === "noorg") R = R.filter(r => !r.origine);
+  if (ui.stato === "ver") R = R.filter(r => r.ver);
   const ordA = a => { const i = S.aree.indexOf(a); return i < 0 ? 999 : i; };
   return R.sort((a, b) => ui.area === "*" ? ordA(a.area) - ordA(b.area) || n0(a.ord) - n0(b.ord) : n0(a.ord) - n0(b.ord));
 }
@@ -784,7 +787,7 @@ function viewInv(v, SM) {
   <section style="min-width:0">
     <select class="areasel" id="areaSel" aria-label="Area" style="margin-bottom:10px">${side.map(([k, n]) => `<option value="${esc(k)}" ${ui.area === k ? "selected" : ""}>${esc(n)} (${pz(k)} pz)</option>`).join("")}</select>
     <div class="bar"><input type="search" class="grow" id="q" placeholder="Cerca articolo, marca, modello…" value="${esc(ui.q)}" aria-label="Cerca">
-      <select id="fSt" aria-label="Filtro stato"><option value="">Tutti gli stati</option><option value="rotti" ${ui.stato === "rotti" ? "selected" : ""}>Con rotti</option><option value="rip" ${ui.stato === "rip" ? "selected" : ""}>In riparazione</option><option value="dis" ${ui.stato === "dis" ? "selected" : ""}>Con dismessi</option><option value="noorg" ${ui.stato === "noorg" ? "selected" : ""}>Senza origine</option></select>
+      <select id="fSt" aria-label="Filtro stato"><option value="">Tutti gli stati</option><option value="rotti" ${ui.stato === "rotti" ? "selected" : ""}>Con rotti</option><option value="rip" ${ui.stato === "rip" ? "selected" : ""}>In riparazione</option><option value="dis" ${ui.stato === "dis" ? "selected" : ""}>Con dismessi</option><option value="noorg" ${ui.stato === "noorg" ? "selected" : ""}>Senza origine</option><option value="ver" ${ui.stato === "ver" ? "selected" : ""}>Da verificare (${S.inv.filter(r => r.ver).length})</option></select>
       <button class="btn pri fl" data-act="newInv">+ Articolo</button></div>
     <div id="list"></div></section></div>
   <button class="btn pri fab" data-act="newInv" aria-label="Nuovo articolo"><span aria-hidden="true">+</span><span class="txt"> Articolo</span></button>`;
@@ -805,7 +808,7 @@ function listInv(SM) {
     if (n0(r.rotto)) ch.push(`<span class="chip r">${r.rotto} rotti</span>`);
     if (n0(r.ripar)) ch.push(`<span class="chip o">${r.ripar} in rip.</span>`);
     if (n0(r.dismesso)) ch.push(`<span class="chip y">${r.dismesso} dismessi</span>`);
-    return `<div class="gr ri cols-inv ${s ? "s" + s : n0(r.dismesso) ? "dis" : ""}" data-act="det" data-id="${r.id}"><div class="art cell c-art">${esc(r.articolo)}${cam}${sub ? `<div class="sub">${sub}</div>` : ""}</div>
+    return `<div class="gr ri cols-inv ${s ? "s" + s : n0(r.dismesso) ? "dis" : ""}${r.ver ? " ver" : ""}" data-act="det" data-id="${r.id}"><div class="art cell c-art"><input type="checkbox" class="vchk" data-act="ver" data-id="${r.id}" ${r.ver ? "checked" : ""} title="Da verificare" aria-label="Da verificare">${esc(r.articolo)}${cam}${sub ? `<div class="sub">${sub}</div>` : ""}</div>
       <div class="c-ma cell">${esc(r.marca || "")}</div><div class="c-mo cell">${esc(r.modello || "")}</div>
       <div class="c-or cell sub" data-l="Origine">${esc(r.origine || "—")}</div>
       <div class="nums" style="display:contents"><div class="num cell c-q" data-l="Qtà"><b>${r.qty ?? "—"}</b></div><div class="num cell" data-l="Rotti">${r.rotto ?? "·"}</div><div class="num cell" data-l="Rip.">${r.ripar ?? "·"}</div><div class="num cell" data-l="Dism.">${r.dismesso ?? "·"}</div></div>
@@ -866,22 +869,26 @@ function dlgDettaglio(id) {
   const key = norm(r.articolo), has = S.imgs.includes(key);
   const prov = r.rip ? r.rip.map(x => esc(x.o) + " · " + x.q + " pz").join("<br>") : esc(r.origine || "");
   const kv = (k, v) => v || v === 0 ? `<dt>${k}</dt><dd>${v}</dd>` : "";
-  const d = dlg(esc(r.articolo), `<div class="ph" id="phBox">${has ? "Carico la foto…" : "Nessuna foto"}</div>
+  const pos = righeKey(grpKey(r)).sort((a, b) => (a.area || "~").localeCompare(b.area || "~", "it")), multiN = new Set(pos.map(x => norm(x.articolo))).size > 1;
+  const dove = `<div class="lab">Dove si trova · totale <b>${pos.reduce((t, x) => t + n0(x.qty), 0)} pz</b></div><div class="un">${pos.map(x => `<div class="r"${x.id !== id ? ` data-pos="${x.id}" style="cursor:pointer"` : ` style="border-color:var(--brand)"`}><b>${esc(x.area || "Da assegnare")}</b><span class="sub"><b style="color:var(--fg)">${n0(x.qty)}</b> pz</span>${provHtml(x)}${multiN ? `<span class="sub">«${esc(x.articolo)}»</span>` : ""}${n0(x.rotto) ? `<span class="chip r">${x.rotto} rotti</span>` : ""}${x.id === id ? `<span class="chip">questa riga</span>` : ""}</div>`).join("")}</div>`;
+  const d = dlg(esc(r.articolo), dove + `<div class="ph" id="phBox">${has ? "Carico la foto…" : "Nessuna foto"}</div>
    <div class="dacts"><button type="button" class="btn sm" id="bFoto">${has ? "Cambia foto" : "Aggiungi foto"}</button>${has ? `<button type="button" class="btn sm dng" id="bFotoDel">Rimuovi foto</button>` : ""}</div>
    <input type="file" id="fImg" accept="image/*" hidden>
    <dl class="kv">${kv("Area", esc(r.area || "Da assegnare"))}${kv("Marca", esc(r.marca))}${kv("Modello", esc(r.modello))}${kv("Quantità", `<b>${r.qty ?? "—"}</b>`)}${kv("Rotti", n0(r.rotto) ? r.rotto : "")}${kv("In riparazione", n0(r.ripar) ? r.ripar : "")}${kv("Dismessi", n0(r.dismesso) ? r.dismesso : "")}${kv("Einkauf", prov)}${kv("Note", esc(r.note))}</dl>
    ${r.grp != null ? `<div class="hint">Collegato con: ${righeKey(grpKey(r)).filter(x => x.id !== r.id).map(x => `<b>${esc(x.articolo)}</b> (${esc(x.area || "Da assegnare")}, ${n0(x.qty)} pz)`).join(", ")}</div>` : ""}
-   <div class="dacts"><button type="button" class="btn pri" data-x="edit">Modifica</button><button type="button" class="btn" data-x="move">Sposta</button><button type="button" class="btn" data-x="stato">Stato</button><button type="button" class="btn" data-x="sim">Collega a simile…</button>${r.grp != null ? `<button type="button" class="btn" data-x="unsim">Scollega</button>` : ""}<button type="button" class="btn dng" data-x="del">Elimina</button></div>`, {
+   <div class="dacts"><button type="button" class="btn pri" data-x="edit">Modifica</button><button type="button" class="btn" data-x="move">Sposta</button><button type="button" class="btn" data-x="stato">Stato</button><button type="button" class="btn" data-x="ver">${r.ver ? "Togli da verificare" : "Da verificare"}</button><button type="button" class="btn" data-x="sim">Collega a simile…</button>${r.grp != null ? `<button type="button" class="btn" data-x="unsim">Scollega</button>` : ""}<button type="button" class="btn dng" data-x="del">Elimina</button></div>`, {
     noCancel: true, ok: "Chiudi", onOk: () => {},
     init: d => {
       d.dataset.inv = id;
       if (has) Img.get(key).then(u => { const b = $("#phBox", d); if (!b) return; if (u) { b.innerHTML = `<img alt="">`; b.firstChild.src = u; } else b.textContent = "Foto non disponibile"; }).catch(() => { const b = $("#phBox", d); if (b) b.textContent = "Foto non disponibile"; });
+      d.querySelectorAll("[data-pos]").forEach(b => b.onclick = () => { closeDlg(); dlgDettaglio(Number(b.dataset.pos)); });
       $("#bFoto", d).onclick = () => $("#fImg", d).click();
       $("#fImg", d).onchange = ev => { const f = ev.target.files[0]; ev.target.value = ""; if (f) salvaFoto(id, f); };
       const del = $("#bFotoDel", d); if (del) del.onclick = () => rimuoviFoto(id);
       d.querySelectorAll("[data-x]").forEach(b => b.onclick = () => {
         const x = b.dataset.x; closeDlg();
         if (x === "edit") dlgRiga(id); else if (x === "move") dlgSposta(id); else if (x === "stato") dlgStato(id); else if (x === "sim") dlgSimile(id);
+        else if (x === "ver") go(() => { if (r.ver) delete r.ver; else r.ver = true; });
         else if (x === "unsim") run(() => scollegaSimile(id), "Scollegato.");
         else dlgConferma("Elimina articolo", `Eliminare «${esc(r.articolo)}» (${r.qty} pz, ${esc(r.area || "Da assegnare")}) dall'inventario? Gli acquisti collegati restano ma risulteranno non collegati.`, "Elimina", () => run(() => eliminaRiga(id), "Eliminato."));
       });
@@ -1159,6 +1166,7 @@ function unisciRighe(ids, nome, totale) {
   for (let i = agg.length - 1; i >= 0 && rem > 0; i--) { const d = Math.min(agg[i].q, rem); agg[i].q -= d; rem -= d; }
   for (let i = agg.length - 1; i >= 0; i--) if (agg[i].q <= 0) agg.splice(i, 1);
   const grpU = (rows.find(r => r.grp != null) || {}).grp; if (grpU != null) target.grp = grpU;
+  if (rows.some(r => r.ver)) target.ver = true;
   Object.assign(target, { articolo: nome, qty: qtot, rotto: nz(somma("rotto")), ripar: nz(somma("ripar")), dismesso: nz(somma("dismesso")), note, marca, modello });
   setOrigini(target, agg); clampStati(target); sincAcq(target);
   nomiVecchi.forEach(n => migraFoto(n, nome));
@@ -1561,6 +1569,7 @@ document.addEventListener("click", e => {
   const id = Number(t.dataset.id);
   switch (t.dataset.act) {
     case "newInv": dlgRiga(null); break;
+    case "ver": go(() => { const r = invRow(id); if (r) { if (r.ver) delete r.ver; else r.ver = true; } }); break;
     case "det": dlgDettaglio(id); break;
     case "detAcq": { const a = S.acq.find(x => x.id === id), r = a && invDiAcq(a); if (r) dlgDettaglio(r.id); else toast("Questo articolo non è ancora nell'inventario: usa «Collega»."); break; }
     case "editInv": dlgRiga(id); break;
