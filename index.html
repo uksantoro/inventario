@@ -78,6 +78,9 @@ input[type=text],input[type=number],input[type=search],select,textarea{width:100
 .gr:last-child{border-bottom:0}
 .gr.dis{background:color-mix(in srgb,var(--muted) 16%,transparent)}.gr.dis .art,.gr.dis .cell{color:var(--muted)}
 .gr.s1{background:var(--y)}.gr.s2{background:var(--o)}.gr.s3{background:var(--r)}
+.gr.prv,.gr.prv.dis{background:color-mix(in srgb,#38b6ff 24%,var(--bg))}.fxsum{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;display:grid;gap:8px}.fxbig{font-size:16px}.fxbig b{font-size:30px;font-variant-numeric:tabular-nums;color:var(--brand)}.fxrow{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.fxit{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}.fxit:last-child{border-bottom:0}.fxit.dis{opacity:.6}.fxm{flex:1 1 180px;min-width:0}.fxc{display:grid;gap:3px;min-width:70px}.fxn{font-size:20px;font-variant-numeric:tabular-nums}.stp{display:inline-flex;align-items:center;gap:8px}.stp b{min-width:22px;text-align:center;font-size:18px;font-variant-numeric:tabular-nums}
+.chip.pv{background:color-mix(in srgb,#38b6ff 38%,var(--bg));color:var(--fg)}.selchk{accent-color:#1c7ed6}
 .gr.ver{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.gr.ver,.gr.ver.dis{background:color-mix(in srgb,#2e9e5b 24%,var(--bg))}.vchk{width:18px;height:18px;margin:0 8px 0 0;vertical-align:-3px;accent-color:#2e9e5b;cursor:pointer}
 .cols-inv{grid-template-columns:minmax(0,1.8fr) minmax(0,.9fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) 52px 52px 52px 52px minmax(0,1.3fr) 284px}
 .gh>div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.subar{display:none}
@@ -340,7 +343,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 /* ---------- archivio dati (sostituibile con Supabase) ---------- */
 const Repo = {
   key: "sl_inventario_v1", cfg: window.SL_CONFIG || {}, mode: "local", ver: 0, busy: false, again: false,
-  fresh() { const d = JSON.parse(JSON.stringify(SEED)); return { aree: d.aree, inv: d.inventario, acq: d.acquisti, imgs: [], imgv: {}, int: [], bud: { anni: {}, forn: [], mov: [] } }; },
+  fresh() { const d = JSON.parse(JSON.stringify(SEED)); return { aree: d.aree, inv: d.inventario, acq: d.acquisti, imgs: [], imgv: {}, int: [], fx: { pol: [], sp: [], bomb: [], fumo: [] }, bud: { anni: {}, forn: [], mov: [] } }; },
   loadLocal() { try { const t = localStorage.getItem(this.key); if (t) { const s = JSON.parse(t); if (s.inv && s.acq && s.aree) return s; } } catch (e) {} return null; },
   saveLocal(s) { try { localStorage.setItem(this.key, JSON.stringify(s)); return true; } catch (e) { return false; } },
   pwd() { try { return localStorage.getItem("sl_pwd") || ""; } catch (e) { return ""; } },
@@ -382,7 +385,7 @@ const Repo = {
   },
   async push(s) { const r = await this.call("PUT", { version: this.ver, data: s }); this.ver = r.version; }
 };
-const fixS = s => { if (!Array.isArray(s.int)) s.int = []; if (!s.bud || typeof s.bud !== "object") s.bud = {}; if (!s.bud.anni || typeof s.bud.anni !== "object" || Array.isArray(s.bud.anni)) s.bud.anni = {}; if (!Array.isArray(s.bud.forn)) s.bud.forn = []; if (!Array.isArray(s.bud.mov)) s.bud.mov = []; if (!Array.isArray(s.imgs)) s.imgs = []; if (!s.imgv || typeof s.imgv !== "object" || Array.isArray(s.imgv)) s.imgv = {}; return s; };
+const fixS = s => { if (!Array.isArray(s.int)) s.int = []; if (!s.fx || typeof s.fx !== "object") s.fx = {}; for (const q of ["pol", "sp", "bomb", "fumo"]) if (!Array.isArray(s.fx[q])) s.fx[q] = []; if (!s.bud || typeof s.bud !== "object") s.bud = {}; if (!s.bud.anni || typeof s.bud.anni !== "object" || Array.isArray(s.bud.anni)) s.bud.anni = {}; if (!Array.isArray(s.bud.forn)) s.bud.forn = []; if (!Array.isArray(s.bud.mov)) s.bud.mov = []; if (!Array.isArray(s.imgs)) s.imgs = []; if (!s.imgv || typeof s.imgv !== "object" || Array.isArray(s.imgv)) s.imgv = {}; return s; };
 let S = Repo.fresh();
 function setStato(t, err) { const e = $("#stato"); if (e) { e.textContent = t; e.style.color = err ? "var(--danger)" : "var(--muted)"; } }
 /* ---------- registro: chi ha fatto cosa e quando ---------- */
@@ -510,7 +513,7 @@ function fuse(r) { // unisce r in una riga identica (stesso articolo, area, orig
   if (!o) return r;
   o.qty = n0(o.qty) + n0(r.qty);
   for (const k of ["rotto", "ripar", "dismesso"]) o[k] = nz(n0(o[k]) + n0(r[k]));
-  if (r.ver && !o.ver) o.ver = r.ver;
+  if (r.ver && !o.ver) o.ver = r.ver; if (r.prova && !o.prova) o.prova = r.prova;
   if (r.rf && !o.rf) o.rf = r.rf; if (r.rd && !o.rd) o.rd = r.rd; if (r.rn && !o.rn) o.rn = r.rn;
   if (!o.note && r.note) o.note = r.note;
   if (!o.marca && r.marca) o.marca = r.marca;
@@ -736,6 +739,7 @@ const TABS = [
   ["show", "Show/Live", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 15l-5-5-8 8M8 21h8"/></svg>'],
   ["oggi", "Oggi", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 00-6 6c0 5-2 6-2 6h16s-2-1-2-6a6 6 0 00-6-6z"/><path d="M10 19a2 2 0 004 0"/></svg>'],
   ["int", "Interventi", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 005 5L20 17l-3 3-5.7-.3L5 13.4V9l3 3 4-4-3-3h4.4z"/></svg>'],
+  ["fx", "Effetti", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.2 6.3L21 9l-5 4.2 1.7 6.8L12 16.5 6.3 20l1.7-6.8L3 9l6.8-.7z"/></svg>'],
   ["bud", "Budget", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9h9"/></svg>'],
   ["uni", "Unisci", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v5a4 4 0 004 4h2a4 4 0 014 4v3"/><path d="M17 4v5a4 4 0 01-4 4"/><path d="M14 17l3 3 3-3"/></svg>'],
   ["log", "Registro", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h11v16H5V4h3z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>'],
@@ -814,6 +818,7 @@ function render() {
   else if (ui.tab === "oggi") viewOggi(v);
   else if (ui.tab === "int") viewInt(v);
   else if (ui.tab === "bud") viewBud(v);
+  else if (ui.tab === "fx") viewFx(v);
   else viewCon(v, L);
 }
 
@@ -829,6 +834,7 @@ function rowsInv() {
   if (ui.stato === "dis") R = R.filter(r => n0(r.dismesso) > 0);
   if (ui.stato === "noorg") R = R.filter(r => !r.origine);
   if (ui.stato === "ver") R = R.filter(r => r.ver);
+  if (ui.stato === "prova") R = R.filter(r => r.prova);
   const ordA = a => { const i = S.aree.indexOf(a); return i < 0 ? 999 : i; };
   R.sort((a, b) => ui.area === "*" ? ordA(a.area) - ordA(b.area) || n0(a.ord) - n0(b.ord) : n0(a.ord) - n0(b.ord));
   return ordina("inv", R, { articolo: r => r.articolo, area: r => r.area || "", marca: r => r.marca || "", modello: r => r.modello || "", origine: r => r.origine || "", qty: r => n0(r.qty), rotto: r => n0(r.rotto), ripar: r => n0(r.ripar), dismesso: r => n0(r.dismesso), note: r => r.note || "" });
@@ -842,9 +848,10 @@ function viewInv(v, SM) {
   <section style="min-width:0">
     <select class="areasel" id="areaSel" aria-label="Area" style="margin-bottom:10px">${side.map(([k, n]) => `<option value="${esc(k)}" ${ui.area === k ? "selected" : ""}>${esc(n)} (${pz(k)} pz)</option>`).join("")}</select>
     <div class="bar"><input type="search" class="grow" id="q" placeholder="Cerca articolo, marca, modello…" value="${esc(ui.q)}" aria-label="Cerca">
-      <select id="fSt" aria-label="Filtro stato"><option value="">Tutti gli stati</option><option value="rotti" ${ui.stato === "rotti" ? "selected" : ""}>Con rotti</option><option value="rip" ${ui.stato === "rip" ? "selected" : ""}>In riparazione</option><option value="dis" ${ui.stato === "dis" ? "selected" : ""}>Con dismessi</option><option value="noorg" ${ui.stato === "noorg" ? "selected" : ""}>Senza origine</option><option value="ver" ${ui.stato === "ver" ? "selected" : ""}>Da verificare (${S.inv.filter(r => r.ver).length})</option></select>
+      <select id="fSt" aria-label="Filtro stato"><option value="">Tutti gli stati</option><option value="rotti" ${ui.stato === "rotti" ? "selected" : ""}>Con rotti</option><option value="rip" ${ui.stato === "rip" ? "selected" : ""}>In riparazione</option><option value="dis" ${ui.stato === "dis" ? "selected" : ""}>Con dismessi</option><option value="noorg" ${ui.stato === "noorg" ? "selected" : ""}>Senza origine</option><option value="ver" ${ui.stato === "ver" ? "selected" : ""}>Da verificare (${S.inv.filter(r => r.ver).length})</option><option value="prova" ${ui.stato === "prova" ? "selected" : ""}>Da provare (${S.inv.filter(r => r.prova).length})</option></select>
+      <button class="btn" data-act="selMode" id="bSel">Seleziona</button>
       <button class="btn pri fl" data-act="newInv">+ Articolo</button></div>
-    <div id="list"></div></section></div>
+    <div id="selbar"></div><div id="list"></div></section></div>
   <button class="btn pri fab" data-act="newInv" aria-label="Nuovo articolo"><span aria-hidden="true">+</span><span class="txt"> Articolo</span></button>`;
   listInv(SM);
 }
@@ -852,6 +859,8 @@ const CAM = '<span class="cam" title="Con foto"><svg viewBox="0 0 24 24" fill="n
 function listInv(SM) {
   SM = SM || sevMap(anomalie());
   const R = rowsInv(); const tot = R.reduce((s, r) => s + n0(r.qty), 0);
+  const sb = $("#selbar"); if (sb) sb.innerHTML = ui.sel ? `<div class="sum2"><span><b>${ui.sel.size}</b> selezionati</span><button class="btn sm pri" data-act="selProva">Segna da provare</button><button class="btn sm" data-act="selNoProva">Togli da provare</button><button class="btn sm" data-act="selAll">Tutti i visibili</button><button class="btn sm" data-act="selMode">Fine</button></div>` : "";
+  const bs = $("#bSel"); if (bs) { bs.textContent = ui.sel ? "Fine selezione" : "Seleziona"; bs.setAttribute("aria-pressed", !!ui.sel); }
   const tr = k => R.reduce((s, r) => s + n0(r[k]), 0);
   const html = R.length ? `<div class="gh cols-inv">${hd("inv", "articolo", "Articolo")}${hd("inv", "area", "Area", "c-ar")}${hd("inv", "marca", "Marca", "c-ma")}${hd("inv", "modello", "Modello", "c-mo")}${hd("inv", "origine", "Origine", "c-or")}${hd("inv", "qty", "Qtà", "num")}${hd("inv", "rotto", "Rotti", "num")}${hd("inv", "ripar", "Rip.", "num")}${hd("inv", "dismesso", "Dism.", "num")}${hd("inv", "note", "Note", "c-no")}<div></div></div>` + R.map(r => {
     const s = SM.inv.get(r.id) || 0;
@@ -863,7 +872,9 @@ function listInv(SM) {
     if (n0(r.rotto)) ch.push(`<span class="chip r">${r.rotto} rotti</span>`);
     if (n0(r.ripar)) ch.push(`<span class="chip o" title="${esc(ripTxt(r))}">${r.ripar} in rip.${r.rf ? " · " + esc(r.rf) : ""}</span>`);
     if (n0(r.dismesso)) ch.push(`<span class="chip y">${r.dismesso} dismessi</span>`);
-    return `<div class="gr ri cols-inv ${s ? "s" + s : n0(r.dismesso) ? "dis" : ""}${r.ver ? " ver" : ""}" data-act="det" data-id="${r.id}"${r.ver ? ` data-vt="${esc(verTxt(r))}" title="${esc(verTxt(r))}"` : ""}><div class="art cell c-art"><input type="checkbox" class="vchk" data-act="ver" data-id="${r.id}" ${r.ver ? "checked" : ""} title="Da verificare" aria-label="Da verificare">${esc(r.articolo)}${cam}${sub ? `<div class="sub">${sub}</div>` : ""}</div>
+    if (r.prova) ch.push(`<span class="chip pv">da provare</span>`);
+    const chk = ui.sel ? `<input type="checkbox" class="vchk selchk" data-act="selRow" data-id="${r.id}" ${ui.sel.has(r.id) ? "checked" : ""} aria-label="Seleziona">` : `<input type="checkbox" class="vchk" data-act="ver" data-id="${r.id}" ${r.ver ? "checked" : ""} title="Da verificare" aria-label="Da verificare">`;
+    return `<div class="gr ri cols-inv ${s ? "s" + s : n0(r.dismesso) ? "dis" : ""}${r.prova ? " prv" : ""}${r.ver ? " ver" : ""}" data-act="${ui.sel ? "selRow" : "det"}" data-id="${r.id}"${r.ver ? ` data-vt="${esc(verTxt(r))}" title="${esc(verTxt(r))}"` : ""}><div class="art cell c-art">${chk}${esc(r.articolo)}${cam}${sub ? `<div class="sub">${sub}</div>` : ""}</div>
       <div class="c-ar cell sub">${esc(r.area || "Da assegnare")}</div><div class="c-ma cell">${esc(r.marca || "")}</div><div class="c-mo cell">${esc(r.modello || "")}</div>
       <div class="c-or cell sub" data-l="Origine">${esc(r.origine || "—")}</div>
       <div class="nums" style="display:contents"><div class="num cell c-q" data-l="Qtà"><b>${r.qty ?? "—"}</b></div><div class="num cell" data-l="Rotti">${r.rotto ?? "·"}</div><div class="num cell" data-l="Rip.">${r.ripar ?? "·"}</div><div class="num cell" data-l="Dism.">${r.dismesso ?? "·"}</div></div>
@@ -964,7 +975,7 @@ function dlgDettaglio(id) {
    <input type="file" id="fImg" accept="image/*" hidden><input type="file" id="fCam" accept="image/*" capture="environment" hidden>
    <dl class="kv">${kv("Area", esc(r.area || "Da assegnare"))}${kv("Marca", esc(r.marca))}${kv("Modello", esc(r.modello))}${kv("Quantità", `<b>${r.qty ?? "—"}</b>`)}${kv("Rotti", n0(r.rotto) ? r.rotto : "")}${kv("In riparazione", n0(r.ripar) ? r.ripar : "")}${kv("Riparazione", n0(r.ripar) ? esc(ripTxt(r)) : "")}${kv("Dismessi", n0(r.dismesso) ? r.dismesso : "")}${kv("Einkauf", prov)}${kv("Note", esc(r.note))}</dl>
    ${r.grp != null ? `<div class="hint">Collegato con: ${righeKey(grpKey(r)).filter(x => x.id !== r.id).map(x => `<b>${esc(x.articolo)}</b> (${esc(x.area || "Da assegnare")}, ${n0(x.qty)} pz)`).join(", ")}</div>` : ""}
-   <div class="dacts"><button type="button" class="btn pri" data-x="edit">Modifica</button><button type="button" class="btn" data-x="move">Sposta</button><button type="button" class="btn" data-x="stato">Stato</button><button type="button" class="btn" data-x="int">Intervento</button><button type="button" class="btn" data-x="ver">${r.ver ? "Togli da verificare" : "Da verificare"}</button><button type="button" class="btn" data-x="sim">Collega a simile…</button>${r.grp != null ? `<button type="button" class="btn" data-x="unsim">Scollega</button>` : ""}<button type="button" class="btn dng" data-x="del">Elimina</button></div>`, {
+   <div class="dacts"><button type="button" class="btn pri" data-x="edit">Modifica</button><button type="button" class="btn" data-x="move">Sposta</button><button type="button" class="btn" data-x="stato">Stato</button><button type="button" class="btn" data-x="int">Intervento</button><button type="button" class="btn" data-x="ver">${r.ver ? "Togli da verificare" : "Da verificare"}</button><button type="button" class="btn" data-x="prova">${r.prova ? "Togli da provare" : "Da provare"}</button><button type="button" class="btn" data-x="sim">Collega a simile…</button>${r.grp != null ? `<button type="button" class="btn" data-x="unsim">Scollega</button>` : ""}<button type="button" class="btn dng" data-x="del">Elimina</button></div>`, {
     noCancel: true, ok: "Chiudi", onOk: () => {},
     init: d => {
       d.dataset.inv = id; ui.dlgS = { t: "det", id };
@@ -980,6 +991,7 @@ function dlgDettaglio(id) {
         const x = b.dataset.x; closeDlg();
         if (x === "edit") dlgRiga(id); else if (x === "move") dlgSposta(id); else if (x === "stato") dlgStato(id); else if (x === "sim") dlgSimile(id); else if (x === "int") dlgInt(null, { art: r.articolo, dove: r.area || "", tipo: "" });
         else if (x === "ver") go(() => { if (r.ver) delete r.ver; else r.ver = Date.now(); });
+        else if (x === "prova") go(() => { if (r.prova) delete r.prova; else r.prova = Date.now(); });
         else if (x === "unsim") run(() => scollegaSimile(id), "Scollegato.");
         else dlgConferma("Elimina articolo", `Eliminare «${esc(r.articolo)}» (${r.qty} pz, ${esc(r.area || "Da assegnare")}) dall'inventario? Gli acquisti collegati restano ma risulteranno non collegati.`, "Elimina", () => run(() => eliminaRiga(id), "Eliminato."));
       });
@@ -1264,7 +1276,7 @@ function unisciRighe(ids, nome, totale) {
   for (let i = agg.length - 1; i >= 0 && rem > 0; i--) { const d = Math.min(agg[i].q, rem); agg[i].q -= d; rem -= d; }
   for (let i = agg.length - 1; i >= 0; i--) if (agg[i].q <= 0) agg.splice(i, 1);
   const grpU = (rows.find(r => r.grp != null) || {}).grp; if (grpU != null) target.grp = grpU;
-  const rv = rows.find(r => r.ver); if (rv) target.ver = rv.ver;
+  const rv = rows.find(r => r.ver); if (rv) target.ver = rv.ver; const rpv = rows.find(r => r.prova); if (rpv) target.prova = rpv.prova;
   const rr = rows.find(r => r.rf || r.rd || r.rn); if (rr) { if (rr.rf) target.rf = rr.rf; if (rr.rd) target.rd = rr.rd; if (rr.rn) target.rn = rr.rn; }
   Object.assign(target, { articolo: nome, qty: qtot, rotto: nz(somma("rotto")), ripar: nz(somma("ripar")), dismesso: nz(somma("dismesso")), note, marca, modello });
   setOrigini(target, agg); clampStati(target); sincAcq(target);
@@ -1496,7 +1508,7 @@ function dlgShowModifica(id) {
 }
 function dlgAltro() {
   const { g, m } = (() => { const L = anomalie(); return { g: L.filter(x => x.gr === 3).length, m: L.filter(x => x.gr === 2).length }; })();
-  const voci = [["oggi", "Oggi · avvisi", calcolaAvvisi().filter(a => a.lv >= 2).length], ["int", "Interventi", S.int.filter(x => !x.fatto).length], ["bud", "Budget", 0], ["uni", "Unisci articoli simili", gruppiSimili().length], ["rie", "Riepilogo", 0], ["log", "Registro modifiche", 0], ["con", "Controlli", g || m]];
+  const voci = [["oggi", "Oggi · avvisi", calcolaAvvisi().filter(a => a.lv >= 2).length], ["int", "Interventi", S.int.filter(x => !x.fatto).length], ["bud", "Budget", 0], ["fx", "Effetti speciali", 0], ["uni", "Unisci articoli simili", gruppiSimili().length], ["rie", "Riepilogo", 0], ["log", "Registro modifiche", 0], ["con", "Controlli", g || m]];
   dlg("Altre sezioni", `<div class="menu">${voci.map(([k, t, n]) => `<button class="btn" data-tab="${k}">${t}${n ? ` <span class="badge ${k === "con" && g ? "" : "o"}">${n}</span>` : ""}</button>`).join("")}</div>`, { noCancel: true });
 }
 
@@ -1737,6 +1749,16 @@ document.addEventListener("click", e => {
     case "ver": go(() => { const r = invRow(id); if (r) { if (r.ver) delete r.ver; else r.ver = Date.now(); } }); break;
     case "sort": { const v = t.dataset.v, k = t.dataset.k, o = ui.sort[v]; ui.sort[v] = o && o.k === k ? { k, d: -o.d } : { k, d: 1 }; if (v === "inv") listInv(); else if (v === "acq") listAcq(); else if (v === "int") listInt(); else if (v === "mov") listMov(); else listRie(); break; }
     case "det": dlgDettaglio(id); break;
+    case "fxSez": uiF.sez = t.dataset.k; render(); break;
+    case "fxNew": dlgFx(uiF.sez, null); break;
+    case "fxEdit": dlgFx(t.dataset.k, id); break;
+    case "fxDel": { const k = t.dataset.k, x = S.fx[k].find(i => i.id === id); if (x) dlgConferma("Elimina", `Eliminare «${esc(x.nome || x.tipo)}»?`, "Elimina", () => go(() => { S.fx[k] = S.fx[k].filter(i => i.id !== id); }, "Eliminato.")); break; }
+    case "fxAdj": { const k = t.dataset.k, f = t.dataset.f, d = Number(t.dataset.d); go(() => { const x = S.fx[k].find(i => i.id === id); if (x) x[f] = Math.max(0, ni(x[f]) + d); }); break; }
+    case "fxRiempi": go(() => fxRiempi(id), "Sparkular riempita: polvere scalata."); break;
+    case "selMode": ui.sel = ui.sel ? null : new Set(); listInv(); break;
+    case "selRow": if (ui.sel) { ui.sel.has(id) ? ui.sel.delete(id) : ui.sel.add(id); listInv(); } break;
+    case "selAll": if (ui.sel) { rowsInv().forEach(r => ui.sel.add(r.id)); listInv(); } break;
+    case "selProva": case "selNoProva": { const ids = [...(ui.sel || [])]; if (!ids.length) { toast("Seleziona almeno un articolo."); break; } const on = t.dataset.act === "selProva"; ui.sel = null; go(() => ids.forEach(i => { const r = invRow(i); if (!r) return; if (on) r.prova = Date.now(); else delete r.prova; }), on ? ids.length + " articoli segnati da provare." : "Tolti da \"da provare\"."); break; }
     case "detAcq": { const a = S.acq.find(x => x.id === id), r = a && invDiAcq(a); if (r) dlgDettaglio(r.id); else toast("Questo articolo non è ancora nell'inventario: usa «Collega»."); break; }
     case "editInv": dlgRiga(id); break;
     case "move": dlgSposta(id); break;
@@ -1861,7 +1883,7 @@ function leggiVista() { try { const v = JSON.parse(localStorage.getItem(VISTA) |
 let vistaRip = false;
 function ripristinaVista() {
   const v = leggiVista(); if (!v) return;
-  const TABS_OK = ["inv", "acq", "rie", "con", "uni", "bat", "show", "log", "int", "bud", "oggi"];
+  const TABS_OK = ["inv", "acq", "rie", "con", "uni", "bat", "show", "log", "int", "bud", "fx", "oggi"];
   if (v.ui) { Object.assign(ui, v.ui, { gr: new Set(Array.isArray(v.ui.gr) && v.ui.gr.length ? v.ui.gr : [3, 2, 1]) }); if (!TABS_OK.includes(ui.tab)) ui.tab = "inv"; }
   if (v.ui3) Object.assign(ui3, v.ui3); if (v.ui2) Object.assign(ui2, v.ui2);
   vistaRip = v;
@@ -1980,6 +2002,73 @@ async function esportaBud() {
   stileXl(rs); await salvaFile("SL_Budget_" + today() + ".xlsx", await xlBlob(wb));
 }
 
+/* ======================= EFFETTI SPECIALI ======================= */
+const uiF = { sez: "pol" };
+const USURA = ["Nuova", "Media", "Usurata"], STSP = ["ok", "da riempire", "fuori uso"];
+const FXSEZ = [["pol", "Polvere"], ["sp", "Schede sparkular"], ["bomb", "Bombolette fuoco"], ["fumo", "Taniche fumo"]];
+const FXNEW = { pol: "+ Polvere", sp: "+ Sparkular", bomb: "+ Bomboletta", fumo: "+ Tanica" };
+const ni = v => Math.max(0, Math.floor(Number(v) || 0));
+const fxIdNuovo = a => a.reduce((m, x) => Math.max(m, x.id || 0), 0) + 1;
+const fxCap = p => ni(p.grandi) * 4 + ni(p.piccole);   // busta grande = 4 sparkular, piccola = 1
+function fxBilancio() {
+  const T = new Map(), get = t => { const k = norm(t || "") || "—"; if (!T.has(k)) T.set(k, { tipo: (t || "").trim() || "—", cap: 0, grandi: 0, piccole: 0, serve: 0 }); return T.get(k); };
+  S.fx.pol.forEach(p => { const o = get(p.tipo); o.cap += fxCap(p); o.grandi += ni(p.grandi); o.piccole += ni(p.piccole); });
+  S.fx.sp.forEach(s => { if (s.stato === "da riempire") get(s.polvere).serve++; });
+  return [...T.values()];
+}
+function viewFx(v) {
+  const B = fxBilancio(), tot = B.reduce((s, o) => s + o.cap, 0);
+  v.innerHTML = `<div class="fxsum"><div class="fxbig"><b>${tot}</b> sparkular riempibili con la polvere rimasta</div>
+   ${B.filter(o => o.cap || o.serve).map(o => `<div class="fxrow"><b>${esc(o.tipo)}</b><span class="sub">${o.grandi} grandi · ${o.piccole} piccole → <b>${o.cap}</b> riempimenti${o.serve ? ` · ${o.serve} sparkular da riempire` : ""}</span>${o.serve > o.cap ? `<span class="chip r">mancano ${o.serve - o.cap}</span>` : o.serve ? `<span class="chip g">bastano</span>` : ""}</div>`).join("")}</div>
+   <div class="chips" style="margin:12px 0">${FXSEZ.map(([k, t]) => `<button class="fchip" aria-pressed="${uiF.sez === k}" data-act="fxSez" data-k="${k}">${t}</button>`).join("")}</div>
+   <div class="bar"><span class="grow sub">${uiF.sez === "pol" ? "Busta grande = 4 sparkular · busta piccola = 1 sparkular" : uiF.sez === "sp" ? "Ogni sparkular ha il suo tipo di polvere (cambia con l'usura)" : ""}</span><button class="btn pri fl" data-act="fxNew">${FXNEW[uiF.sez]}</button></div>
+   <div id="list"></div><button class="btn pri fab" data-act="fxNew" aria-label="Aggiungi"><span aria-hidden="true">+</span><span class="txt"> ${FXNEW[uiF.sez].slice(2)}</span></button>`;
+  listFx();
+}
+const stp = (k, id, f, val) => `<span class="stp"><button type="button" class="btn sm" data-act="fxAdj" data-k="${k}" data-id="${id}" data-f="${f}" data-d="-1" aria-label="Meno">−</button><b>${val}</b><button type="button" class="btn sm" data-act="fxAdj" data-k="${k}" data-id="${id}" data-f="${f}" data-d="1" aria-label="Più">+</button></span>`;
+function listFx() {
+  const k = uiF.sez; let h = "";
+  const fine = (k2, id) => `<button class="btn sm" data-act="fxEdit" data-k="${k2}" data-id="${id}">Modifica</button><button class="btn sm dng" data-act="fxDel" data-k="${k2}" data-id="${id}">Elimina</button>`;
+  if (k === "pol") h = S.fx.pol.map(p => `<div class="fxit"><div class="fxm"><b>${esc(p.tipo)}</b><div class="sub">${esc(p.note || "")}</div></div>
+     <div class="fxc"><span class="sub">Buste grandi</span>${stp("pol", p.id, "grandi", ni(p.grandi))}</div><div class="fxc"><span class="sub">Buste piccole</span>${stp("pol", p.id, "piccole", ni(p.piccole))}</div>
+     <div class="fxc"><span class="sub">Riempimenti</span><b class="fxn">${fxCap(p)}</b></div><div class="acts">${fine("pol", p.id)}</div></div>`).join("");
+  else if (k === "sp") h = S.fx.sp.slice().sort((a, b) => String(a.nome).localeCompare(String(b.nome), "it", { numeric: true })).map(s => `<div class="fxit${s.stato === "fuori uso" ? " dis" : ""}"><div class="fxm"><b>${esc(s.nome)}</b><div class="sub">${esc(s.note || "")}</div></div>
+     <div class="fxc"><span class="sub">Polvere</span><b>${esc(s.polvere || "—")}</b></div><div class="fxc"><span class="sub">Usura</span><span class="chip ${s.usura === "Usurata" ? "r" : s.usura === "Media" ? "o" : "g"}">${esc(s.usura || "—")}</span></div>
+     <div class="fxc"><span class="sub">Stato</span><span class="chip ${s.stato === "da riempire" ? "o" : s.stato === "fuori uso" ? "r" : "g"}">${esc(s.stato || "ok")}</span></div>
+     <div class="fxc"><span class="sub">Ultimo riempimento</span>${s.riemp ? dataIt(new Date(s.riemp).toISOString().slice(0, 10)) : "—"}</div>
+     <div class="acts">${s.stato !== "fuori uso" ? `<button class="btn sm pri" data-act="fxRiempi" data-id="${s.id}">Riempita</button>` : ""}${fine("sp", s.id)}</div></div>`).join("");
+  else h = S.fx[k].map(x => { const low = ni(x.min) && ni(x.piene) <= ni(x.min); return `<div class="fxit"><div class="fxm"><b>${esc(x.nome)}</b>${low ? ` <span class="chip r">sotto scorta</span>` : ""}<div class="sub">${esc(x.note || "")}</div></div>
+     <div class="fxc"><span class="sub">${k === "bomb" ? "Piene" : "Piene"}</span>${stp(k, x.id, "piene", ni(x.piene))}</div><div class="fxc"><span class="sub">Vuote</span>${stp(k, x.id, "vuote", ni(x.vuote))}</div>
+     <div class="fxc"><span class="sub">Minimo</span>${ni(x.min) || "—"}</div><div class="acts">${fine(k, x.id)}</div></div>`; }).join("");
+  $("#list").innerHTML = h ? `<div class="list">${h}</div>` : `<div class="empty">Nessun elemento. Usa il pulsante "${FXNEW[k]}".</div>`;
+}
+const numF = (id, lab, val) => `<div class="f"><label for="${id}">${lab}</label><input type="text" id="${id}" inputmode="numeric" value="${val}" autocomplete="off"></div>`;
+function dlgFx(k, id) {
+  const arr = S.fx[k], x = id ? arr.find(i => i.id === id) : null;
+  const sal = (o, extra) => go(() => { if (id) Object.assign(x, o); else arr.push({ id: fxIdNuovo(arr), ...o }); }, "Salvato.");
+  const dls = f => [...new Set(S.fx.pol.map(p => p.tipo).concat(S.fx.sp.map(s => s.polvere)).filter(Boolean))];
+  if (k === "pol") dlg(id ? "Modifica polvere" : "Nuova polvere", `<div class="f"><label for="fT">Tipo di polvere</label><input type="text" id="fT" value="${esc(x ? x.tipo : "")}" autocomplete="off" list="dlFx"></div>
+    <div class="g2">${numF("fG", "Buste grandi (4 sparkular)", x ? ni(x.grandi) : 0)}${numF("fP", "Buste piccole (1 sparkular)", x ? ni(x.piccole) : 0)}</div>
+    <div class="f"><label for="fN">Note</label><input type="text" id="fN" value="${esc(x ? x.note || "" : "")}" autocomplete="off"></div><datalist id="dlFx">${dls().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`, {
+    ok: "Salva", onOk: d => { const tipo = $("#fT", d).value.trim(); if (!tipo) throw new Err("Scrivi il tipo di polvere."); sal({ tipo, grandi: ni($("#fG", d).value), piccole: ni($("#fP", d).value), note: $("#fN", d).value.trim() }); } });
+  else if (k === "sp") dlg(id ? "Modifica sparkular" : "Nuova sparkular", `<div class="f"><label for="fT">Nome / numero</label><input type="text" id="fT" value="${esc(x ? x.nome : "")}" autocomplete="off"></div>
+    <div class="g2"><div class="f"><label for="fU">Tipo di polvere</label><input type="text" id="fU" value="${esc(x ? x.polvere || "" : "")}" autocomplete="off" list="dlFx"></div><div class="f"><label for="fW">Usura</label><select id="fW">${USURA.map(u => `<option ${x && x.usura === u ? "selected" : ""}>${u}</option>`).join("")}</select></div></div>
+    <div class="f"><label for="fS">Stato</label><select id="fS">${STSP.map(u => `<option ${(x ? x.stato : "ok") === u ? "selected" : ""}>${u}</option>`).join("")}</select></div>
+    <div class="f"><label for="fN">Note</label><input type="text" id="fN" value="${esc(x ? x.note || "" : "")}" autocomplete="off"></div><datalist id="dlFx">${dls().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`, {
+    ok: "Salva", onOk: d => { const nome = $("#fT", d).value.trim(); if (!nome) throw new Err("Scrivi il nome della sparkular."); sal({ nome, polvere: $("#fU", d).value.trim(), usura: $("#fW", d).value, stato: $("#fS", d).value, note: $("#fN", d).value.trim() }); } });
+  else dlg((id ? "Modifica " : "Nuova ") + (k === "bomb" ? "bomboletta fuoco" : "tanica fumo"), `<div class="f"><label for="fT">${k === "bomb" ? "Tipo bomboletta" : "Tipo di fumo / capacità"}</label><input type="text" id="fT" value="${esc(x ? x.nome : "")}" autocomplete="off"></div>
+    <div class="g2">${numF("fG", "Piene", x ? ni(x.piene) : 0)}${numF("fP", "Vuote", x ? ni(x.vuote) : 0)}</div>${numF("fM", "Scorta minima (avviso se le piene arrivano a questo numero)", x ? ni(x.min) : 0)}
+    <div class="f"><label for="fN">Note</label><input type="text" id="fN" value="${esc(x ? x.note || "" : "")}" autocomplete="off"></div>`, {
+    ok: "Salva", onOk: d => { const nome = $("#fT", d).value.trim(); if (!nome) throw new Err("Scrivi il tipo."); sal({ nome, piene: ni($("#fG", d).value), vuote: ni($("#fP", d).value), min: ni($("#fM", d).value), note: $("#fN", d).value.trim() }); } });
+}
+function fxRiempi(id) {
+  const s = S.fx.sp.find(x => x.id === id); if (!s) return;
+  const p = S.fx.pol.find(q => norm(q.tipo) === norm(s.polvere) && fxCap(q) > 0);
+  if (!p) throw new Err("Polvere «" + (s.polvere || "?") + "» finita: impossibile riempire " + s.nome + ".");
+  if (ni(p.piccole) > 0) p.piccole = ni(p.piccole) - 1; else { p.grandi = ni(p.grandi) - 1; p.piccole = 3; }   // apre una busta grande: 1 usata, 3 restano
+  s.riemp = Date.now(); s.stato = "ok";
+}
+
 /* ======================= OGGI (avvisi) ======================= */
 let ALERTS = [];
 function calcolaAvvisi() {
@@ -2000,6 +2089,8 @@ function calcolaAvvisi() {
   if (senzaData.length) L.push({ lv: 1, t: senzaData.length + " articoli in riparazione senza data di invio", d: "Indica fornitore e data per tenerli sotto controllo", tab: "inv", q: "", stato: "rip" });
   const nv = S.inv.filter(r => r.ver).length; if (nv) L.push({ lv: 1, t: nv + " righe da verificare", d: "Spuntate in inventario", tab: "inv", q: "" });
   const g = anomalie().filter(x => x.gr === 3).length; if (g) L.push({ lv: 3, t: g + " controlli gravi", d: "Anomalie dei dati", tab: "con", q: "" });
+  fxBilancio().forEach(o => { if (o.serve > o.cap) L.push({ lv: 2, t: "Polvere «" + o.tipo + "» insufficiente", d: "Mancano " + (o.serve - o.cap) + " riempimenti (" + o.serve + " sparkular da riempire)", tab: "fx", q: "" }); });
+  ["bomb", "fumo"].forEach(k => S.fx[k].filter(x => ni(x.min) && ni(x.piene) <= ni(x.min)).forEach(x => L.push({ lv: 2, t: (k === "bomb" ? "Bombolette " : "Taniche ") + x.nome + " in esaurimento", d: ni(x.piene) + " piene (minimo " + ni(x.min) + ")", tab: "fx", q: "" })));
   return L.sort((a, b) => b.lv - a.lv);
 }
 function viewOggi(v) {
