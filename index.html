@@ -79,11 +79,13 @@ input[type=text],input[type=number],input[type=search],select,textarea{width:100
 .gr.dis{background:color-mix(in srgb,var(--muted) 16%,transparent)}.gr.dis .art,.gr.dis .cell{color:var(--muted)}
 .gr.s1{background:var(--y)}.gr.s2{background:var(--o)}.gr.s3{background:var(--r)}
 .gr.ver{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.gr.ver,.gr.ver.dis{background:color-mix(in srgb,#2e9e5b 24%,var(--bg))}.vchk{width:18px;height:18px;margin:0 8px 0 0;vertical-align:-3px;accent-color:#2e9e5b;cursor:pointer}
-.cols-inv{grid-template-columns:minmax(0,1.8fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) 52px 52px 52px 52px minmax(0,1.3fr) 284px}
+.cols-inv{grid-template-columns:minmax(0,1.8fr) minmax(0,.9fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) 52px 52px 52px 52px minmax(0,1.3fr) 284px}
+.gh>div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.subar{display:none}
+.srt{cursor:pointer;user-select:none;-webkit-user-select:none}.srt:hover{color:var(--fg)}.srt i{font-style:normal;margin-left:4px;color:var(--brand)}
 .mvs{display:none}
 .cols-inv .acts{flex-wrap:nowrap}
 .cols-acq{grid-template-columns:70px minmax(0,2.2fr) minmax(0,1.2fr) 56px minmax(0,1.6fr) 110px 232px}
-.cols-rie{grid-template-columns:minmax(0,2.4fr) 70px 60px 60px 60px minmax(0,2fr)}
+.cols-rie{grid-template-columns:minmax(0,2.4fr) 70px 80px 60px 60px 60px minmax(0,2fr)}
 .num{text-align:center;font-variant-numeric:tabular-nums}
 .art{font-weight:600;min-width:0;overflow-wrap:anywhere}
 .sub{color:var(--muted);font-size:12.5px;font-weight:400}
@@ -137,7 +139,8 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
 /* tablet / phone */
 @media (max-width:900px){
   .cols-inv{grid-template-columns:minmax(0,2fr) 48px 48px 48px 48px 150px}
-  .cols-inv .c-or,.cols-inv .c-no,.cols-inv .c-ma,.cols-inv .c-mo{display:none}
+  .cols-inv .c-or,.cols-inv .c-no,.cols-inv .c-ma,.cols-inv .c-mo,.cols-inv .c-ar{display:none}
+  .subar{display:inline}
   .mvs{display:inline}
   .cols-inv .c-art .sub.mo{display:block}
 }
@@ -703,7 +706,7 @@ function anomalie() {
 function sevMap(L) { const m = { inv: new Map(), acq: new Map() }; L.forEach(x => { const t = m[x.dove]; t.set(x.id, Math.max(t.get(x.id) || 0, x.gr)); }); return m; }
 
 /* ---------- interfaccia ---------- */
-const ui = { tab: "inv", area: "*", q: "", stato: "", anno: "*", qa: "", gr: new Set([3, 2, 1]), qc: "", qr: "" };
+const ui = { sort: { inv: null, acq: null, rie: null }, tab: "inv", area: "*", q: "", stato: "", anno: "*", qa: "", gr: new Set([3, 2, 1]), qc: "", qr: "" };
 const TABS = [
   ["inv", "Inventario", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>'],
   ["acq", "Acquisti", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a2 2 0 002 1.6h8.2a2 2 0 002-1.5L21 7H6"/></svg>'],
@@ -788,6 +791,8 @@ function render() {
 }
 
 /* --- Inventario --- */
+const hd = (v, k, t, cls) => { const o = ui.sort[v]; return `<div class="${cls || ""} srt" data-act="sort" data-v="${v}" data-k="${k}" title="Ordina per ${t}">${t}${o && o.k === k ? `<i>${o.d < 0 ? "▼" : "▲"}</i>` : ""}</div>`; };
+const ordina = (v, R, key) => { const o = ui.sort[v]; if (!o) return R; const f = key[o.k]; if (!f) return R; return R.slice().sort((a, b) => { const x = f(a), y = f(b); const c = typeof x === "number" && typeof y === "number" ? x - y : String(x ?? "").localeCompare(String(y ?? ""), "it", { numeric: true }); return (c || 0) * o.d; }); };
 function rowsInv() {
   let R = S.inv.filter(r => ui.area === "*" ? true : ui.area === "-" ? !r.area : r.area === ui.area);
   const q = norm(ui.q);
@@ -798,7 +803,8 @@ function rowsInv() {
   if (ui.stato === "noorg") R = R.filter(r => !r.origine);
   if (ui.stato === "ver") R = R.filter(r => r.ver);
   const ordA = a => { const i = S.aree.indexOf(a); return i < 0 ? 999 : i; };
-  return R.sort((a, b) => ui.area === "*" ? ordA(a.area) - ordA(b.area) || n0(a.ord) - n0(b.ord) : n0(a.ord) - n0(b.ord));
+  R.sort((a, b) => ui.area === "*" ? ordA(a.area) - ordA(b.area) || n0(a.ord) - n0(b.ord) : n0(a.ord) - n0(b.ord));
+  return ordina("inv", R, { articolo: r => r.articolo, area: r => r.area || "", marca: r => r.marca || "", modello: r => r.modello || "", origine: r => r.origine || "", qty: r => n0(r.qty), rotto: r => n0(r.rotto), ripar: r => n0(r.ripar), dismesso: r => n0(r.dismesso), note: r => r.note || "" });
 }
 function viewInv(v, SM) {
   const cnt = a => S.inv.filter(r => a === "*" ? true : a === "-" ? !r.area : r.area === a);
@@ -820,10 +826,10 @@ function listInv(SM) {
   SM = SM || sevMap(anomalie());
   const R = rowsInv(); const tot = R.reduce((s, r) => s + n0(r.qty), 0);
   const tr = k => R.reduce((s, r) => s + n0(r[k]), 0);
-  const html = R.length ? `<div class="gh cols-inv"><div>Articolo</div><div class="c-ma">Marca</div><div class="c-mo">Modello</div><div class="c-or">Origine</div><div class="num">Qtà</div><div class="num">Rotti</div><div class="num">Rip.</div><div class="num">Dism.</div><div class="c-no">Note</div><div></div></div>` + R.map(r => {
+  const html = R.length ? `<div class="gh cols-inv">${hd("inv", "articolo", "Articolo")}${hd("inv", "area", "Area", "c-ar")}${hd("inv", "marca", "Marca", "c-ma")}${hd("inv", "modello", "Modello", "c-mo")}${hd("inv", "origine", "Origine", "c-or")}${hd("inv", "qty", "Qtà", "num")}${hd("inv", "rotto", "Rotti", "num")}${hd("inv", "ripar", "Rip.", "num")}${hd("inv", "dismesso", "Dism.", "num")}${hd("inv", "note", "Note", "c-no")}<div></div></div>` + R.map(r => {
     const s = SM.inv.get(r.id) || 0;
     const mv = [r.marca, r.modello].filter(Boolean).join(" ");
-    const sub = [mv ? `<span class="mvs">${esc(mv)} · </span>` : "", ui.area === "*" ? esc(r.area || "Da assegnare") : ""].join("").replace(/ · <\/span>$/, "</span>");
+    const sub = [mv ? `<span class="mvs">${esc(mv)} · </span>` : "", ui.area === "*" ? `<span class="subar">${esc(r.area || "Da assegnare")}</span>` : ""].join("").replace(/ · <\/span>$/, "</span>");
     const cam = S.imgs.includes(norm(r.articolo)) ? CAM : "";
     const ch = [];
     if (r.rip) r.rip.forEach(x => ch.push(`<span class="chip">${esc(x.o)} · ${x.q}</span>`)); else if (r.origine) ch.push(`<span class="chip">${esc(r.origine)}</span>`);
@@ -831,7 +837,7 @@ function listInv(SM) {
     if (n0(r.ripar)) ch.push(`<span class="chip o" title="${esc(ripTxt(r))}">${r.ripar} in rip.${r.rf ? " · " + esc(r.rf) : ""}</span>`);
     if (n0(r.dismesso)) ch.push(`<span class="chip y">${r.dismesso} dismessi</span>`);
     return `<div class="gr ri cols-inv ${s ? "s" + s : n0(r.dismesso) ? "dis" : ""}${r.ver ? " ver" : ""}" data-act="det" data-id="${r.id}"${r.ver ? ` data-vt="${esc(verTxt(r))}" title="${esc(verTxt(r))}"` : ""}><div class="art cell c-art"><input type="checkbox" class="vchk" data-act="ver" data-id="${r.id}" ${r.ver ? "checked" : ""} title="Da verificare" aria-label="Da verificare">${esc(r.articolo)}${cam}${sub ? `<div class="sub">${sub}</div>` : ""}</div>
-      <div class="c-ma cell">${esc(r.marca || "")}</div><div class="c-mo cell">${esc(r.modello || "")}</div>
+      <div class="c-ar cell sub">${esc(r.area || "Da assegnare")}</div><div class="c-ma cell">${esc(r.marca || "")}</div><div class="c-mo cell">${esc(r.modello || "")}</div>
       <div class="c-or cell sub" data-l="Origine">${esc(r.origine || "—")}</div>
       <div class="nums" style="display:contents"><div class="num cell c-q" data-l="Qtà"><b>${r.qty ?? "—"}</b></div><div class="num cell" data-l="Rotti">${r.rotto ?? "·"}</div><div class="num cell" data-l="Rip.">${r.ripar ?? "·"}</div><div class="num cell" data-l="Dism.">${r.dismesso ?? "·"}</div></div>
       <div class="c-no cell sub">${esc(r.note || "")}</div>
@@ -1018,8 +1024,9 @@ function listAcq(SM) {
   let R = S.acq.filter(a => ui.anno === "*" || String(a.anno) === String(ui.anno));
   const q = norm(ui.qa); if (q) { const T = q.split(" ").filter(Boolean); R = R.filter(a => { const h = norm([a.articolo, a.area, a.note, a.anno, orgDi(a.anno)].join(" ")); return T.every(t => h.includes(t)); }); }
   R.sort((a, b) => b.anno - a.anno || n0(a.ord) - n0(b.ord));
+  R = ordina("acq", R, { anno: a => a.anno, articolo: a => a.articolo, area: a => a.area || "", qty: a => n0(a.qty), note: a => a.note || "" });
   const tot = R.reduce((s, a) => s + n0(a.qty), 0);
-  const html = R.length ? `<div class="gh cols-acq"><div>Anno</div><div>Articolo</div><div>Area</div><div class="num">Qtà</div><div>Note</div><div>Inventario</div><div></div></div>` + R.map(a => {
+  const html = R.length ? `<div class="gh cols-acq">${hd("acq", "anno", "Anno")}${hd("acq", "articolo", "Articolo")}${hd("acq", "area", "Area")}${hd("acq", "qty", "Qtà", "num")}${hd("acq", "note", "Note")}<div>Inventario</div><div></div></div>` + R.map(a => {
     const s = SM.acq.get(a.id) || 0; const col = a.inv_id != null && invRow(a.inv_id);
     return `<div class="gr ra cols-acq ${s ? "s" + s : ""}" data-act="detAcq" data-id="${a.id}"><div class="cell" data-l="Anno">${a.anno}</div><div class="art cell">${esc(a.articolo)}</div><div class="cell sub" data-l="Area">${esc(a.area || "—")}</div><div class="num cell" data-l="Qtà"><b>${a.qty}</b></div><div class="cell sub" ${a.note ? 'data-l="Note"' : ""}>${esc(a.note || "")}</div>
      <div><span class="chip ${col ? "g" : a.fuori ? "" : "o"}">${col ? "collegato" : a.fuori ? "non in inventario" : "non collegato"}</span></div>
@@ -1117,10 +1124,12 @@ function scollegaSimile(id) {
 }
 function listRie() {
   const m = new Map();
-  S.inv.forEach(r => { const k = grpKey(r); const g = m.get(k) || { key: k, nome: r.articolo, maxq: -1, nomi: new Set(), qty: 0, rotto: 0, ripar: 0, dis: 0, aree: new Map() }; if (n0(r.qty) > g.maxq) { g.maxq = n0(r.qty); g.nome = r.articolo; } g.nomi.add(r.articolo); g.qty += n0(r.qty); g.rotto += n0(r.rotto); g.ripar += n0(r.ripar); g.dis += n0(r.dismesso); const a = r.area || "Da assegnare"; g.aree.set(a, (g.aree.get(a) || 0) + n0(r.qty)); m.set(k, g); });
+  S.inv.forEach(r => { const k = grpKey(r); const g = m.get(k) || { key: k, nome: r.articolo, maxq: -1, nomi: new Set(), qty: 0, rotto: 0, ripar: 0, dis: 0, aree: new Map() }; if (n0(r.qty) > g.maxq) { g.maxq = n0(r.qty); g.nome = r.articolo; } g.nomi.add(r.articolo); g.ids = g.ids || new Set(); g.ids.add(r.id); g.qty += n0(r.qty); g.rotto += n0(r.rotto); g.ripar += n0(r.ripar); g.dis += n0(r.dismesso); const a = r.area || "Da assegnare"; g.aree.set(a, (g.aree.get(a) || 0) + n0(r.qty)); m.set(k, g); });
   const q = norm(ui.qr);
-  const R = [...m.values()].filter(g => !q || [...g.nomi].some(n => norm(n).includes(q))).sort((a, b) => a.nome.localeCompare(b.nome, "it"));
-  $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> articoli diversi</span><span><b>${R.reduce((s, g) => s + g.qty, 0)}</b> pezzi</span></div><div class="list">` + (R.length ? `<div class="gh cols-rie"><div>Articolo</div><div class="num">Totale</div><div class="num">Rotti</div><div class="num">Rip.</div><div class="num">Dism.</div><div>Dove si trova</div></div>` + R.map(g => `<div class="gr ra cols-rie" data-act="artAree" data-n="${esc(g.key)}"><div class="art cell"><a href="#" data-act="artAree" data-n="${esc(g.key)}" style="color:var(--brand);text-decoration:none">${esc(g.nome)}</a>${g.nomi.size > 1 ? `<div class="sub">anche: ${esc([...g.nomi].filter(n => n !== g.nome).join(" · "))}</div>` : ""}</div><div class="num cell" data-l="Totale"><b>${g.qty}</b></div><div class="num cell" data-l="Rotti">${g.rotto || "·"}</div><div class="num cell" data-l="Rip.">${g.ripar || "·"}</div><div class="num cell" data-l="Dism.">${g.dis || "·"}</div><div class="cell">${[...g.aree].map(([a, n]) => `<span class="chip">${esc(a)} · ${n}</span>`).join(" ")}</div></div>`).join("") : `<div class="empty">Nessun articolo.</div>`) + `</div>`;
+  let R = [...m.values()].filter(g => !q || [...g.nomi].some(n => norm(n).includes(q))).sort((a, b) => a.nome.localeCompare(b.nome, "it"));
+  R.forEach(g => { const nn = new Set([...g.nomi].map(norm)); g.acq = S.acq.filter(a => a.inv_id != null && invRow(a.inv_id) ? g.ids.has(a.inv_id) : nn.has(norm(a.articolo))).reduce((t, a) => t + n0(a.qty), 0); });
+  R = ordina("rie", R, { nome: g => g.nome, qty: g => g.qty, acq: g => g.acq, rotto: g => g.rotto, ripar: g => g.ripar, dis: g => g.dis, dove: g => [...g.aree.keys()].join(" ") });
+  $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> articoli diversi</span><span><b>${R.reduce((s, g) => s + g.qty, 0)}</b> pezzi</span></div><div class="list">` + (R.length ? `<div class="gh cols-rie">${hd("rie", "nome", "Articolo")}${hd("rie", "qty", "Pezzi", "num")}${hd("rie", "acq", "Acquistati", "num")}${hd("rie", "rotto", "Rotti", "num")}${hd("rie", "ripar", "Rip.", "num")}${hd("rie", "dis", "Dism.", "num")}${hd("rie", "dove", "Dove si trova")}</div>` + R.map(g => `<div class="gr ra cols-rie" data-act="artAree" data-n="${esc(g.key)}"><div class="art cell"><a href="#" data-act="artAree" data-n="${esc(g.key)}" style="color:var(--brand);text-decoration:none">${esc(g.nome)}</a>${g.nomi.size > 1 ? `<div class="sub">anche: ${esc([...g.nomi].filter(n => n !== g.nome).join(" · "))}</div>` : ""}</div><div class="num cell" data-l="Pezzi"><b>${g.qty}</b></div><div class="num cell" data-l="Acquistati">${g.acq || "·"}</div><div class="num cell" data-l="Rotti">${g.rotto || "·"}</div><div class="num cell" data-l="Rip.">${g.ripar || "·"}</div><div class="num cell" data-l="Dism.">${g.dis || "·"}</div><div class="cell">${[...g.aree].map(([a, n]) => `<span class="chip">${esc(a)} · ${n}</span>`).join(" ")}</div></div>`).join("") : `<div class="empty">Nessun articolo.</div>`) + `</div>`;
 }
 
 function dlgSimile(id) {
@@ -1681,6 +1690,7 @@ document.addEventListener("click", e => {
   switch (t.dataset.act) {
     case "newInv": dlgRiga(null); break;
     case "ver": go(() => { const r = invRow(id); if (r) { if (r.ver) delete r.ver; else r.ver = Date.now(); } }); break;
+    case "sort": { const v = t.dataset.v, k = t.dataset.k, o = ui.sort[v]; ui.sort[v] = o && o.k === k ? { k, d: -o.d } : { k, d: 1 }; if (v === "inv") listInv(); else if (v === "acq") listAcq(); else listRie(); break; }
     case "det": dlgDettaglio(id); break;
     case "detAcq": { const a = S.acq.find(x => x.id === id), r = a && invDiAcq(a); if (r) dlgDettaglio(r.id); else toast("Questo articolo non è ancora nell'inventario: usa «Collega»."); break; }
     case "editInv": dlgRiga(id); break;
