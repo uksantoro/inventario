@@ -59,6 +59,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 main{padding-block:18px 40px}
 .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
 .bar .grow{flex:1;min-width:160px}
+input[type=date]{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-height:40px}
+.g3r{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:10px}@media (max-width:640px){.g3r{grid-template-columns:minmax(0,1fr)}}
 input[type=text],input[type=number],input[type=search],select,textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
 .bar select{width:auto}
 .inv{display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px;align-items:start}
@@ -485,6 +487,7 @@ function fuse(r) { // unisce r in una riga identica (stesso articolo, area, orig
   o.qty = n0(o.qty) + n0(r.qty);
   for (const k of ["rotto", "ripar", "dismesso"]) o[k] = nz(n0(o[k]) + n0(r[k]));
   if (r.ver && !o.ver) o.ver = r.ver;
+  if (r.rf && !o.rf) o.rf = r.rf; if (r.rd && !o.rd) o.rd = r.rd; if (r.rn && !o.rn) o.rn = r.rn;
   if (!o.note && r.note) o.note = r.note;
   if (!o.marca && r.marca) o.marca = r.marca;
   if (!o.modello && r.modello) o.modello = r.modello;
@@ -554,6 +557,7 @@ function salvaRiga(id, d) {
   let r = id == null ? null : invRow(id);
   if (!r) { r = { id: nid(S.inv), ord: nextOrd() }; S.inv.push(r); }
   Object.assign(r, { articolo: d.articolo.trim().replace(/\s+/g, " "), area: d.area || null, qty: d.qty, rotto: nz(d.rotto), ripar: nz(d.ripar), dismesso: nz(d.dismesso), note: d.note || null, marca: d.marca || null, modello: d.modello || null });
+  if (d.rf !== undefined || d.rd !== undefined || d.rn !== undefined) setRip(r, d.rf, d.rd, d.rn); else if (!n0(r.ripar)) setRip(r);
   setOrigini(r, d.origini);
   sincAcq(fuse(r));
 }
@@ -606,14 +610,22 @@ function sposta(id, dest, n, take) {
   setOrigini(t, Pt); setOrigini(r, Pr); clampStati(r);
   sincAcq(r); sincAcq(t);
 }
-function segnaStato(id, tipo, n) {
+const oggiIso = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+const ripTxt = r => [r.rf ? "presso " + r.rf : "", r.rd ? "inviato il " + dataIt(r.rd) : "", r.rn ? "DDT " + r.rn : ""].filter(Boolean).join(" · ");
+function setRip(r, f, d, n) {
+  f = (f || "").trim(); d = (d || "").trim(); n = (n || "").trim();
+  if (!n0(r.ripar) || (!f && !d && !n)) { delete r.rf; delete r.rd; delete r.rn; return; }
+  if (f) r.rf = f; else delete r.rf; if (d) r.rd = d; else delete r.rd; if (n) r.rn = n; else delete r.rn;
+}
+function segnaStato(id, tipo, n, info) {
   const r = invRow(id); if (!r) return;
   if (!Number.isInteger(n) || n < 1) throw new Err("Indica quanti pezzi (almeno 1).");
   const rot = n0(r.rotto), rip = n0(r.ripar), dis = n0(r.dismesso);
   if (tipo === "rotto") { if (rot + rip + n > r.qty) throw new Err("Rotti + in riparazione supererebbero la quantità."); r.rotto = rot + n; }
-  else if (tipo === "ripar") { if (n > rot) throw new Err("Hai solo " + rot + " pezzi rotti da mandare in riparazione."); r.rotto = nz(rot - n); r.ripar = rip + n; }
+  else if (tipo === "ripar") { if (n > rot) throw new Err("Hai solo " + rot + " pezzi rotti da mandare in riparazione."); r.rotto = nz(rot - n); r.ripar = rip + n; if (info && (info.f || info.d || info.n)) setRip(r, info.f, info.d, info.n); }
   else if (tipo === "riparato") { if (n > rip) throw new Err("Hai solo " + rip + " pezzi in riparazione."); r.ripar = nz(rip - n); }
   else if (tipo === "dismesso") { if (n > rot) throw new Err("Hai solo " + rot + " pezzi rotti da dismettere."); if (dis + n > r.qty) throw new Err("I dismessi supererebbero la quantità."); r.rotto = nz(rot - n); r.dismesso = dis + n; }
+  if (!n0(r.ripar)) setRip(r);
 }
 
 /* aree */
@@ -745,9 +757,10 @@ const areaOpts = (sel, vuoto) => (vuoto ? `<option value="">${vuoto}</option>` :
 const MANUALE = "Inserimento manuale";
 const origini = () => [...new Set([...S.inv.flatMap(r => r.rip ? r.rip.map(x => x.o) : [r.origine]), ...S.acq.map(a => orgDi(a.anno)), MANUALE].filter(Boolean))].sort();
 const einkaufPresenti = () => [...new Set(S.acq.map(a => a.anno))].sort((a, b) => b - a).map(orgDi);
+const fornitori = () => [...new Set(S.inv.map(r => r.rf).filter(Boolean))].sort((a, b) => a.localeCompare(b, "it"));
 const marche = () => [...new Set(S.inv.map(r => r.marca).filter(Boolean))].sort((a, b) => a.localeCompare(b, "it"));
 const nomi = () => [...new Set(S.inv.map(r => r.articolo))].sort((a, b) => a.localeCompare(b, "it"));
-const datalists = () => `<datalist id="dlOr">${origini().map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlMa">${marche().map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlNo">${nomi().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`;
+const datalists = () => `<datalist id="dlOr">${origini().map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlFo">${fornitori().map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlMa">${marche().map(o => `<option value="${esc(o)}">`).join("")}</datalist><datalist id="dlNo">${nomi().map(o => `<option value="${esc(o)}">`).join("")}</datalist>`;
 
 /* tabs */
 function drawTabs(L = anomalie()) {
@@ -815,7 +828,7 @@ function listInv(SM) {
     const ch = [];
     if (r.rip) r.rip.forEach(x => ch.push(`<span class="chip">${esc(x.o)} · ${x.q}</span>`)); else if (r.origine) ch.push(`<span class="chip">${esc(r.origine)}</span>`);
     if (n0(r.rotto)) ch.push(`<span class="chip r">${r.rotto} rotti</span>`);
-    if (n0(r.ripar)) ch.push(`<span class="chip o">${r.ripar} in rip.</span>`);
+    if (n0(r.ripar)) ch.push(`<span class="chip o" title="${esc(ripTxt(r))}">${r.ripar} in rip.${r.rf ? " · " + esc(r.rf) : ""}</span>`);
     if (n0(r.dismesso)) ch.push(`<span class="chip y">${r.dismesso} dismessi</span>`);
     return `<div class="gr ri cols-inv ${s ? "s" + s : n0(r.dismesso) ? "dis" : ""}${r.ver ? " ver" : ""}" data-act="det" data-id="${r.id}"${r.ver ? ` data-vt="${esc(verTxt(r))}" title="${esc(verTxt(r))}"` : ""}><div class="art cell c-art"><input type="checkbox" class="vchk" data-act="ver" data-id="${r.id}" ${r.ver ? "checked" : ""} title="Da verificare" aria-label="Da verificare">${esc(r.articolo)}${cam}${sub ? `<div class="sub">${sub}</div>` : ""}</div>
       <div class="c-ma cell">${esc(r.marca || "")}</div><div class="c-mo cell">${esc(r.modello || "")}</div>
@@ -848,6 +861,8 @@ function formRiga(r) {
   <div class="f"><label for="fR">Rotti</label><input type="number" id="fR" min="0" inputmode="numeric" value="${r.rotto ?? ""}"></div>
   <div class="f"><label for="fP">In riparaz.</label><input type="number" id="fP" min="0" inputmode="numeric" value="${r.ripar ?? ""}"></div>
   <div class="f"><label for="fD">Dismessi</label><input type="number" id="fD" min="0" inputmode="numeric" value="${r.dismesso ?? ""}"></div></div>
+  <div class="f"><span class="lab">Se in riparazione: dove si trova, quando è stato mandato, DDT</span>
+  <div class="g3r"><input type="text" id="fRf" list="dlFo" placeholder="Fornitore / dove" value="${esc(r.rf)}" autocomplete="off" aria-label="Fornitore"><input type="date" id="fRd" value="${esc(r.rd)}" aria-label="Data invio"><input type="text" id="fRn" placeholder="N° DDT" value="${esc(r.rn)}" autocomplete="off" aria-label="Numero DDT"></div></div>
   <div class="f"><span class="lab">Einkauf di provenienza</span><div id="pv">${prov.map(pvRowHtml).join("")}</div>
   <div><button type="button" class="btn sm" id="pvAdd">+ Altro Einkauf</button></div><div class="hint" id="pvHint"></div></div>
   <div class="f"><label for="fN">Note</label><textarea id="fN" rows="2">${esc(r.note)}</textarea></div>${datalists()}`;
@@ -856,7 +871,8 @@ function leggiRiga(d) {
   const q = intOrNull($("#fQ", d).value);
   const o = { articolo: $("#fA", d).value, marca: $("#fMa", d).value.trim() || null, modello: $("#fMo", d).value.trim() || null, area: $("#fAr", d).value || null,
     origini: [...d.querySelectorAll(".prv")].map(r => ({ o: $(".pO", r).value.trim(), q: intOrNull($(".pQ", r).value) })),
-    qty: q, rotto: intOrNull($("#fR", d).value), ripar: intOrNull($("#fP", d).value), dismesso: intOrNull($("#fD", d).value), note: $("#fN", d).value.trim() || null };
+    qty: q, rotto: intOrNull($("#fR", d).value), ripar: intOrNull($("#fP", d).value), dismesso: intOrNull($("#fD", d).value), note: $("#fN", d).value.trim() || null,
+    rf: $("#fRf", d).value.trim(), rd: $("#fRd", d).value, rn: $("#fRn", d).value.trim() };
   if (q === null || Number.isNaN(q)) throw new Err("Inserisci la quantità (numero intero).");
   return o;
 }
@@ -913,7 +929,7 @@ function dlgDettaglio(id) {
   const d = dlg(esc(r.articolo), dove + `<div class="ph" id="phBox">${has ? "Carico la foto…" : "Nessuna foto"}</div>
    <div class="dacts"><button type="button" class="btn sm" id="bCam">📷 Scatta foto</button><button type="button" class="btn sm" id="bFoto">${has ? "Cambia dalla galleria" : "Dalla galleria"}</button>${has ? `<button type="button" class="btn sm dng" id="bFotoDel">Rimuovi foto</button>` : ""}</div>
    <input type="file" id="fImg" accept="image/*" hidden><input type="file" id="fCam" accept="image/*" capture="environment" hidden>
-   <dl class="kv">${kv("Area", esc(r.area || "Da assegnare"))}${kv("Marca", esc(r.marca))}${kv("Modello", esc(r.modello))}${kv("Quantità", `<b>${r.qty ?? "—"}</b>`)}${kv("Rotti", n0(r.rotto) ? r.rotto : "")}${kv("In riparazione", n0(r.ripar) ? r.ripar : "")}${kv("Dismessi", n0(r.dismesso) ? r.dismesso : "")}${kv("Einkauf", prov)}${kv("Note", esc(r.note))}</dl>
+   <dl class="kv">${kv("Area", esc(r.area || "Da assegnare"))}${kv("Marca", esc(r.marca))}${kv("Modello", esc(r.modello))}${kv("Quantità", `<b>${r.qty ?? "—"}</b>`)}${kv("Rotti", n0(r.rotto) ? r.rotto : "")}${kv("In riparazione", n0(r.ripar) ? r.ripar : "")}${kv("Riparazione", n0(r.ripar) ? esc(ripTxt(r)) : "")}${kv("Dismessi", n0(r.dismesso) ? r.dismesso : "")}${kv("Einkauf", prov)}${kv("Note", esc(r.note))}</dl>
    ${r.grp != null ? `<div class="hint">Collegato con: ${righeKey(grpKey(r)).filter(x => x.id !== r.id).map(x => `<b>${esc(x.articolo)}</b> (${esc(x.area || "Da assegnare")}, ${n0(x.qty)} pz)`).join(", ")}</div>` : ""}
    <div class="dacts"><button type="button" class="btn pri" data-x="edit">Modifica</button><button type="button" class="btn" data-x="move">Sposta</button><button type="button" class="btn" data-x="stato">Stato</button><button type="button" class="btn" data-x="ver">${r.ver ? "Togli da verificare" : "Da verificare"}</button><button type="button" class="btn" data-x="sim">Collega a simile…</button>${r.grp != null ? `<button type="button" class="btn" data-x="unsim">Scollega</button>` : ""}<button type="button" class="btn dng" data-x="del">Elimina</button></div>`, {
     noCancel: true, ok: "Chiudi", onOk: () => {},
@@ -973,8 +989,11 @@ function dlgStato(id) {
   const r = invRow(id);
   dlg("Stato di «" + esc(r.articolo) + "»", `<div class="hint">Quantità ${r.qty} · rotti ${r.rotto ?? 0} · in riparazione ${r.ripar ?? 0} · dismessi ${r.dismesso ?? 0}</div>
    <div class="f"><label for="tT">Cosa è successo</label><select id="tT"><option value="rotto">Si è rotto</option><option value="ripar">È andato in riparazione (da rotti)</option><option value="riparato">È stato riparato (da in riparazione)</option><option value="dismesso">È stato dismesso (da rotti)</option></select></div>
-   <div class="f"><label for="tN">Quanti pezzi</label><input type="number" id="tN" min="1" value="1"></div>`, {
-    ok: "Applica", onOk: d => { const t = $("#tT", d).value, n = Number($("#tN", d).value); run(() => segnaStato(id, t, n), "Stato aggiornato."); }
+   <div class="f"><label for="tN">Quanti pezzi</label><input type="number" id="tN" min="1" value="1"></div>
+   <div id="rpBox" hidden><div class="lab">Dove è andato in riparazione</div><div class="f"><label for="tRf">Fornitore / dove si trova</label><input type="text" id="tRf" list="dlFo" value="${esc(r.rf)}" autocomplete="off"></div>
+   <div class="g2"><div class="f"><label for="tRd">Data invio</label><input type="date" id="tRd" value="${esc(r.rd || oggiIso())}"></div><div class="f"><label for="tRn">N° DDT</label><input type="text" id="tRn" value="${esc(r.rn)}" autocomplete="off"></div></div></div>${datalists()}`, {
+    ok: "Applica", init: d => { const sync = () => { $("#rpBox", d).hidden = $("#tT", d).value !== "ripar"; }; $("#tT", d).onchange = sync; sync(); },
+    onOk: d => { const t = $("#tT", d).value, n = Number($("#tN", d).value), info = { f: $("#tRf", d).value, d: $("#tRd", d).value, n: $("#tRn", d).value }; run(() => segnaStato(id, t, n, info), "Stato aggiornato."); }
   });
 }
 function dlgConferma(titolo, testo, okTxt, fn) {
@@ -985,7 +1004,7 @@ function dlgConferma(titolo, testo, okTxt, fn) {
 function viewAcq(v, SM) {
   const anni = [...new Set(S.acq.map(a => a.anno))].sort((a, b) => b - a);
   v.innerHTML = `<div class="bar"><select id="fAn" aria-label="Anno"><option value="*">Tutti gli anni</option>${anni.map(a => `<option ${String(a) === String(ui.anno) ? "selected" : ""}>${a}</option>`).join("")}</select>
-   <input type="search" class="grow" id="qa" placeholder="Cerca acquisto…" value="${esc(ui.qa)}" aria-label="Cerca"><button class="btn pri fl" data-act="newAcq">+ Nuovo acquisto</button></div><div id="list"></div>
+   <input type="search" class="grow" id="qa" placeholder="Cerca articolo, area, note, anno…" value="${esc(ui.qa)}" aria-label="Cerca"><button class="btn pri fl" data-act="newAcq">+ Nuovo acquisto</button></div><div id="list"></div>
    <button class="btn pri fab" data-act="newAcq" aria-label="Nuovo acquisto"><span aria-hidden="true">+</span><span class="txt"> Acquisto</span></button>`;
   listAcq(SM);
 }
@@ -997,7 +1016,7 @@ function invDiAcq(a) {
 function listAcq(SM) {
   SM = SM || sevMap(anomalie());
   let R = S.acq.filter(a => ui.anno === "*" || String(a.anno) === String(ui.anno));
-  const q = norm(ui.qa); if (q) R = R.filter(a => norm([a.articolo, a.area, a.note].join(" ")).includes(q));
+  const q = norm(ui.qa); if (q) { const T = q.split(" ").filter(Boolean); R = R.filter(a => { const h = norm([a.articolo, a.area, a.note, a.anno, orgDi(a.anno)].join(" ")); return T.every(t => h.includes(t)); }); }
   R.sort((a, b) => b.anno - a.anno || n0(a.ord) - n0(b.ord));
   const tot = R.reduce((s, a) => s + n0(a.qty), 0);
   const html = R.length ? `<div class="gh cols-acq"><div>Anno</div><div>Articolo</div><div>Area</div><div class="num">Qtà</div><div>Note</div><div>Inventario</div><div></div></div>` + R.map(a => {
@@ -1210,6 +1229,7 @@ function unisciRighe(ids, nome, totale) {
   for (let i = agg.length - 1; i >= 0; i--) if (agg[i].q <= 0) agg.splice(i, 1);
   const grpU = (rows.find(r => r.grp != null) || {}).grp; if (grpU != null) target.grp = grpU;
   const rv = rows.find(r => r.ver); if (rv) target.ver = rv.ver;
+  const rr = rows.find(r => r.rf || r.rd || r.rn); if (rr) { if (rr.rf) target.rf = rr.rf; if (rr.rd) target.rd = rr.rd; if (rr.rn) target.rn = rr.rn; }
   Object.assign(target, { articolo: nome, qty: qtot, rotto: nz(somma("rotto")), ripar: nz(somma("ripar")), dismesso: nz(somma("dismesso")), note, marca, modello });
   setOrigini(target, agg); clampStati(target); sincAcq(target);
   nomiVecchi.forEach(n => migraFoto(n, nome));
