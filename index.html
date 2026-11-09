@@ -81,7 +81,7 @@ input[type=text],input[type=number],input[type=search],select,textarea{width:100
 .gr.prv,.gr.prv.dis{background:color-mix(in srgb,#38b6ff 24%,var(--bg))}.gr.str,.gr.str.prv{background:color-mix(in srgb,#d64545 26%,var(--bg))}.gr.sty,.gr.sty.prv{background:color-mix(in srgb,#f2c200 30%,var(--bg))}.gr.sgr,.gr.sgr.prv{background:color-mix(in srgb,#8a919c 24%,var(--bg))}.gr.sgr .art,.gr.sgr .cell{color:var(--muted)}.fxcard{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;display:grid;gap:10px;margin-bottom:12px}.fxcard h3{margin:0;font-size:16px}.fxbig{font-size:15px}.fxbig b{font-size:34px;font-variant-numeric:tabular-nums;color:var(--brand)}.fxline{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px}.stp{display:inline-flex;align-items:center;gap:10px}.stp b{min-width:30px;text-align:center;font-size:22px;font-variant-numeric:tabular-nums}.stp .btn{min-width:44px;min-height:40px;font-size:20px}
 .chip.pv{background:color-mix(in srgb,#38b6ff 38%,var(--bg));color:var(--fg)}.selchk{accent-color:#1c7ed6}
 .gr.ver{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.gr.ver,.gr.ver.dis{background:color-mix(in srgb,#2e9e5b 24%,var(--bg))}.vchk{width:18px;height:18px;margin:0 8px 0 0;vertical-align:-3px;accent-color:#2e9e5b;cursor:pointer}
-.cols-inv{grid-template-columns:minmax(0,1.8fr) minmax(0,.9fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) 52px 52px 52px 52px minmax(0,1.3fr) 284px}
+.cols-inv{grid-template-columns:minmax(0,1.8fr) minmax(0,.9fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) 52px 52px 52px 52px 52px minmax(0,1.3fr) 284px}
 .gh>div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.subar{display:none}
 .srt{cursor:pointer;user-select:none;-webkit-user-select:none}.srt:hover{color:var(--fg)}.srt i{font-style:normal;margin-left:4px;color:var(--brand)}
 .mvs{display:none}
@@ -156,7 +156,7 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
 .fab{display:none}
 /* tablet / phone */
 @media (max-width:900px){
-  .cols-inv{grid-template-columns:minmax(0,2fr) 48px 48px 48px 48px 150px}
+  .cols-inv{grid-template-columns:minmax(0,2fr) 48px 48px 48px 48px 48px 150px}
   .cols-inv .c-or,.cols-inv .c-no,.cols-inv .c-ma,.cols-inv .c-mo,.cols-inv .c-ar{display:none}
   .subar{display:inline}
   .mvs{display:inline}
@@ -533,6 +533,7 @@ function comprimi(file, max = 1024, q = 0.75) {
 }
 /* ---------- regole ---------- */
 const orgDi = anno => "Einkauf " + anno;
+const disp = r => Math.max(0, n0(r.qty) - n0(r.rotto) - n0(r.ripar) - n0(r.dismesso));
 const invRow = id => S.inv.find(r => r.id === id);
 const sameKey = (a, b) => norm(a.articolo) === norm(b.articolo) && (a.area || "") === (b.area || "") && norm(a.origine) === norm(b.origine);
 
@@ -892,7 +893,7 @@ function rowsInv() {
   if (ui.stato === "prova") R = R.filter(r => r.prova);
   const ordA = a => { const i = S.aree.indexOf(a); return i < 0 ? 999 : i; };
   R.sort((a, b) => ui.area === "*" ? ordA(a.area) - ordA(b.area) || n0(a.ord) - n0(b.ord) : n0(a.ord) - n0(b.ord));
-  return ordina("inv", R, { articolo: r => r.articolo, area: r => r.area || "", marca: r => r.marca || "", modello: r => r.modello || "", origine: r => r.origine || "", qty: r => n0(r.qty), rotto: r => n0(r.rotto), ripar: r => n0(r.ripar), dismesso: r => n0(r.dismesso), note: r => r.note || "" });
+  return ordina("inv", R, { articolo: r => r.articolo, area: r => r.area || "", marca: r => r.marca || "", modello: r => r.modello || "", origine: r => r.origine || "", qty: r => n0(r.qty), disp: r => disp(r), rotto: r => n0(r.rotto), ripar: r => n0(r.ripar), dismesso: r => n0(r.dismesso), note: r => r.note || "" });
 }
 function viewInv(v, SM) {
   const cnt = a => S.inv.filter(r => a === "*" ? true : a === "-" ? !r.area : r.area === a);
@@ -918,7 +919,7 @@ function listInv(SM) {
   const sb = $("#selbar"); if (sb) sb.innerHTML = ui.sel ? `<div class="sum2"><span><b>${ui.sel.size}</b> selezionati</span><button class="btn sm pri" data-act="selProva">Segna da provare</button><button class="btn sm" data-act="selNoProva">Togli da provare</button><button class="btn sm" data-act="selDdt">Crea DDT</button><button class="btn sm" data-act="selAll">Tutti i visibili</button><button class="btn sm" data-act="selMode">Fine</button></div>` : "";
   const bs = $("#bSel"); if (bs) { bs.textContent = ui.sel ? "Fine selezione" : "Seleziona"; bs.setAttribute("aria-pressed", !!ui.sel); }
   const tr = k => R.reduce((s, r) => s + n0(r[k]), 0);
-  const html = R.length ? `<div class="gh cols-inv">${hd("inv", "articolo", "Articolo")}${hd("inv", "area", "Area", "c-ar")}${hd("inv", "marca", "Marca", "c-ma")}${hd("inv", "modello", "Modello", "c-mo")}${hd("inv", "origine", "Origine", "c-or")}${hd("inv", "qty", "Qtà", "num")}${hd("inv", "rotto", "Rotti", "num")}${hd("inv", "ripar", "Rip.", "num")}${hd("inv", "dismesso", "Dism.", "num")}${hd("inv", "note", "Note", "c-no")}<div></div></div>` + R.map(r => {
+  const html = R.length ? `<div class="gh cols-inv">${hd("inv", "articolo", "Articolo")}${hd("inv", "area", "Area", "c-ar")}${hd("inv", "marca", "Marca", "c-ma")}${hd("inv", "modello", "Modello", "c-mo")}${hd("inv", "origine", "Origine", "c-or")}${hd("inv", "qty", "Qtà", "num")}${hd("inv", "disp", "Disp.", "num")}${hd("inv", "rotto", "Rotti", "num")}${hd("inv", "ripar", "Rip.", "num")}${hd("inv", "dismesso", "Dism.", "num")}${hd("inv", "note", "Note", "c-no")}<div></div></div>` + R.map(r => {
     const s = SM.inv.get(r.id) || 0;
     const mv = [r.marca, r.modello].filter(Boolean).join(" ");
     const sub = [mv ? `<span class="mvs">${esc(mv)} · </span>` : "", ui.area === "*" ? `<span class="subar">${esc(r.area || "Da assegnare")}</span>` : ""].join("").replace(/ · <\/span>$/, "</span>");
@@ -933,7 +934,7 @@ function listInv(SM) {
     return `<div class="gr ri cols-inv ${n0(r.rotto) ? "str" : n0(r.ripar) ? "sty" : n0(r.dismesso) ? "sgr" : s ? "s" + s : ""}${r.prova ? " prv" : ""}${r.ver ? " ver" : ""}" data-act="${ui.sel ? "selRow" : "det"}" data-id="${r.id}"${r.ver ? ` data-vt="${esc(verTxt(r))}" title="${esc(verTxt(r))}"` : ""}><div class="art cell c-art">${chk}${esc(r.articolo)}${cam}${sub ? `<div class="sub">${sub}</div>` : ""}</div>
       <div class="c-ar cell sub">${esc(r.area || "Da assegnare")}</div><div class="c-ma cell">${esc(r.marca || "")}</div><div class="c-mo cell">${esc(r.modello || "")}</div>
       <div class="c-or cell sub" data-l="Origine">${esc(r.origine || "—")}</div>
-      <div class="nums" style="display:contents"><div class="num cell c-q" data-l="Qtà"><b>${r.qty ?? "—"}</b></div><div class="num cell" data-l="Rotti">${r.rotto ?? "·"}</div><div class="num cell" data-l="Rip.">${r.ripar ?? "·"}</div><div class="num cell" data-l="Dism.">${r.dismesso ?? "·"}</div></div>
+      <div class="nums" style="display:contents"><div class="num cell c-q" data-l="Qtà"><b>${r.qty ?? "—"}</b></div><div class="num cell" data-l="Disp."><b>${disp(r)}</b></div><div class="num cell" data-l="Rotti">${r.rotto ?? "·"}</div><div class="num cell" data-l="Rip.">${r.ripar ?? "·"}</div><div class="num cell" data-l="Dism.">${r.dismesso ?? "·"}</div></div>
       <div class="c-no cell sub">${esc(r.note || "")}</div>
       <div class="acts"><button class="btn sm" data-act="editInv" data-id="${r.id}">Modifica</button><button class="btn sm" data-act="move" data-id="${r.id}">Sposta</button><button class="btn sm" data-act="stato" data-id="${r.id}">Stato</button><button class="btn sm dng" data-act="delInv" data-id="${r.id}" aria-label="Elimina">✕</button></div>
       <div class="mq">${r.qty ?? "—"}<small>pz</small></div>${ch.length ? `<div class="mch">${ch.join("")}</div>` : ""}${r.note ? `<div class="mnote sub">${esc(r.note)}</div>` : ""}</div>`;
@@ -2077,9 +2078,9 @@ function dlgDDT(ids) {
 }
 function dlgDDTNuovi(ctx) {
   const nuovi = ctx.voci.filter(x => x.id == null);
-  dlg("Articoli nuovi: area e origine", `<div class="hint">Questi articoli non sono in inventario: li creo e li segno in riparazione. Indica dove assegnarli e l'origine.</div>` + nuovi.map((x, i) => `<div class="nrow" data-i="${i}"><div class="f"><label>${esc(x.a)} × ${x.q}</label><select class="nA">${areaOpts("", "— Da assegnare —")}</select></div><div class="f"><label>Area di origine</label><select class="nO">${pvOpts("")}</select></div></div>`).join(""), {
+  dlg("Articoli nuovi: area e origine", `<div class="hint">Questi articoli non sono in inventario: li creo e li segno in riparazione. Indica dove assegnarli e l'origine.</div>` + nuovi.map((x, i) => `<div class="nrow" data-i="${i}"><div class="f"><label>${esc(x.a)} × ${x.q}</label><select class="nA">${areaOpts("", "— Da assegnare —")}</select></div><div class="f"><label>Area di origine</label><select class="nO">${pvOpts("")}</select></div><div class="f"><label>Note</label><input type="text" class="nN" autocomplete="off"></div></div>`).join(""), {
     ok: "Crea DDT",
-    onOk: d => { d.querySelectorAll(".nrow").forEach(r => { const x = nuovi[+r.dataset.i]; x.area = $(".nA", r).value || null; x.orig = $(".nO", r).value || ""; }); ddtConferma(ctx); }
+    onOk: d => { d.querySelectorAll(".nrow").forEach(r => { const x = nuovi[+r.dataset.i]; x.area = $(".nA", r).value || null; x.orig = $(".nO", r).value || ""; x.note = $(".nN", r).value.trim(); }); ddtConferma(ctx); }
   });
 }
 function ddtConferma(ctx) {
@@ -2087,7 +2088,7 @@ function ddtConferma(ctx) {
   run(() => {
     voci.forEach(x => {
       if (x.id != null) { const r = invRow(x.id), dalRotto = Math.min(x.q, n0(r.rotto)); r.rotto = nz(n0(r.rotto) - dalRotto); r.ripar = n0(r.ripar) + x.q; setRip(r, f, dt, n); righe.push({ a: r.articolo, ma: r.marca || "", mo: r.modello || "", q: x.q, no: r.note || "" }); }
-      else { salvaRiga(null, { articolo: x.a, marca: null, modello: null, area: x.area, qty: x.q, rotto: null, ripar: x.q, dismesso: null, note: null, origini: x.orig ? [{ o: x.orig, q: x.q }] : [], rf: f, rd: dt, rn: n }); righe.push({ a: x.a, ma: "", mo: "", q: x.q, no: "" }); }
+      else { salvaRiga(null, { articolo: x.a, marca: null, modello: null, area: x.area, qty: x.q, rotto: null, ripar: x.q, dismesso: null, note: x.note || null, origini: x.orig ? [{ o: x.orig, q: x.q }] : [], rf: f, rd: dt, rn: n }); righe.push({ a: x.a, ma: "", mo: "", q: x.q, no: x.note || "" }); }
     });
   }, "DDT creato: " + righe.reduce((s, x) => s + x.q, 0) + " pezzi in riparazione presso " + f + ".");
   const dd = { f, n, dt, righe, foto };
@@ -2424,8 +2425,8 @@ async function vediFotoMov(id) {
 
 // ---- disposizione colonne copiata dal PC (solo schermo largo)
 const LAY = {
-  inv: { cls: "cols-inv", keys: ["articolo","area","marca","modello","origine","qty","rotto","ripar","dismesso","note"], fixed: 1,
-         w: ["minmax(0,1.8fr)","minmax(0,.9fr)","minmax(0,1fr)","minmax(0,1fr)","minmax(0,1.1fr)","52px","52px","52px","52px","minmax(0,1.3fr)","284px"] },
+  inv: { cls: "cols-inv", keys: ["articolo","area","marca","modello","origine","qty","disp","rotto","ripar","dismesso","note"], fixed: 1,
+         w: ["minmax(0,1.8fr)","minmax(0,.9fr)","minmax(0,1fr)","minmax(0,1fr)","minmax(0,1.1fr)","52px","52px","52px","52px","52px","minmax(0,1.3fr)","284px"] },
   acq: { cls: "cols-acq", keys: ["anno","articolo","area","qty","note"], fixed: 2,
          w: ["70px","minmax(0,2.2fr)","minmax(0,1.2fr)","56px","minmax(0,1.6fr)","110px","232px"] },
   rie: { cls: "cols-rie", keys: ["articolo","totale","acquistati","rotti","ripar","dismessi","dove"], fixed: 0,
