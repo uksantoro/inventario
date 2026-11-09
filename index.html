@@ -78,7 +78,7 @@ input[type=text],input[type=number],input[type=search],select,textarea{width:100
 .gr:last-child{border-bottom:0}
 .gr.dis{background:color-mix(in srgb,var(--muted) 16%,transparent)}.gr.dis .art,.gr.dis .cell{color:var(--muted)}
 .gr.s1{background:var(--y)}.gr.s2{background:var(--o)}.gr.s3{background:var(--r)}
-.gr.prv,.gr.prv.dis{background:color-mix(in srgb,#38b6ff 24%,var(--bg))}.gr.str,.gr.str.prv{background:color-mix(in srgb,#d64545 26%,var(--bg))}.gr.sty,.gr.sty.prv{background:color-mix(in srgb,#f2c200 30%,var(--bg))}.gr.sgr,.gr.sgr.prv{background:color-mix(in srgb,#8a919c 24%,var(--bg))}.gr.sgr .art,.gr.sgr .cell{color:var(--muted)}.fxcard{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;display:grid;gap:10px;margin-bottom:12px}.fxcard h3{margin:0;font-size:16px}.fxbig{font-size:15px}.fxbig b{font-size:34px;font-variant-numeric:tabular-nums;color:var(--brand)}.fxline{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px}.stp{display:inline-flex;align-items:center;gap:10px}.stp b{min-width:30px;text-align:center;font-size:22px;font-variant-numeric:tabular-nums}.stp .btn{min-width:44px;min-height:40px;font-size:20px}
+.leg{display:flex;flex-wrap:wrap;gap:4px 14px;padding:4px 0 2px;font-size:12px;color:var(--muted)}.lg{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.lg::before{content:"";width:12px;height:12px;border-radius:3px;background:var(--c);border:1px solid color-mix(in srgb,var(--c) 60%,#000)}.gr.prv,.gr.prv.dis{background:color-mix(in srgb,#38b6ff 24%,var(--bg))}.gr.str,.gr.str.prv{background:color-mix(in srgb,#d64545 26%,var(--bg))}.gr.sty,.gr.sty.prv{background:color-mix(in srgb,#f2c200 30%,var(--bg))}.gr.sgr,.gr.sgr.prv{background:color-mix(in srgb,#8a919c 24%,var(--bg))}.gr.sgr .art,.gr.sgr .cell{color:var(--muted)}.fxcard{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;display:grid;gap:10px;margin-bottom:12px}.fxcard h3{margin:0;font-size:16px}.fxbig{font-size:15px}.fxbig b{font-size:34px;font-variant-numeric:tabular-nums;color:var(--brand)}.fxline{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px}.stp{display:inline-flex;align-items:center;gap:10px}.stp b{min-width:30px;text-align:center;font-size:22px;font-variant-numeric:tabular-nums}.stp .btn{min-width:44px;min-height:40px;font-size:20px}
 .chip.pv{background:color-mix(in srgb,#38b6ff 38%,var(--bg));color:var(--fg)}.selchk{accent-color:#1c7ed6}
 .gr.ver{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.gr.ver,.gr.ver.dis{background:color-mix(in srgb,#2e9e5b 24%,var(--bg))}.vchk{width:18px;height:18px;margin:0 8px 0 0;vertical-align:-3px;accent-color:#2e9e5b;cursor:pointer}
 .cols-inv{grid-template-columns:minmax(0,1.8fr) minmax(0,.9fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) 52px 52px 52px 52px 52px minmax(0,1.3fr) 284px}
@@ -86,8 +86,8 @@ input[type=text],input[type=number],input[type=search],select,textarea{width:100
 .srt{cursor:pointer;user-select:none;-webkit-user-select:none}.srt:hover{color:var(--fg)}.srt i{font-style:normal;margin-left:4px;color:var(--brand)}
 .mvs{display:none}
 .cols-inv .acts{flex-wrap:nowrap}
-.cols-acq{grid-template-columns:70px minmax(0,2.2fr) minmax(0,1.2fr) 56px minmax(0,1.6fr) 110px 232px}
-.cols-rie{grid-template-columns:minmax(0,2.4fr) 70px 80px 60px 60px 60px minmax(0,2fr)}
+.cols-acq{grid-template-columns:70px minmax(0,2.2fr) minmax(0,1.2fr) 56px 56px minmax(0,1.6fr) 110px 232px}
+.cols-rie{grid-template-columns:minmax(0,2.4fr) 70px 56px 80px 60px 60px 60px minmax(0,2fr)}
 .num{text-align:center;font-variant-numeric:tabular-nums}
 .art{font-weight:600;min-width:0;overflow-wrap:anywhere}
 .sub{color:var(--muted);font-size:12.5px;font-weight:400}
@@ -307,7 +307,9 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
     <button class="btn sm dsk pri" id="bExp">Esporta Excel</button>
     <button class="btn sm" id="bMenu" aria-label="Menu"><span aria-hidden="true">⋯</span><span class="tx"> Menu</span></button>
   </div>
-</div></div>
+</div>
+  <div class="leg" aria-label="Legenda colori righe"><span class="lg" style="--c:#d64545">Rotto</span><span class="lg" style="--c:#2e9e5b">Da verificare</span><span class="lg" style="--c:#38b6ff">Da provare</span><span class="lg" style="--c:#f2c200">In riparazione</span><span class="lg" style="--c:#8a919c">Dismesso</span></div>
+</div>
 <div class="wrap"><main id="view"></main></div>
 <footer class="foot" id="foot"><span>Robinson Apulia · Sound&amp;Light</span><span id="fTot"></span><span id="stato" aria-live="polite"></span></footer>
 <nav class="bnav" id="bnav" aria-label="Sezioni"></nav>
@@ -1122,11 +1124,11 @@ function listAcq(SM) {
   let R = S.acq.filter(a => ui.anno === "*" || String(a.anno) === String(ui.anno));
   const q = norm(ui.qa); if (q) { const T = q.split(" ").filter(Boolean); R = R.filter(a => { const h = norm([a.articolo, a.area, a.note, a.anno, orgDi(a.anno)].join(" ")); return T.every(t => h.includes(t)); }); }
   R.sort((a, b) => b.anno - a.anno || n0(a.ord) - n0(b.ord));
-  R = ordina("acq", R, { anno: a => a.anno, articolo: a => a.articolo, area: a => a.area || "", qty: a => n0(a.qty), note: a => a.note || "" });
+  R = ordina("acq", R, { anno: a => a.anno, articolo: a => a.articolo, area: a => a.area || "", qty: a => n0(a.qty), disp: a => { const c = a.inv_id != null && invRow(a.inv_id); return c ? disp(c) : -1; }, note: a => a.note || "" });
   const tot = R.reduce((s, a) => s + n0(a.qty), 0);
-  const html = R.length ? `<div class="gh cols-acq">${hd("acq", "anno", "Anno")}${hd("acq", "articolo", "Articolo")}${hd("acq", "area", "Area")}${hd("acq", "qty", "Qtà", "num")}${hd("acq", "note", "Note")}<div>Inventario</div><div></div></div>` + R.map(a => {
+  const html = R.length ? `<div class="gh cols-acq">${hd("acq", "anno", "Anno")}${hd("acq", "articolo", "Articolo")}${hd("acq", "area", "Area")}${hd("acq", "qty", "Qtà", "num")}${hd("acq", "disp", "Disp.", "num")}${hd("acq", "note", "Note")}<div>Inventario</div><div></div></div>` + R.map(a => {
     const s = SM.acq.get(a.id) || 0; const col = a.inv_id != null && invRow(a.inv_id);
-    return `<div class="gr ra cols-acq ${s ? "s" + s : ""}" data-act="detAcq" data-id="${a.id}"><div class="cell" data-l="Anno">${a.anno}</div><div class="art cell">${esc(a.articolo)}</div><div class="cell sub" data-l="Area">${esc(a.area || "—")}</div><div class="num cell" data-l="Qtà"><b>${a.qty}</b></div><div class="cell sub" ${a.note ? 'data-l="Note"' : ""}>${esc(a.note || "")}</div>
+    return `<div class="gr ra cols-acq ${s ? "s" + s : ""}" data-act="detAcq" data-id="${a.id}"><div class="cell" data-l="Anno">${a.anno}</div><div class="art cell">${esc(a.articolo)}</div><div class="cell sub" data-l="Area">${esc(a.area || "—")}</div><div class="num cell" data-l="Qtà"><b>${a.qty}</b></div><div class="num cell" data-l="Disp.">${col ? "<b>" + disp(col) + "</b>" : "·"}</div><div class="cell sub" ${a.note ? 'data-l="Note"' : ""}>${esc(a.note || "")}</div>
      <div><span class="chip ${col ? "g" : a.fuori ? "" : "o"}">${col ? "collegato" : a.fuori ? "non in inventario" : "non collegato"}</span></div>
      <div class="acts"><button class="btn sm" data-act="editAcq" data-id="${a.id}">Modifica</button>${col ? "" : `<button class="btn sm" data-act="link" data-id="${a.id}">Collega</button>`}${!col && a.fuori ? `<button class="btn sm" data-act="fuoriNo" data-id="${a.id}">Segnala di nuovo</button>` : ""}<button class="btn sm dng" data-act="delAcq" data-id="${a.id}" aria-label="Elimina">✕</button></div></div>`;
   }).join("") : `<div class="empty">Nessun acquisto trovato.</div>`;
@@ -1226,8 +1228,8 @@ function listRie() {
   const q = norm(ui.qr);
   let R = [...m.values()].filter(g => !q || [...g.nomi].some(n => norm(n).includes(q))).sort((a, b) => a.nome.localeCompare(b.nome, "it"));
   R.forEach(g => { const nn = new Set([...g.nomi].map(norm)); g.acq = S.acq.filter(a => a.inv_id != null && invRow(a.inv_id) ? g.ids.has(a.inv_id) : nn.has(norm(a.articolo))).reduce((t, a) => t + n0(a.qty), 0); });
-  R = ordina("rie", R, { nome: g => g.nome, qty: g => g.qty, acq: g => g.acq, rotto: g => g.rotto, ripar: g => g.ripar, dis: g => g.dis, dove: g => [...g.aree.keys()].join(" ") });
-  $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> articoli diversi</span><span><b>${R.reduce((s, g) => s + g.qty, 0)}</b> pezzi</span></div><div class="list">` + (R.length ? `<div class="gh cols-rie">${hd("rie", "nome", "Articolo")}${hd("rie", "qty", "Pezzi", "num")}${hd("rie", "acq", "Acquistati", "num")}${hd("rie", "rotto", "Rotti", "num")}${hd("rie", "ripar", "Rip.", "num")}${hd("rie", "dis", "Dism.", "num")}${hd("rie", "dove", "Dove si trova")}</div>` + R.map(g => `<div class="gr ra cols-rie" data-act="artAree" data-n="${esc(g.key)}"><div class="art cell"><a href="#" data-act="artAree" data-n="${esc(g.key)}" style="color:var(--brand);text-decoration:none">${esc(g.nome)}</a>${g.nomi.size > 1 ? `<div class="sub">anche: ${esc([...g.nomi].filter(n => n !== g.nome).join(" · "))}</div>` : ""}</div><div class="num cell" data-l="Pezzi"><b>${g.qty}</b></div><div class="num cell" data-l="Acquistati">${g.acq || "·"}</div><div class="num cell" data-l="Rotti">${g.rotto || "·"}</div><div class="num cell" data-l="Rip.">${g.ripar || "·"}</div><div class="num cell" data-l="Dism.">${g.dis || "·"}</div><div class="cell">${[...g.aree].map(([a, n]) => `<span class="chip">${esc(a)} · ${n}</span>`).join(" ")}</div></div>`).join("") : `<div class="empty">Nessun articolo.</div>`) + `</div>`;
+  R = ordina("rie", R, { nome: g => g.nome, qty: g => g.qty, disp: g => Math.max(0, g.qty - g.rotto - g.ripar - g.dis), acq: g => g.acq, rotto: g => g.rotto, ripar: g => g.ripar, dis: g => g.dis, dove: g => [...g.aree.keys()].join(" ") });
+  $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> articoli diversi</span><span><b>${R.reduce((s, g) => s + g.qty, 0)}</b> pezzi</span></div><div class="list">` + (R.length ? `<div class="gh cols-rie">${hd("rie", "nome", "Articolo")}${hd("rie", "qty", "Pezzi", "num")}${hd("rie", "disp", "Disp.", "num")}${hd("rie", "acq", "Acquistati", "num")}${hd("rie", "rotto", "Rotti", "num")}${hd("rie", "ripar", "Rip.", "num")}${hd("rie", "dis", "Dism.", "num")}${hd("rie", "dove", "Dove si trova")}</div>` + R.map(g => `<div class="gr ra cols-rie" data-act="artAree" data-n="${esc(g.key)}"><div class="art cell"><a href="#" data-act="artAree" data-n="${esc(g.key)}" style="color:var(--brand);text-decoration:none">${esc(g.nome)}</a>${g.nomi.size > 1 ? `<div class="sub">anche: ${esc([...g.nomi].filter(n => n !== g.nome).join(" · "))}</div>` : ""}</div><div class="num cell" data-l="Pezzi"><b>${g.qty}</b></div><div class="num cell" data-l="Disp."><b>${Math.max(0, g.qty - g.rotto - g.ripar - g.dis)}</b></div><div class="num cell" data-l="Acquistati">${g.acq || "·"}</div><div class="num cell" data-l="Rotti">${g.rotto || "·"}</div><div class="num cell" data-l="Rip.">${g.ripar || "·"}</div><div class="num cell" data-l="Dism.">${g.dis || "·"}</div><div class="cell">${[...g.aree].map(([a, n]) => `<span class="chip">${esc(a)} · ${n}</span>`).join(" ")}</div></div>`).join("") : `<div class="empty">Nessun articolo.</div>`) + `</div>`;
 }
 
 function dlgSimile(id) {
@@ -1253,7 +1255,7 @@ function dlgArticoloAree(k) {
   if (!rows.length) return toast("Articolo non trovato.");
   const tot = rows.reduce((t, r) => t + n0(r.qty), 0), nm = rows.slice().sort((a, b) => n0(b.qty) - n0(a.qty))[0].articolo, multi = new Set(rows.map(r => norm(r.articolo))).size > 1;
   dlg(esc(nm), `<div style="font-size:15px">Totale <b>${tot} pz</b> · ${rows.length} ${rows.length === 1 ? "riga" : "righe"}</div>
-    <div class="un">${rows.map(r => `<div class="r"><b>${esc(r.area || "Da assegnare")}</b>${multi ? `<span class="sub">«${esc(r.articolo)}»</span>` : ""}<span class="sub"><b style="color:var(--fg)">${n0(r.qty)}</b> pz</span>${provHtml(r)}${n0(r.rotto) ? `<span class="chip r">${r.rotto} rotti</span>` : ""}${n0(r.ripar) ? `<span class="chip o">${r.ripar} in rip.</span>` : ""}${n0(r.dismesso) ? `<span class="chip y">${r.dismesso} dismessi</span>` : ""}
+    <div class="un">${rows.map(r => `<div class="r"><b>${esc(r.area || "Da assegnare")}</b>${multi ? `<span class="sub">«${esc(r.articolo)}»</span>` : ""}<span class="sub"><b style="color:var(--fg)">${n0(r.qty)}</b> pz · disp. ${disp(r)}</span>${provHtml(r)}${n0(r.rotto) ? `<span class="chip r">${r.rotto} rotti</span>` : ""}${n0(r.ripar) ? `<span class="chip o">${r.ripar} in rip.</span>` : ""}${n0(r.dismesso) ? `<span class="chip y">${r.dismesso} dismessi</span>` : ""}
       <span style="margin-left:auto;display:flex;gap:6px"><button type="button" class="btn sm" data-x="edit" data-id="${r.id}">Modifica</button><button type="button" class="btn sm" data-x="move" data-id="${r.id}">Sposta</button><button type="button" class="btn sm" data-x="det" data-id="${r.id}">Scheda</button></span></div>`).join("")}</div>
     <div class="hint">«Modifica» cambia area, Einkauf di provenienza e quantità di quella riga; «Sposta» porta alcuni pezzi in un'altra area.</div>`,
     { noCancel: true, ok: "Chiudi", wide: true, onOk: () => {}, init: d => { ui.dlgS = { t: "aree", k }; d.querySelectorAll("[data-x]").forEach(b => b.onclick = () => {
@@ -1302,7 +1304,7 @@ function viewUni(v) {
   const G = gruppiSimili(), n = ignUni().size;
   v.innerHTML = `<div class="bar"><div class="sub" style="flex:1 1 260px">Articoli della stessa area con nome uguale o simile. Scegli tu quali unire: prima di cambiare qualcosa ti chiedo conferma.</div>${n ? `<button class="btn" data-act="uniReset">Mostra di nuovo i gruppi nascosti (${n})</button>` : ""}</div>
   <div id="list">${G.length ? `<div class="cards">${G.map(g => `<div class="card s1"><div style="min-width:0"><h3>${esc(g.rows[0].articolo)} <span class="sub">· ${g.rows.length} righe · ${esc(g.area || "Da assegnare")} · <b>${g.rows.reduce((t, r) => t + n0(r.qty), 0)}</b> pz in totale</span></h3>
-      <div class="un">${g.rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="sub">${n0(r.qty)} pz</span>${provHtml(r)}</div>`).join("")}</div></div>
+      <div class="un">${g.rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="sub">${n0(r.qty)} pz · disp. ${disp(r)}</span>${provHtml(r)}</div>`).join("")}</div></div>
       <div class="acts"><button class="btn sm pri" data-act="uni" data-k="${g.key}">Unisci…</button><button class="btn sm" data-act="uniIgn" data-k="${g.key}">Non unire</button></div></div>`).join("")}</div>` : `<div class="empty">Nessun articolo simile da unire.</div>`}</div>`;
 }
 function dlgUnisci(key) {
@@ -1314,7 +1316,7 @@ function dlgUnisci(key) {
   const nomi = [...new Set(rows.map(r => r.articolo))];
   dlg("Unire questi articoli?", `<div>Le ${rows.length} righe diventano <b>una sola</b> in «${esc(rows[0].area || "Da assegnare")}». Quantità, rotti, in riparazione e dismessi vengono sommati; gli acquisti collegati restano collegati.</div>
     <div class="f"><span class="lab">Nome dopo l'unione</span>${nomi.map((n, i) => `<label class="optn"><input type="radio" name="unN" value="${esc(n)}" ${i === 0 ? "checked" : ""}><span>${esc(n)}</span></label>`).join("")}</div>
-    <div class="un">${rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="sub">${n0(r.qty)} pz</span>${provHtml(r)}</div>`).join("")}</div>
+    <div class="un">${rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="sub">${n0(r.qty)} pz · disp. ${disp(r)}</span>${provHtml(r)}</div>`).join("")}</div>
     <div class="f"><span class="lab">Quantità totale dopo l'unione</span><input type="number" id="unTot" min="1" step="1" value="${tot}" inputmode="numeric"><div class="hint">Somma suggerita: <b>${tot}</b>. Cambiala se i pezzi in realtà sono di meno o di più (ad es. lo stesso articolo contato due volte). Se scendi sotto i pezzi assegnati agli Einkauf, questi vengono ridotti a partire dall'ultimo.</div></div>
     <div class="f"><span class="lab">Risultato</span><div><b>${tot} pz</b> in totale (con la somma suggerita)</div><div class="un"><div class="r">${[...agg].map(([o, q]) => `<span class="chip">${esc(o)} · ${q}</span>`).join("")}${tot > ass ? `<span class="chip y">senza Einkauf · ${tot - ass}</span>` : ""}${!agg.size ? '<span class="sub">Nessun Einkauf indicato</span>' : ""}</div></div></div>`,
     { ok: "Sì, unisci", wide: true, onOk: d => { const nome = (d.querySelector('input[name=unN]:checked') || {}).value || nomi[0]; const t = Number(($("#unTot", d) || {}).value); if (!Number.isInteger(t) || t < 1) { $("#derr", d).textContent = "Scrivi una quantità totale valida (intero, almeno 1)."; return false; } run(() => unisciRighe(ids, nome, t), "Articoli uniti: " + t + " pz."); } });
@@ -1802,12 +1804,9 @@ document.addEventListener("click", e => {
     case "delMov": eliminaMov(id); break;
     case "ddtT": uiD.t = t.dataset.t; render(); break;
     case "ddtNew": if (uiD.t === "acq") dlgDDTAcq(); else dlgDDT([]); break;
-    case "ddtPdf": ddtPdfDa(id).catch(e => toast(e.message || "PDF non riuscito.")); break;
-    case "ddtXl": ddtPdfDa(id, true).catch(e => toast(e.message || "Excel non riuscito.")); break;
-    case "ddtEdit": dlgDdtEdit(id); break;
-    case "ddtFoto": dlgDdtFoto(id); break;
+    case "ddtEdit": dlgDdtScheda(id); break;
     case "ddtRient": dlgRientro(id); break;
-    case "ddtDel": { const x = S.ddt.find(i => i.id === id); dlgConferma("Elimina DDT", `Eliminare il DDT ${esc(x.num || "s.n.")} (${esc(x.forn)})?<br><small>Le quantità di magazzino non vengono modificate.</small>`, "Elimina", () => { const k = "dd:" + id; if (S.imgs.includes(k)) Img.del(k).catch(() => {}); go(() => { S.ddt = S.ddt.filter(i => i.id !== id); S.imgs = S.imgs.filter(q => q !== k); delete S.imgv[k]; }, "DDT eliminato."); }); break; }
+    case "ddtDel": ddtElimina(id); break;
     case "movFoto": vediFotoMov(id); break;
     case "intFoto": Img.get("int:" + id).then(u => u ? apriFoto(u) : toast("Foto non disponibile.")).catch(() => toast("Foto non disponibile.")); break;
     case "budReset": Object.assign(uiB, { da: "", a: "", forn: "", q: "", ddt: "" }); render(); break;
@@ -2149,6 +2148,8 @@ async function esportaDdt(d) {
   await salvaFile("DDT_" + (d.n ? d.n.replace(/[^\w-]+/g, "_") + "_" : "") + d.f.replace(/[^\w-]+/g, "_") + "_" + d.dt + ".xlsx", await xlBlob(wb));
 }
 /* ---------- sezione DDT: schede «DDT riparazione» e «DDT acquisto» ---------- */
+function ddtElimina(id) { const x = S.ddt.find(i => i.id === id); dlgConferma("Elimina DDT", `Eliminare il DDT ${esc(x.num || "s.n.")} (${esc(x.forn)})?<br><small>Le quantità di magazzino non vengono modificate.</small>`, "Elimina", () => { const k = "dd:" + id; if (S.imgs.includes(k)) Img.del(k).catch(() => {}); go(() => { S.ddt = S.ddt.filter(i => i.id !== id); S.imgs = S.imgs.filter(q => q !== k); delete S.imgv[k]; }, "DDT eliminato."); });
+}
 const uiD = { t: "rip" };
 const ddtAperto = d => d.tipo === "rip" && d.righe.some(x => x.q - n0(x.r) > 0);
 function viewDdt(v) {
@@ -2160,9 +2161,9 @@ function listDdt() {
   $("#list").innerHTML = L.length ? L.map(d => {
     const tot = d.righe.reduce((s, x) => s + x.q, 0), rien = d.righe.reduce((s, x) => s + n0(x.r), 0), foto = S.imgs.includes("dd:" + d.id);
     const stato = d.tipo === "acq" ? "Ricevuto in magazzino" : rien >= tot ? "Rientrato" : rien > 0 ? "Rientro parziale (" + rien + "/" + tot + ")" : "In riparazione";
-    return `<div class="fxcard"><h3>DDT ${esc(d.num || "s.n.")} — ${esc(d.forn)}</h3><div class="sub">${dataIt(d.data)} · ${tot} pezzi · <b>${stato}</b></div>
+    return `<div class="fxcard" data-act="ddtEdit" data-id="${d.id}" role="button" tabindex="0" style="cursor:pointer"><h3>DDT ${esc(d.num || "s.n.")} — ${esc(d.forn)}</h3><div class="sub">${dataIt(d.data)} · ${tot} pezzi · <b>${stato}</b></div>
       ${d.righe.map(x => `<div class="fxline"><span>${x.q} × ${esc(x.a)} <small class="sub">${esc([x.ma, x.mo].filter(Boolean).join(" "))}</small></span><span class="sub">${d.tipo === "rip" ? "rientrati " + n0(x.r) + "/" + x.q : esc(x.ar || "da assegnare")}</span></div>`).join("")}
-      <div class="dacts"><button class="btn sm" data-act="ddtEdit" data-id="${d.id}">Modifica</button><button class="btn sm" data-act="ddtPdf" data-id="${d.id}">PDF</button><button class="btn sm" data-act="ddtXl" data-id="${d.id}">Excel</button><button class="btn sm" data-act="ddtFoto" data-id="${d.id}">${foto ? "📷 Foto" : "+ Foto"}</button>${ddtAperto(d) ? `<button class="btn sm pri" data-act="ddtRient" data-id="${d.id}">Rientro</button>` : ""}<button class="btn sm dng" data-act="ddtDel" data-id="${d.id}">Elimina</button></div></div>`;
+      <div class="sub" style="margin-top:6px">${foto ? "📷 con foto · " : ""}Tocca per aprire la scheda</div></div>`;
   }).join("") : `<div class="empty">Nessun DDT ${uiD.t === "acq" ? "di acquisto" : "di riparazione"}. Usa «+ Nuovo DDT».</div>`;
 }
 async function ddtPdfDa(id, xl) {
@@ -2171,60 +2172,60 @@ async function ddtPdfDa(id, xl) {
   const dd = { tipo: d.tipo, f: d.forn, n: d.num, dt: d.data, righe: d.righe.map(x => ({ a: x.a, ma: x.ma || "", mo: x.mo || "", q: x.q, no: [d.tipo === "acq" ? x.ar : "", x.no].filter(Boolean).join(" · ") })), foto };
   if (xl) await esportaDdt(dd); else await pdfDdt(dd);
 }
-function dlgDdtFoto(id) {
-  let nuova = null; const k = "dd:" + id, ha = S.imgs.includes(k);
-  dlg("Foto del DDT", `<div class="f"><label for="dfF">Scegli una foto (convertita in WebP)</label><input type="file" id="dfF" accept="image/*"></div><img id="dfP" alt="" style="max-width:100%;max-height:260px;border-radius:8px" hidden>${ha ? `<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="dfT"> Togli la foto attuale</label>` : ""}`, {
-    init: d => {
-      if (ha) Img.get(k).then(u => { if (u && !nuova) { const im = $("#dfP", d); im.src = u; im.hidden = false; } }).catch(() => {});
-      $("#dfF", d).onchange = async e => { const fl = e.target.files[0]; if (!fl) return; try { nuova = await comprimi(fl, 1000, 0.75); const im = $("#dfP", d); im.src = nuova; im.hidden = false; } catch (er) { $("#derr").textContent = er.message; } };
-    },
-    onOk: d => {
-      const togli = ha && $("#dfT", d) && $("#dfT", d).checked; if (!nuova && !togli) return;
-      $("#dok", d).disabled = true;
-      (async () => {
-        try { if (nuova) await Img.set(k, nuova); else await Img.del(k); go(() => { if (nuova) { if (!S.imgs.includes(k)) S.imgs.push(k); S.imgv[k] = Date.now(); } else { S.imgs = S.imgs.filter(q => q !== k); delete S.imgv[k]; } }, "Salvato."); d.close(); }
-        catch (e) { $("#derr", d).textContent = e.message || "Foto non salvata."; $("#dok", d).disabled = false; }
-      })();
-      return false;
-    }
-  });
-}
-function dlgDdtEdit(id) {
-  const d = S.ddt.find(i => i.id === id); if (!d) return;
-  dlg("Modifica DDT", `<div class="g2"><div class="f"><label for="eF">Fornitore</label><input type="text" id="eF" list="dlFd" value="${esc(d.forn)}" autocomplete="off"></div><div class="f"><label for="eN">N° DDT</label><input type="text" id="eN" value="${esc(d.num || "")}"></div></div>
-   <div class="f"><label for="eD">Data</label><input type="date" id="eD" value="${esc(d.data)}"></div>
+function dlgDdtScheda(id) {
+  const d0 = S.ddt.find(i => i.id === id); if (!d0) return;
+  const k = "dd:" + id, ha = S.imgs.includes(k), st = { nuova: null, togli: false };
+  const aperto = ddtAperto(d0);
+  dlg("DDT " + esc(d0.num || "s.n.") + " — " + (d0.tipo === "acq" ? "acquisto" : "riparazione"), `<div class="g2"><div class="f"><label for="eF">Fornitore</label><input type="text" id="eF" list="dlFd" value="${esc(d0.forn)}" autocomplete="off"></div><div class="f"><label for="eN">N° DDT</label><input type="text" id="eN" value="${esc(d0.num || "")}"></div></div>
+   <div class="f"><label for="eD">Data</label><input type="date" id="eD" value="${esc(d0.data)}"></div>
    <div class="hint">Quantità per articolo: il magazzino si aggiorna di conseguenza. 0 = toglie l'articolo dal DDT.</div>
-   ${d.righe.map(x => `<div class="f"><label>${esc(x.a)}${d.tipo === "rip" ? " (già rientrati: " + n0(x.r) + ")" : ""}</label><input type="number" class="eQ" data-r="${x.id}" min="${d.tipo === "rip" ? n0(x.r) : 0}" value="${x.q}" inputmode="numeric"></div>`).join("")}
+   ${d0.righe.map(x => `<div class="f"><label>${esc(x.a)}${d0.tipo === "rip" ? " (già rientrati: " + n0(x.r) + ")" : ""}</label><input type="number" class="eQ" data-r="${x.id}" min="${d0.tipo === "rip" ? n0(x.r) : 0}" value="${x.q}" inputmode="numeric"></div>`).join("")}
+   <div class="f"><label>Foto del DDT (convertita in WebP)</label><img id="sP" alt="" style="max-width:100%;max-height:240px;border-radius:8px" hidden><div class="dacts" style="margin-top:6px"><label class="btn sm" for="sF" style="cursor:pointer">${ha ? "Cambia foto" : "+ Aggiungi foto"}</label><input type="file" id="sF" accept="image/*" hidden><button type="button" class="btn sm dng" id="sT" ${ha ? "" : "hidden"}>Togli foto</button></div><div class="hint" id="sM"></div></div>
+   <div class="dacts"><button type="button" class="btn sm" id="sPdf">Esporta PDF</button><button type="button" class="btn sm" id="sXl">Esporta Excel</button>${aperto ? `<button type="button" class="btn sm pri" id="sRi">Rientro…</button>` : ""}<button type="button" class="btn sm dng" id="sEl">Elimina DDT</button></div>
    <datalist id="dlFd">${fornDdt().map(x => `<option value="${esc(x)}">`).join("")}</datalist>`, {
-    ok: "Salva",
-    onOk: dd => {
-      const f = $("#eF", dd).value.trim(), n = $("#eN", dd).value.trim(), dt = $("#eD", dd).value || oggiIso();
-      if (!f) throw new Err("Scrivi il fornitore.");
-      const Q = new Map([...dd.querySelectorAll(".eQ")].map(e => [+e.dataset.r, intOrNull(e.value)]));
-      for (const [, v] of Q) if (!Number.isInteger(v) || v < 0) throw new Err("Quantità non valida.");
-      run(() => {
-        const x = S.ddt.find(i => i.id === id); x.forn = f; x.num = n; x.data = dt;
-        x.righe.forEach(rg => {
-          const nq = Q.get(rg.id), delta = nq - rg.q, r = invRow(rg.inv);
-          if (x.tipo === "rip" && nq < n0(rg.r)) throw new Err("«" + rg.a + "»: ne risultano già rientrati " + n0(rg.r) + ".");
-          if (r && delta) {
-            if (x.tipo === "rip") {
-              if (delta > 0) { if (delta > n0(r.qty) - n0(r.ripar) - n0(r.dismesso)) throw new Err("«" + r.articolo + "»: disponibili solo " + (n0(r.qty) - n0(r.ripar) - n0(r.dismesso)) + " pezzi in più."); r.rotto = nz(n0(r.rotto) - Math.min(delta, n0(r.rotto))); r.ripar = n0(r.ripar) + delta; }
-              else { if (-delta > n0(r.ripar)) throw new Err("«" + r.articolo + "»: in riparazione risultano solo " + n0(r.ripar) + " pezzi."); r.ripar = nz(n0(r.ripar) + delta); }
-            } else {
-              if (r.rip) throw new Err("«" + r.articolo + "» ha più origini: cambia la quantità dall'inventario.");
-              const qt = n0(r.qty) + delta; if (qt < n0(r.rotto) + n0(r.ripar) + n0(r.dismesso)) throw new Err("«" + r.articolo + "»: i pezzi in magazzino non bastano per ridurre la quantità.");
-              salvaRiga(r.id, { articolo: r.articolo, marca: r.marca, modello: r.modello, area: r.area, qty: qt, rotto: r.rotto, ripar: r.ripar, dismesso: r.dismesso, note: r.note, origini: r.origine ? [{ o: r.origine, q: qt }] : [], rf: r.rf, rd: r.rd, rn: r.rn });
-            }
-          }
-          rg.q = nq;
-          if (x.tipo === "rip" && r) { if (n0(r.ripar)) setRip(r, f, dt, n); else setRip(r); }
-        });
-        x.righe = x.righe.filter(rg => rg.q > 0);
-        if (!x.righe.length) throw new Err("Tutte le righe sono a zero: usa Elimina per togliere il DDT.");
-      }, "DDT modificato.");
-    }
+    ok: "Salva", wide: true,
+    init: dd => {
+      const im = $("#sP", dd), msg = $("#sM", dd), bT = $("#sT", dd);
+      if (ha) Img.get(k).then(u => { if (u && !st.nuova && !st.togli) { im.src = u; im.hidden = false; } }).catch(() => {});
+      $("#sF", dd).onchange = async e => { const fl = e.target.files[0]; if (!fl) return; try { st.nuova = await comprimi(fl, 1000, 0.75); st.togli = false; im.src = st.nuova; im.hidden = false; bT.hidden = false; msg.textContent = "Nuova foto: si salva con «Salva»."; } catch (er) { $("#derr", dd).textContent = er.message; } };
+      bT.onclick = () => { st.nuova = null; st.togli = true; im.hidden = true; im.removeAttribute("src"); bT.hidden = true; msg.textContent = "La foto verrà tolta con «Salva»."; };
+      const salvaPoi = async fn => { const er = $("#derr", dd); er.textContent = ""; try { await salva(dd); dd.close(); if (fn) await fn(); } catch (e) { er.textContent = e instanceof Err ? e.message : (e.message || "Operazione non riuscita."); } };
+      $("#sPdf", dd).onclick = () => salvaPoi(() => ddtPdfDa(id));
+      $("#sXl", dd).onclick = () => salvaPoi(() => ddtPdfDa(id, true));
+      const ri = $("#sRi", dd); if (ri) ri.onclick = () => { dd.close(); dlgRientro(id); };
+      $("#sEl", dd).onclick = () => { dd.close(); ddtElimina(id); };
+    },
+    onOk: dd => { salva(dd).then(() => dd.close()).catch(e => { $("#derr", dd).textContent = e instanceof Err ? e.message : (e.message || "Salvataggio non riuscito."); }); return false; }
   });
+  async function salva(dd) {
+    const f = $("#eF", dd).value.trim(), n = $("#eN", dd).value.trim(), dt = $("#eD", dd).value || oggiIso();
+    if (!f) throw new Err("Scrivi il fornitore.");
+    const Q = new Map([...dd.querySelectorAll(".eQ")].map(e => [+e.dataset.r, intOrNull(e.value)]));
+    for (const [, v] of Q) if (!Number.isInteger(v) || v < 0) throw new Err("Quantità non valida.");
+    run(() => {
+      const x = S.ddt.find(i => i.id === id); x.forn = f; x.num = n; x.data = dt;
+      x.righe.forEach(rg => {
+        const nq = Q.get(rg.id), delta = nq - rg.q, r = invRow(rg.inv);
+        if (x.tipo === "rip" && nq < n0(rg.r)) throw new Err("«" + rg.a + "»: ne risultano già rientrati " + n0(rg.r) + ".");
+        if (r && delta) {
+          if (x.tipo === "rip") {
+            if (delta > 0) { if (delta > n0(r.qty) - n0(r.ripar) - n0(r.dismesso)) throw new Err("«" + r.articolo + "»: disponibili solo " + (n0(r.qty) - n0(r.ripar) - n0(r.dismesso)) + " pezzi in più."); r.rotto = nz(n0(r.rotto) - Math.min(delta, n0(r.rotto))); r.ripar = n0(r.ripar) + delta; }
+            else { if (-delta > n0(r.ripar)) throw new Err("«" + r.articolo + "»: in riparazione risultano solo " + n0(r.ripar) + " pezzi."); r.ripar = nz(n0(r.ripar) + delta); }
+          } else {
+            if (r.rip) throw new Err("«" + r.articolo + "» ha più origini: cambia la quantità dall'inventario.");
+            const qt = n0(r.qty) + delta; if (qt < n0(r.rotto) + n0(r.ripar) + n0(r.dismesso)) throw new Err("«" + r.articolo + "»: i pezzi in magazzino non bastano per ridurre la quantità.");
+            salvaRiga(r.id, { articolo: r.articolo, marca: r.marca, modello: r.modello, area: r.area, qty: qt, rotto: r.rotto, ripar: r.ripar, dismesso: r.dismesso, note: r.note, origini: r.origine ? [{ o: r.origine, q: qt }] : [], rf: r.rf, rd: r.rd, rn: r.rn });
+          }
+        }
+        rg.q = nq;
+        if (x.tipo === "rip" && r) { if (n0(r.ripar)) setRip(r, f, dt, n); else setRip(r); }
+      });
+      x.righe = x.righe.filter(rg => rg.q > 0);
+      if (!x.righe.length) throw new Err("Tutte le righe sono a zero: usa Elimina per togliere il DDT.");
+    }, "DDT salvato.");
+    if (st.nuova) { await Img.set(k, st.nuova); go(() => { if (!S.imgs.includes(k)) S.imgs.push(k); S.imgv[k] = Date.now(); }); st.nuova = null; }
+    else if (st.togli) { await Img.del(k); go(() => { S.imgs = S.imgs.filter(q => q !== k); delete S.imgv[k]; }); st.togli = false; }
+  }
 }
 function dlgRientro(id) {
   const d = S.ddt.find(i => i.id === id); if (!d) return;
@@ -2387,7 +2388,7 @@ function dlgCerca() {
         const T = norm(q.value).split(" ").filter(Boolean); res = [];
         if (T.length) {
           const ok = h => { h = norm(h); return T.every(t => h.includes(t)); };
-          S.inv.filter(r => ok([r.articolo, r.marca, r.modello, r.area, r.note, r.origine].join(" "))).slice(0, 8).forEach(r => res.push(["Inventario", r.articolo + " · " + (r.area || "Da assegnare") + " · " + n0(r.qty) + " pz", "inv", r.articolo]));
+          S.inv.filter(r => ok([r.articolo, r.marca, r.modello, r.area, r.note, r.origine].join(" "))).slice(0, 8).forEach(r => res.push(["Inventario", r.articolo + " · " + (r.area || "Da assegnare") + " · " + n0(r.qty) + " (disp. " + disp(r) + ") pz", "inv", r.articolo]));
           S.acq.filter(a => ok([a.articolo, a.area, a.note, a.anno].join(" "))).slice(0, 6).forEach(a => res.push(["Acquisti", "Einkauf " + a.anno + " · " + a.articolo + " · " + n0(a.qty) + " pz", "acq", a.articolo]));
           S.int.filter(x => ok([x.tipo, x.dove, x.chi, x.serve, x.art].join(" "))).slice(0, 6).forEach(x => res.push(["Interventi", x.tipo + (x.dove ? " · " + x.dove : "") + (x.chi ? " · " + x.chi : ""), "int", x.tipo]));
           S.bud.mov.filter(m => ok([m.forn, m.art, m.ddt, m.note, dataIt(m.data)].join(" "))).slice(0, 6).forEach(m => res.push(["Budget", dataIt(m.data) + " · " + (m.forn || "") + " · " + (m.art || "") + " · " + eur(m.imp), "bud", m.art || m.forn || ""]));
@@ -2406,13 +2407,19 @@ function dlgConta(area0) {
   if (!aree.length) return toast("Nessuna area con articoli.");
   const sel = aree.includes(area0) ? area0 : aree[0];
   dlg("Conta area", `<div class="f"><label for="cA">Area da contare</label><select id="cA">${aree.map(a => `<option ${a === sel ? "selected" : ""}>${esc(a)}</option>`).join("")}</select></div>
+   <div class="dacts" style="margin-bottom:8px"><button type="button" class="btn sm" id="cPdf">Stampa lista (PDF)</button></div>
    <div class="hint">Scrivi quanti pezzi hai trovato. Dove il numero è diverso, la riga viene segnata «da verificare» con una nota; le quantità non cambiano da sole. Lascia vuoto ciò che non hai contato.</div><div id="cL"></div>`, {
     ok: "Applica", init: d => {
       const disegna = () => {
         const a = $("#cA", d).value;
-        $("#cL", d).innerHTML = S.inv.filter(r => r.area === a).sort((x, y) => x.articolo.localeCompare(y.articolo, "it")).map(r => `<div class="ar"><span><b>${esc(r.articolo)}</b><span class="sub"> · attesi ${n0(r.qty)}${r.origine ? " · " + esc(r.origine) : ""}</span></span><input type="number" min="0" inputmode="numeric" data-id="${r.id}" data-q="${n0(r.qty)}" placeholder="${n0(r.qty)}" style="width:88px"></div>`).join("");
+        $("#cL", d).innerHTML = S.inv.filter(r => r.area === a).sort((x, y) => x.articolo.localeCompare(y.articolo, "it")).map(r => `<div class="ar"><span><b>${esc(r.articolo)}</b><span class="sub"> · attesi ${n0(r.qty)} (disp. ${disp(r)})${r.origine ? " · " + esc(r.origine) : ""}</span></span><input type="number" min="0" inputmode="numeric" data-id="${r.id}" data-q="${n0(r.qty)}" placeholder="${n0(r.qty)}" style="width:88px"></div>`).join("");
       };
       $("#cA", d).onchange = disegna; disegna();
+      $("#cPdf", d).onclick = () => {
+        const a = $("#cA", d).value, con = new Map([...d.querySelectorAll("#cL input")].map(i => [Number(i.dataset.id), i.value]));
+        const righe = S.inv.filter(r => r.area === a).sort((x, y) => x.articolo.localeCompare(y.articolo, "it")).map(r => ({ a: r.articolo, o: r.origine || "", q: n0(r.qty), dp: disp(r), c: con.get(r.id) || "" }));
+        pdfConta(a, righe).catch(e => { $("#derr", d).textContent = e.message || "PDF non riuscito."; });
+      };
     },
     onOk: d => {
       const diff = [...d.querySelectorAll("#cL input")].filter(i => i.value !== "" && Number(i.value) !== Number(i.dataset.q) && Number.isInteger(Number(i.value)) && Number(i.value) >= 0);
@@ -2420,6 +2427,24 @@ function dlgConta(area0) {
       go(() => diff.forEach(i => { const r = invRow(Number(i.dataset.id)); if (!r) return; r.ver = Date.now(); r.note = (r.note ? r.note + " · " : "") + "Contati " + Number(i.value) + " il " + dataIt(oggiIso()) + " (attesi " + n0(r.qty) + ")"; }), diff.length + " righe segnate da verificare.");
     }
   });
+}
+
+async function pdfConta(area, righe) {
+  if (!window.jspdf) throw new Err("La libreria PDF non si è caricata. Controlla la connessione e riprova.");
+  const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" }), L = 15, R = 195, cx = [L, L + 88, L + 124, L + 142, L + 160];
+  doc.setFont("helvetica", "bold"); doc.setFontSize(15); doc.text("CONTA AREA – " + area, L, 18);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text("Robinson Apulia – Sound&Light · " + dataIt(oggiIso()) + " · " + righe.length + " articoli · " + righe.reduce((s, x) => s + x.q, 0) + " pezzi attesi", L, 25);
+  let y = 34;
+  const testa = () => { doc.setFillColor(0, 71, 171); doc.rect(L, y - 5, R - L, 8, "F"); doc.setTextColor(255); doc.setFont("helvetica", "bold"); ["Articolo / origine", "Attesi", "Disp.", "Contati", "Note"].forEach((h, i) => doc.text(h, cx[i] + 1.5, y)); doc.setTextColor(0); doc.setFont("helvetica", "normal"); y += 8; };
+  testa();
+  righe.forEach(x => {
+    const nm = doc.splitTextToSize(x.a + (x.o ? " · " + x.o : ""), 84), h = Math.max(nm.length * 5, 6) + 4;
+    if (y + h > 280) { doc.addPage(); y = 20; testa(); }
+    doc.text(nm, cx[0] + 1.5, y); doc.text(String(x.q), cx[1] + 1.5, y); doc.text(String(x.dp), cx[2] + 1.5, y);
+    if (x.c !== "") doc.text(String(x.c), cx[3] + 1.5, y); else { doc.setDrawColor(120); doc.setLineWidth(0.3); doc.rect(cx[3] + 1.5, y - 4.5, 14, 6.5); }
+    doc.setDrawColor(200); doc.setLineWidth(0.2); doc.line(L, y + h - 5, R, y + h - 5); y += h;
+  });
+  await salvaFile("Conta_" + area.replace(/[^\w-]+/g, "_") + "_" + oggiIso() + ".pdf", doc.output("blob"));
 }
 
 /* ======================= BUDGET ======================= */
@@ -2579,10 +2604,10 @@ async function vediFotoMov(id) {
 const LAY = {
   inv: { cls: "cols-inv", keys: ["articolo","area","marca","modello","origine","qty","disp","rotto","ripar","dismesso","note"], fixed: 1,
          w: ["minmax(0,1.8fr)","minmax(0,.9fr)","minmax(0,1fr)","minmax(0,1fr)","minmax(0,1.1fr)","52px","52px","52px","52px","52px","minmax(0,1.3fr)","284px"] },
-  acq: { cls: "cols-acq", keys: ["anno","articolo","area","qty","note"], fixed: 2,
-         w: ["70px","minmax(0,2.2fr)","minmax(0,1.2fr)","56px","minmax(0,1.6fr)","110px","232px"] },
-  rie: { cls: "cols-rie", keys: ["articolo","totale","acquistati","rotti","ripar","dismessi","dove"], fixed: 0,
-         w: ["minmax(0,2.4fr)","70px","80px","60px","60px","60px","minmax(0,2fr)"] }
+  acq: { cls: "cols-acq", keys: ["anno","articolo","area","qty","disp","note"], fixed: 2,
+         w: ["70px","minmax(0,2.2fr)","minmax(0,1.2fr)","56px","56px","minmax(0,1.6fr)","110px","232px"] },
+  rie: { cls: "cols-rie", keys: ["articolo","totale","disp","acquistati","rotti","ripar","dismessi","dove"], fixed: 0,
+         w: ["minmax(0,2.4fr)","70px","56px","80px","60px","60px","60px","minmax(0,2fr)"] }
 };
 function ordineLay(tab) {
   const L = LAY[tab], saved = S && S.layout && Array.isArray(S.layout[tab]) ? S.layout[tab] : null; if (!saved) return null;
