@@ -1803,6 +1803,8 @@ document.addEventListener("click", e => {
     case "ddtT": uiD.t = t.dataset.t; render(); break;
     case "ddtNew": if (uiD.t === "acq") dlgDDTAcq(); else dlgDDT([]); break;
     case "ddtPdf": ddtPdfDa(id).catch(e => toast(e.message || "PDF non riuscito.")); break;
+    case "ddtXl": ddtPdfDa(id, true).catch(e => toast(e.message || "Excel non riuscito.")); break;
+    case "ddtEdit": dlgDdtEdit(id); break;
     case "ddtFoto": dlgDdtFoto(id); break;
     case "ddtRient": dlgRientro(id); break;
     case "ddtDel": { const x = S.ddt.find(i => i.id === id); dlgConferma("Elimina DDT", `Eliminare il DDT ${esc(x.num || "s.n.")} (${esc(x.forn)})?<br><small>Le quantità di magazzino non vengono modificate.</small>`, "Elimina", () => { const k = "dd:" + id; if (S.imgs.includes(k)) Img.del(k).catch(() => {}); go(() => { S.ddt = S.ddt.filter(i => i.id !== id); S.imgs = S.imgs.filter(q => q !== k); delete S.imgv[k]; }, "DDT eliminato."); }); break; }
@@ -2063,9 +2065,8 @@ function dlgDDT(ids) {
    <div class="f"><span class="lab">Articoli da inviare</span><div id="dr">${(ids.length ? ids.map(i => riga(lab(i), 1)) : [riga()]).join("")}</div><div><button type="button" class="btn sm" id="dAdd">+ Aggiungi articolo</button></div></div>
    <div class="hint">Se un articolo non è in elenco, scrivi il nome: dopo ti chiederò area e origine per crearlo.</div>
    <div class="f"><label for="dFoto">Foto (facoltativa, convertita in WebP)</label><input type="file" id="dFoto" accept="image/*"><img id="dFotoP" alt="" style="max-width:100%;max-height:160px;margin-top:6px;border-radius:8px" hidden></div>
-   <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="dXl"> Scarica anche l'Excel</label>
    <datalist id="dlDd">${tut.map(x => `<option value="${esc(x)}">`).join("")}</datalist><datalist id="dlFd">${fornDdt().map(x => `<option value="${esc(x)}">`).join("")}</datalist>`, {
-    wide: true, ok: "Crea DDT",
+    wide: true, ok: "Salva DDT",
     onOk: d => {
       const f = $("#dF", d).value.trim(), n = $("#dN", d).value.trim(), dt = $("#dD", d).value || oggiIso();
       if (!f) throw new Err("Scegli o scrivi il fornitore di destinazione.");
@@ -2074,7 +2075,7 @@ function dlgDDT(ids) {
       voci.forEach(x => { if (!Number.isInteger(x.q) || x.q < 1) throw new Err("Indica la quantità per «" + x.a + "»."); x.id = m.get(x.a); });
       const usati = new Map();
       voci.forEach(x => { if (x.id == null) return; const r = invRow(x.id), tot = (usati.get(x.id) || 0) + x.q; usati.set(x.id, tot); const disp = n0(r.qty) - n0(r.ripar) - n0(r.dismesso); if (tot > disp) throw new Err("«" + r.articolo + "»: disponibili solo " + disp + " pezzi."); });
-      const ctx = { f, n, dt, voci, foto: dFoto, xl: $("#dXl", d).checked };
+      const ctx = { f, n, dt, voci, foto: dFoto };
       if (voci.some(x => x.id == null)) setTimeout(() => dlgDDTNuovi(ctx), 80); else ddtConferma(ctx);
     },
     init: d => {
@@ -2087,12 +2088,12 @@ function dlgDDT(ids) {
 function dlgDDTNuovi(ctx) {
   const nuovi = ctx.voci.filter(x => x.id == null);
   dlg("Articoli nuovi: area e origine", `<div class="hint">Questi articoli non sono in inventario: li creo e li segno in riparazione. Indica dove assegnarli e l'origine.</div>` + nuovi.map((x, i) => `<div class="nrow" data-i="${i}"><div class="f"><label>${esc(x.a)} × ${x.q}</label><select class="nA">${areaOpts("", "— Da assegnare —")}</select></div><div class="f"><label>Area di origine</label><select class="nO">${pvOpts("")}</select></div><div class="f"><label>Note</label><input type="text" class="nN" autocomplete="off"></div></div>`).join(""), {
-    ok: "Crea DDT",
+    ok: "Salva DDT",
     onOk: d => { d.querySelectorAll(".nrow").forEach(r => { const x = nuovi[+r.dataset.i]; x.area = $(".nA", r).value || null; x.orig = $(".nO", r).value || ""; x.note = $(".nN", r).value.trim(); }); ddtConferma(ctx); }
   });
 }
 function ddtConferma(ctx) {
-  const { f, n, dt, voci, foto, xl } = ctx; const righe = [], did = nid(S.ddt);
+  const { f, n, dt, voci, foto } = ctx; const righe = [], did = nid(S.ddt);
   run(() => {
     const rr = [];
     voci.forEach(x => {
@@ -2103,12 +2104,10 @@ function ddtConferma(ctx) {
       righe.push({ a: r.articolo, ma: r.marca || "", mo: r.modello || "", q: x.q, no: r.note || "" });
     });
     S.ddt.push({ id: did, tipo: "rip", num: n, data: dt, forn: f, righe: rr });
-  }, "DDT creato: " + voci.reduce((s, x) => s + x.q, 0) + " pezzi in riparazione presso " + f + ".");
-  const dd = { tipo: "rip", f, n, dt, righe, foto };
+  }, "DDT salvato: " + voci.reduce((s, x) => s + x.q, 0) + " pezzi in riparazione presso " + f + ". PDF ed Excel dalla sezione DDT.");
   (async () => {
     if (foto) { const k = "dd:" + did; await Img.set(k, foto); go(() => { if (!S.imgs.includes(k)) S.imgs.push(k); S.imgv[k] = Date.now(); }); }
-    await pdfDdt(dd); if (xl) await esportaDdt(dd);
-  })().catch(e => toast(e.message || "Creazione del DDT non riuscita."));
+  })().catch(e => toast(e.message || "Foto non salvata."));
 }
 const inJpeg = u => new Promise((res, rej) => { const im = new Image(); im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0); res({ d: c.toDataURL("image/jpeg", 0.85), w: c.width, h: c.height }); }; im.onerror = () => rej(new Err("Foto non leggibile.")); im.src = u; });
 async function pdfDdt(d) {
@@ -2140,7 +2139,7 @@ async function esportaDdt(d) {
   const wb = new ExcelJS.Workbook(); wb.creator = "Robinson Apulia – Sound&Light"; const ws = wb.addWorksheet("DDT");
   ws.columns = [{ width: 6 }, { width: 36 }, { width: 18 }, { width: 18 }, { width: 8 }, { width: 36 }];
   ws.mergeCells("A1:F1"); ws.getCell("A1").value = "DOCUMENTO DI TRASPORTO – Invio in riparazione"; ws.getCell("A1").font = { bold: true, size: 14 };
-  ws.addRow(["", "Mittente", "Robinson Apulia – Sound&Light"]); ws.addRow(["", "Destinatario", d.f]); ws.addRow(["", "N° DDT", d.n || "—"]); ws.addRow(["", "Data", dataIt(d.dt)]); ws.addRow(["", "Causale", "Invio per riparazione"]);
+  const ra = "Robinson Apulia – Sound&Light", aq = d.tipo === "acq"; ws.addRow(["", "Mittente", aq ? d.f : ra]); ws.addRow(["", "Destinatario", aq ? ra : d.f]); ws.addRow(["", "N° DDT", d.n || "—"]); ws.addRow(["", "Data", dataIt(d.dt)]); ws.addRow(["", "Causale", aq ? "Acquisto - merce in entrata" : "Invio per riparazione"]);
   for (let i = 2; i <= 6; i++) ws.getCell("B" + i).font = { bold: true };
   ws.addRow([]); const h = ws.addRow(["N°", "Articolo", "Marca", "Modello", "Qtà", "Note"]);
   h.font = { bold: true, color: { argb: "FFFFFFFF" } }; h.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0047AB" } };
@@ -2163,13 +2162,14 @@ function listDdt() {
     const stato = d.tipo === "acq" ? "Ricevuto in magazzino" : rien >= tot ? "Rientrato" : rien > 0 ? "Rientro parziale (" + rien + "/" + tot + ")" : "In riparazione";
     return `<div class="fxcard"><h3>DDT ${esc(d.num || "s.n.")} — ${esc(d.forn)}</h3><div class="sub">${dataIt(d.data)} · ${tot} pezzi · <b>${stato}</b></div>
       ${d.righe.map(x => `<div class="fxline"><span>${x.q} × ${esc(x.a)} <small class="sub">${esc([x.ma, x.mo].filter(Boolean).join(" "))}</small></span><span class="sub">${d.tipo === "rip" ? "rientrati " + n0(x.r) + "/" + x.q : esc(x.ar || "da assegnare")}</span></div>`).join("")}
-      <div class="dacts"><button class="btn sm" data-act="ddtPdf" data-id="${d.id}">PDF</button><button class="btn sm" data-act="ddtFoto" data-id="${d.id}">${foto ? "📷 Foto" : "+ Foto"}</button>${ddtAperto(d) ? `<button class="btn sm pri" data-act="ddtRient" data-id="${d.id}">Rientro</button>` : ""}<button class="btn sm dng" data-act="ddtDel" data-id="${d.id}">Elimina</button></div></div>`;
+      <div class="dacts"><button class="btn sm" data-act="ddtEdit" data-id="${d.id}">Modifica</button><button class="btn sm" data-act="ddtPdf" data-id="${d.id}">PDF</button><button class="btn sm" data-act="ddtXl" data-id="${d.id}">Excel</button><button class="btn sm" data-act="ddtFoto" data-id="${d.id}">${foto ? "📷 Foto" : "+ Foto"}</button>${ddtAperto(d) ? `<button class="btn sm pri" data-act="ddtRient" data-id="${d.id}">Rientro</button>` : ""}<button class="btn sm dng" data-act="ddtDel" data-id="${d.id}">Elimina</button></div></div>`;
   }).join("") : `<div class="empty">Nessun DDT ${uiD.t === "acq" ? "di acquisto" : "di riparazione"}. Usa «+ Nuovo DDT».</div>`;
 }
-async function ddtPdfDa(id) {
+async function ddtPdfDa(id, xl) {
   const d = S.ddt.find(i => i.id === id); if (!d) return;
   const foto = S.imgs.includes("dd:" + id) ? await Img.get("dd:" + id) : null;
-  await pdfDdt({ tipo: d.tipo, f: d.forn, n: d.num, dt: d.data, righe: d.righe.map(x => ({ a: x.a, ma: x.ma || "", mo: x.mo || "", q: x.q, no: x.no || "" })), foto });
+  const dd = { tipo: d.tipo, f: d.forn, n: d.num, dt: d.data, righe: d.righe.map(x => ({ a: x.a, ma: x.ma || "", mo: x.mo || "", q: x.q, no: [d.tipo === "acq" ? x.ar : "", x.no].filter(Boolean).join(" · ") })), foto };
+  if (xl) await esportaDdt(dd); else await pdfDdt(dd);
 }
 function dlgDdtFoto(id) {
   let nuova = null; const k = "dd:" + id, ha = S.imgs.includes(k);
@@ -2186,6 +2186,43 @@ function dlgDdtFoto(id) {
         catch (e) { $("#derr", d).textContent = e.message || "Foto non salvata."; $("#dok", d).disabled = false; }
       })();
       return false;
+    }
+  });
+}
+function dlgDdtEdit(id) {
+  const d = S.ddt.find(i => i.id === id); if (!d) return;
+  dlg("Modifica DDT", `<div class="g2"><div class="f"><label for="eF">Fornitore</label><input type="text" id="eF" list="dlFd" value="${esc(d.forn)}" autocomplete="off"></div><div class="f"><label for="eN">N° DDT</label><input type="text" id="eN" value="${esc(d.num || "")}"></div></div>
+   <div class="f"><label for="eD">Data</label><input type="date" id="eD" value="${esc(d.data)}"></div>
+   <div class="hint">Quantità per articolo: il magazzino si aggiorna di conseguenza. 0 = toglie l'articolo dal DDT.</div>
+   ${d.righe.map(x => `<div class="f"><label>${esc(x.a)}${d.tipo === "rip" ? " (già rientrati: " + n0(x.r) + ")" : ""}</label><input type="number" class="eQ" data-r="${x.id}" min="${d.tipo === "rip" ? n0(x.r) : 0}" value="${x.q}" inputmode="numeric"></div>`).join("")}
+   <datalist id="dlFd">${fornDdt().map(x => `<option value="${esc(x)}">`).join("")}</datalist>`, {
+    ok: "Salva",
+    onOk: dd => {
+      const f = $("#eF", dd).value.trim(), n = $("#eN", dd).value.trim(), dt = $("#eD", dd).value || oggiIso();
+      if (!f) throw new Err("Scrivi il fornitore.");
+      const Q = new Map([...dd.querySelectorAll(".eQ")].map(e => [+e.dataset.r, intOrNull(e.value)]));
+      for (const [, v] of Q) if (!Number.isInteger(v) || v < 0) throw new Err("Quantità non valida.");
+      run(() => {
+        const x = S.ddt.find(i => i.id === id); x.forn = f; x.num = n; x.data = dt;
+        x.righe.forEach(rg => {
+          const nq = Q.get(rg.id), delta = nq - rg.q, r = invRow(rg.inv);
+          if (x.tipo === "rip" && nq < n0(rg.r)) throw new Err("«" + rg.a + "»: ne risultano già rientrati " + n0(rg.r) + ".");
+          if (r && delta) {
+            if (x.tipo === "rip") {
+              if (delta > 0) { if (delta > n0(r.qty) - n0(r.ripar) - n0(r.dismesso)) throw new Err("«" + r.articolo + "»: disponibili solo " + (n0(r.qty) - n0(r.ripar) - n0(r.dismesso)) + " pezzi in più."); r.rotto = nz(n0(r.rotto) - Math.min(delta, n0(r.rotto))); r.ripar = n0(r.ripar) + delta; }
+              else { if (-delta > n0(r.ripar)) throw new Err("«" + r.articolo + "»: in riparazione risultano solo " + n0(r.ripar) + " pezzi."); r.ripar = nz(n0(r.ripar) + delta); }
+            } else {
+              if (r.rip) throw new Err("«" + r.articolo + "» ha più origini: cambia la quantità dall'inventario.");
+              const qt = n0(r.qty) + delta; if (qt < n0(r.rotto) + n0(r.ripar) + n0(r.dismesso)) throw new Err("«" + r.articolo + "»: i pezzi in magazzino non bastano per ridurre la quantità.");
+              salvaRiga(r.id, { articolo: r.articolo, marca: r.marca, modello: r.modello, area: r.area, qty: qt, rotto: r.rotto, ripar: r.ripar, dismesso: r.dismesso, note: r.note, origini: r.origine ? [{ o: r.origine, q: qt }] : [], rf: r.rf, rd: r.rd, rn: r.rn });
+            }
+          }
+          rg.q = nq;
+          if (x.tipo === "rip" && r) { if (n0(r.ripar)) setRip(r, f, dt, n); else setRip(r); }
+        });
+        x.righe = x.righe.filter(rg => rg.q > 0);
+        if (!x.righe.length) throw new Err("Tutte le righe sono a zero: usa Elimina per togliere il DDT.");
+      }, "DDT modificato.");
     }
   });
 }
@@ -2217,7 +2254,7 @@ function dlgDDTAcq() {
    <div class="f"><span class="lab">Articoli ricevuti: entrano in magazzino con la quantità indicata</span><div id="ar">${riga()}</div><div><button type="button" class="btn sm" id="aAdd">+ Aggiungi articolo</button></div></div>
    <div class="f"><label for="aFoto">Foto (facoltativa, convertita in WebP)</label><input type="file" id="aFoto" accept="image/*"><img id="aFotoP" alt="" style="max-width:100%;max-height:160px;margin-top:6px;border-radius:8px" hidden></div>
    <datalist id="dlNo">${nomi().map(x => `<option value="${esc(x)}">`).join("")}</datalist><datalist id="dlFd">${fornDdt().map(x => `<option value="${esc(x)}">`).join("")}</datalist>`, {
-    wide: true, ok: "Crea DDT",
+    wide: true, ok: "Salva DDT",
     init: d => {
       $("#aAdd", d).onclick = () => { $("#ar", d).insertAdjacentHTML("beforeend", riga()); const a = d.querySelectorAll(".aA"); a[a.length - 1].focus(); };
       $("#ar", d).onclick = e => { const b = e.target.closest(".nX"); if (b && d.querySelectorAll(".nrow").length > 1) b.closest(".nrow").remove(); };
@@ -2240,11 +2277,10 @@ function dlgDDTAcq() {
           righe.push({ a: r.articolo, ma: r.marca || "", mo: r.modello || "", q: x.q, no: [x.area, x.no].filter(Boolean).join(" · ") });
         });
         S.ddt.push({ id: did, tipo: "acq", num: n, data: dt, forn: f, righe: rr });
-      }, "DDT di acquisto creato: " + V.reduce((s, x) => s + x.q, 0) + " pezzi in magazzino.");
+      }, "DDT salvato: " + V.reduce((s, x) => s + x.q, 0) + " pezzi entrati in magazzino. PDF ed Excel dalla sezione DDT.");
       (async () => {
         if (dFoto) { const k = "dd:" + did; await Img.set(k, dFoto); go(() => { if (!S.imgs.includes(k)) S.imgs.push(k); S.imgv[k] = Date.now(); }); }
-        await pdfDdt({ tipo: "acq", f, n, dt, righe, foto: dFoto });
-      })().catch(e => toast(e.message || "Creazione del DDT non riuscita."));
+      })().catch(e => toast(e.message || "Foto non salvata."));
     }
   });
 }
