@@ -1203,8 +1203,9 @@ function dlgCollega(id) {
 }
 
 /* --- Riepilogo --- */
+const rieSel = new Set();
 function viewRie(v) {
-  v.innerHTML = `<div class="bar"><input type="search" class="grow" id="qr" placeholder="Cerca articolo…" value="${esc(ui.qr)}" aria-label="Cerca"></div><div id="list"></div>`;
+  v.innerHTML = `<div class="bar"><input type="search" class="grow" id="qr" placeholder="Cerca articolo…" value="${esc(ui.qr)}" aria-label="Cerca"><button class="btn pri" id="rUn" data-act="rieUni" ${rieSel.size ? "" : "disabled"}>Unisci selezionati (${rieSel.size})…</button></div><div class="hint" style="margin:0 0 6px">Spunta due o più articoli simili e premi «Unisci selezionati»: scegli le righe di origine e il nome/area di destinazione.</div><div id="list"></div>`;
   listRie();
 }
 const verTxt = r => r.ver ? "Da verificare dal " + (r.ver > 1000 ? new Date(r.ver).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "(data non registrata)") : "";
@@ -1230,7 +1231,7 @@ function listRie() {
   let R = [...m.values()].filter(g => !q || [...g.nomi].some(n => norm(n).includes(q))).sort((a, b) => a.nome.localeCompare(b.nome, "it"));
   R.forEach(g => { const nn = new Set([...g.nomi].map(norm)); g.acq = S.acq.filter(a => a.inv_id != null && invRow(a.inv_id) ? g.ids.has(a.inv_id) : nn.has(norm(a.articolo))).reduce((t, a) => t + n0(a.qty), 0); });
   R = ordina("rie", R, { nome: g => g.nome, qty: g => g.qty, disp: g => Math.max(0, g.qty - g.rotto - g.ripar - g.dis), acq: g => g.acq, rotto: g => g.rotto, ripar: g => g.ripar, dis: g => g.dis, dove: g => [...g.aree.keys()].join(" ") });
-  $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> articoli diversi</span><span><b>${R.reduce((s, g) => s + g.qty, 0)}</b> pezzi</span></div><div class="list">` + (R.length ? `<div class="gh cols-rie">${hd("rie", "nome", "Articolo")}${hd("rie", "qty", "Pezzi", "num")}${hd("rie", "disp", "Disp.", "num")}${hd("rie", "acq", "Acquistati", "num")}${hd("rie", "rotto", "Rotti", "num")}${hd("rie", "ripar", "Rip.", "num")}${hd("rie", "dis", "Dism.", "num")}${hd("rie", "dove", "Dove si trova")}</div>` + R.map(g => `<div class="gr ra cols-rie" data-act="artAree" data-n="${esc(g.key)}"><div class="art cell"><a href="#" data-act="artAree" data-n="${esc(g.key)}" style="color:var(--brand);text-decoration:none">${esc(g.nome)}</a>${g.nomi.size > 1 ? `<div class="sub">anche: ${esc([...g.nomi].filter(n => n !== g.nome).join(" · "))}</div>` : ""}</div><div class="num cell" data-l="Pezzi"><b>${g.qty}</b></div><div class="num cell" data-l="Disp."><b>${Math.max(0, g.qty - g.rotto - g.ripar - g.dis)}</b></div><div class="num cell" data-l="Acquistati">${g.acq || "·"}</div><div class="num cell" data-l="Rotti">${g.rotto || "·"}</div><div class="num cell" data-l="Rip.">${g.ripar || "·"}</div><div class="num cell" data-l="Dism.">${g.dis || "·"}</div><div class="cell">${[...g.aree].map(([a, n]) => `<span class="chip">${esc(a)} · ${n}</span>`).join(" ")}</div></div>`).join("") : `<div class="empty">Nessun articolo.</div>`) + `</div>`;
+  $("#list").innerHTML = `<div class="sum"><span><b>${R.length}</b> articoli diversi</span><span><b>${R.reduce((s, g) => s + g.qty, 0)}</b> pezzi</span></div><div class="list">` + (R.length ? `<div class="gh cols-rie">${hd("rie", "nome", "Articolo")}${hd("rie", "qty", "Pezzi", "num")}${hd("rie", "disp", "Disp.", "num")}${hd("rie", "acq", "Acquistati", "num")}${hd("rie", "rotto", "Rotti", "num")}${hd("rie", "ripar", "Rip.", "num")}${hd("rie", "dis", "Dism.", "num")}${hd("rie", "dove", "Dove si trova")}</div>` + R.map(g => `<div class="gr ra cols-rie" data-act="artAree" data-n="${esc(g.key)}"><div class="art cell"><input type="checkbox" class="rsel" data-n="${esc(g.key)}" ${rieSel.has(g.key) ? "checked" : ""} aria-label="Seleziona" style="margin-right:8px"><a href="#" data-act="artAree" data-n="${esc(g.key)}" style="color:var(--brand);text-decoration:none">${esc(g.nome)}</a>${g.nomi.size > 1 ? `<div class="sub">anche: ${esc([...g.nomi].filter(n => n !== g.nome).join(" · "))}</div>` : ""}</div><div class="num cell" data-l="Pezzi"><b>${g.qty}</b></div><div class="num cell" data-l="Disp."><b>${Math.max(0, g.qty - g.rotto - g.ripar - g.dis)}</b></div><div class="num cell" data-l="Acquistati">${g.acq || "·"}</div><div class="num cell" data-l="Rotti">${g.rotto || "·"}</div><div class="num cell" data-l="Rip.">${g.ripar || "·"}</div><div class="num cell" data-l="Dism.">${g.dis || "·"}</div><div class="cell">${[...g.aree].map(([a, n]) => `<span class="chip">${esc(a)} · ${n}</span>`).join(" ")}</div></div>`).join("") : `<div class="empty">Nessun articolo.</div>`) + `</div>`;
 }
 
 function dlgSimile(id) {
@@ -1301,29 +1302,33 @@ function punteggio(ra, rb) {
 }
 /* gruppi «a legame completo»: una riga entra in un gruppo solo se è simile a TUTTE quelle già presenti (niente catene A~B~C) */
 function raggruppa(rows) {
-  const cl = [];
+  const cl = [], big = rows.length > 400, idx = new Map(), toks = r => norm(r.articolo).split(/[^a-z0-9à-ÿ]+/).filter(w => w.length >= 3);
   rows.slice().sort((a, b) => norm(a.articolo).localeCompare(norm(b.articolo)) || a.id - b.id).forEach(r => {
+    const tk = big ? toks(r) : null;
+    const cand = big ? [...new Set(tk.flatMap(w => [...(idx.get(w) || [])]))].map(i => cl[i]) : cl;   // su molte righe si confrontano solo i gruppi con almeno una parola in comune
     let best = null, bs = 0;
-    for (const c of cl) { let mn = 1; for (const m of c.rows) { const s = punteggio(r, m); if (!s) { mn = 0; break; } mn = Math.min(mn, s); } if (mn > bs) { bs = mn; best = c; } }
-    if (best) { best.rows.push(r); best.min = Math.min(best.min, bs); } else cl.push({ rows: [r], min: 1 });
+    for (const c of cand) { let mn = 1; for (const m of c.rows) { const s = punteggio(r, m); if (!s) { mn = 0; break; } mn = Math.min(mn, s); } if (mn > bs) { bs = mn; best = c; } }
+    if (best) { best.rows.push(r); best.min = Math.min(best.min, bs); } else { best = { rows: [r], min: 1, i: cl.length }; cl.push(best); }
+    if (big) tk.forEach(w => (idx.get(w) || idx.set(w, new Set()).get(w)).add(best.i));
   });
   return cl.filter(c => c.rows.length > 1);
 }
 const nomiOrd = rows => { const m = new Map(); rows.forEach(r => { const o = m.get(r.articolo) || { n: 0, q: 0 }; o.n++; o.q += n0(r.qty); m.set(r.articolo, o); }); return [...m].sort((a, b) => b[1].n - a[1].n || b[1].q - a[1].q).map(x => x[0]); };
 /* righe della stessa area con nome uguale o molto simile */
-function gruppiSimili(tutti) {
+const uiU = { cross: false };
+function gruppiSimili(tutti, cross) {
   const ign = tutti ? new Set() : ignUni(), perArea = new Map(), out = [];
-  S.inv.forEach(r => { const a = r.area || ""; (perArea.get(a) || perArea.set(a, []).get(a)).push(r); });
+  S.inv.forEach(r => { const a = cross ? "" : (r.area || ""); (perArea.get(a) || perArea.set(a, []).get(a)).push(r); });
   for (const [area, rows] of perArea) for (const c of raggruppa(rows)) {
-    const key = c.rows.map(r => r.id).sort((a, b) => a - b).join("-");
-    if (!ign.has(key)) out.push({ key, area, rows: c.rows.sort((a, b) => n0(b.qty) - n0(a.qty)), sicuro: c.min >= .97 });
+    const key = c.rows.map(r => r.id).sort((a, b) => a - b).join("-"), aree = [...new Set(c.rows.map(r => r.area || ""))];
+    if (!ign.has(key)) out.push({ key, area: aree.length > 1 ? "più aree" : aree[0], multi: aree.length > 1, rows: c.rows.sort((a, b) => n0(b.qty) - n0(a.qty)), sicuro: c.min >= .97 });
   }
   return out.sort((a, b) => (b.sicuro - a.sicuro) || a.area.localeCompare(b.area, "it") || a.rows[0].articolo.localeCompare(b.rows[0].articolo, "it"));
 }
 const provHtml = r => { const P = provDi(r), ass = P.reduce((t, x) => t + x.q, 0); return P.map(x => `<span class="chip">${esc(x.o)} · ${x.q}</span>`).join("") + (n0(r.qty) > ass ? `<span class="chip y">senza Einkauf · ${n0(r.qty) - ass}</span>` : ""); };
 function viewUni(v) {
-  const G = gruppiSimili(), n = ignUni().size, nS = G.filter(g => g.sicuro).length;
-  v.innerHTML = `<div class="bar"><div class="sub" style="flex:1 1 260px">Articoli della stessa area con nome uguale o simile. Scegli tu quali unire: prima di cambiare qualcosa ti chiedo conferma. «Sicuro» = stesso nome (cambiano solo maiuscole o ordine delle parole); «Da controllare» = nomi solo simili. Se marca, modello o numeri nel nome sono diversi, non li propongo.</div>${nS ? `<button class="btn pri" data-act="uniSicuri">Unisci tutti i sicuri (${nS})</button>` : ""}${n ? `<button class="btn" data-act="uniReset">Mostra di nuovo i gruppi nascosti (${n})</button>` : ""}</div>
+  const G = gruppiSimili(false, uiU.cross), n = ignUni().size, nS = G.filter(g => g.sicuro && !g.multi).length;
+  v.innerHTML = `<div class="bar"><div class="sub" style="flex:1 1 260px">Articoli della stessa area con nome uguale o simile. Scegli tu quali unire: prima di cambiare qualcosa ti chiedo conferma. «Sicuro» = stesso nome (cambiano solo maiuscole o ordine delle parole); «Da controllare» = nomi solo simili. Se marca, modello o numeri nel nome sono diversi, non li propongo.</div><label class="optn" style="flex:1 1 100%"><input type="checkbox" id="uCross" ${uiU.cross ? "checked" : ""}><span>Includi anche articoli di aree diverse (poi scegli l'area di destinazione)</span></label>${nS ? `<button class="btn pri" data-act="uniSicuri">Unisci tutti i sicuri (${nS})</button>` : ""}${n ? `<button class="btn" data-act="uniReset">Mostra di nuovo i gruppi nascosti (${n})</button>` : ""}</div>
   <div id="list">${G.length ? `<div class="cards">${G.map(g => `<div class="card s1"><div style="min-width:0"><h3>${esc(nomiOrd(g.rows)[0])} <span class="chip ${g.sicuro ? "g" : "y"}">${g.sicuro ? "Sicuro" : "Da controllare"}</span> <span class="sub">· ${g.rows.length} righe · ${esc(g.area || "Da assegnare")} · <b>${g.rows.reduce((t, r) => t + n0(r.qty), 0)}</b> pz in totale</span></h3>
       <div class="un">${g.rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="sub">${n0(r.qty)} pz · disp. ${disp(r)}</span>${provHtml(r)}</div>`).join("")}</div></div>
       <div class="acts"><button class="btn sm pri" data-act="uni" data-k="${g.key}">Unisci…</button><button class="btn sm" data-act="uniIgn" data-k="${g.key}">Non unire</button></div></div>`).join("")}</div>` : `<div class="empty">Nessun articolo simile da unire.</div>`}</div>`;
@@ -1335,20 +1340,30 @@ function dlgUnisci(key) {
   rows.forEach(r => provDi(r).forEach(x => agg.set(x.o, (agg.get(x.o) || 0) + x.q)));
   const ass = [...agg.values()].reduce((t, x) => t + x, 0);
   const nomi = nomiOrd(rows);
-  dlg("Unire questi articoli?", `<div>Le ${rows.length} righe diventano <b>una sola</b> in «${esc(rows[0].area || "Da assegnare")}». Quantità, rotti, in riparazione e dismessi vengono sommati; gli acquisti collegati restano collegati.</div>
+  dlg("Unire questi articoli?", `<div>Le ${rows.length} righe diventano <b>una sola</b> (scegli sotto l'area di destinazione). Quantità, rotti, in riparazione e dismessi vengono sommati; gli acquisti collegati restano collegati.</div>
+    <div class="f"><span class="lab">Area di destinazione</span><select id="unAr">${areaOpts(rows[0].area || "", "— Da assegnare —")}</select></div>
     <div class="f"><span class="lab">Nome dopo l'unione</span>${nomi.map((n, i) => `<label class="optn"><input type="radio" name="unN" value="${esc(n)}" ${i === 0 ? "checked" : ""}><span>${esc(n)}</span></label>`).join("")}</div>
     <div class="un">${rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="sub">${n0(r.qty)} pz · disp. ${disp(r)}</span>${provHtml(r)}</div>`).join("")}</div>
     <div class="f"><span class="lab">Quantità totale dopo l'unione</span><input type="number" id="unTot" min="1" step="1" value="${tot}" inputmode="numeric"><div class="hint">Somma suggerita: <b>${tot}</b>. Cambiala se i pezzi in realtà sono di meno o di più (ad es. lo stesso articolo contato due volte). Se scendi sotto i pezzi assegnati agli Einkauf, questi vengono ridotti a partire dall'ultimo.</div></div>
     <div class="f"><span class="lab">Risultato</span><div><b>${tot} pz</b> in totale (con la somma suggerita)</div><div class="un"><div class="r">${[...agg].map(([o, q]) => `<span class="chip">${esc(o)} · ${q}</span>`).join("")}${tot > ass ? `<span class="chip y">senza Einkauf · ${tot - ass}</span>` : ""}${!agg.size ? '<span class="sub">Nessun Einkauf indicato</span>' : ""}</div></div></div>`,
-    { ok: "Sì, unisci", wide: true, onOk: d => { const nome = (d.querySelector('input[name=unN]:checked') || {}).value || nomi[0]; const t = Number(($("#unTot", d) || {}).value); if (!Number.isInteger(t) || t < 1) { $("#derr", d).textContent = "Scrivi una quantità totale valida (intero, almeno 1)."; return false; } run(() => unisciRighe(ids, nome, t), "Articoli uniti: " + t + " pz."); } });
+    { ok: "Sì, unisci", wide: true, onOk: d => { const nome = (d.querySelector('input[name=unN]:checked') || {}).value || nomi[0]; const t = Number(($("#unTot", d) || {}).value); if (!Number.isInteger(t) || t < 1) { $("#derr", d).textContent = "Scrivi una quantità totale valida (intero, almeno 1)."; return false; } run(() => unisciRighe(ids, nome, t, $("#unAr", d).value), "Articoli uniti: " + t + " pz."); } });
 }
-function dlgUnisciSicuri() {
-  const G = gruppiSimili().filter(g => g.sicuro); if (!G.length) return toast("Nessun gruppo sicuro da unire.");
-  dlgConferma("Unisci tutti i sicuri", `Unire <b>${G.length}</b> gruppi con nome identico (${G.reduce((t, g) => t + g.rows.length, 0)} righe)? Per ogni gruppo si somma la quantità e si tiene il nome più usato. Puoi annullare tutto con «Annulla».`, "Sì, unisci", () => {
-    go(() => G.forEach(g => unisciRighe(g.rows.map(r => r.id), nomiOrd(g.rows)[0], null)), G.length + " gruppi uniti.");
+function dlgUnisciManuale() {
+  const rows = S.inv.filter(r => rieSel.has(grpKey(r))).sort((a, b) => a.articolo.localeCompare(b.articolo, "it") || (a.area || "").localeCompare(b.area || "", "it"));
+  if (!rows.length) return toast("Seleziona prima gli articoli dal Riepilogo.");
+  dlg("Unisci selezionati — ORIGINE", `<div class="hint">ORIGINE: spunta le righe (area ed Einkauf) da unire. Nel passo dopo scegli nome e area di DESTINAZIONE.</div>
+    <div class="un">${rows.map(r => `<label class="optn"><input type="checkbox" class="mSel" value="${r.id}" checked><span><b>${esc(r.articolo)}</b> · ${esc(r.area || "Da assegnare")} · ${n0(r.qty)} pz · disp. ${disp(r)} ${provHtml(r)}</span></label>`).join("")}</div>`, {
+    ok: "Avanti", wide: true,
+    onOk: d => { const ids = [...d.querySelectorAll(".mSel:checked")].map(i => Number(i.value)); if (ids.length < 2) throw new Err("Spunta almeno due righe da unire."); d.close(); dlgUnisci(ids.join("-")); return false; }
   });
 }
-function unisciRighe(ids, nome, totale) {
+function dlgUnisciSicuri() {
+  const G = gruppiSimili().filter(g => g.sicuro && !g.multi); if (!G.length) return toast("Nessun gruppo sicuro da unire.");
+  dlgConferma("Unisci tutti i sicuri", `Unire <b>${G.length}</b> gruppi con nome identico (${G.reduce((t, g) => t + g.rows.length, 0)} righe)? Per ogni gruppo si somma la quantità e si tiene il nome più usato. Puoi annullare tutto con «Annulla».`, "Sì, unisci", () => {
+    go(() => G.forEach(g => unisciRighe(g.rows.map(r => r.id), nomiOrd(g.rows)[0], null, g.rows[0].area || "")), G.length + " gruppi uniti.");
+  });
+}
+function unisciRighe(ids, nome, totale, area) {
   const rows = ids.map(invRow).filter(Boolean);
   if (rows.length < 2) throw new Err("Servono almeno due righe da unire.");
   const target = rows.slice().sort((a, b) => n0(b.qty) - n0(a.qty))[0], agg = [];
@@ -1367,6 +1382,7 @@ function unisciRighe(ids, nome, totale) {
   const rv = rows.find(r => r.ver); if (rv) target.ver = rv.ver; const rpv = rows.find(r => r.prova); if (rpv) target.prova = rpv.prova;
   const rr = rows.find(r => r.rf || r.rd || r.rn); if (rr) { if (rr.rf) target.rf = rr.rf; if (rr.rd) target.rd = rr.rd; if (rr.rn) target.rn = rr.rn; }
   Object.assign(target, { articolo: nome, qty: qtot, rotto: nz(somma("rotto")), ripar: nz(somma("ripar")), dismesso: nz(somma("dismesso")), note, marca, modello });
+  if (area != null) target.area = area || null;
   setOrigini(target, agg); clampStati(target); sincAcq(target);
   nomiVecchi.forEach(n => migraFoto(n, nome));
 }
@@ -1809,6 +1825,7 @@ document.addEventListener("click", e => { if (Date.now() - lpDone < 700) { e.sto
 
 /* ---------- eventi ---------- */
 document.addEventListener("click", e => {
+  if (e.target.classList && (e.target.classList.contains("rsel") || e.target.classList.contains("mSel"))) return;
   const t = e.target.closest("[data-tab],[data-area],[data-act],[data-gr]"); if (!t) return;
   if (t.dataset.tab) { closeDlg(); ui.tab = t.dataset.tab; render(); inCima(); return; }
   if (t.dataset.area != null) { ui.area = t.dataset.area; render(); return; }
@@ -1869,6 +1886,7 @@ document.addEventListener("click", e => {
     case "uniIgn": { const s2 = ignUni(); s2.add(t.dataset.k); salvaIgnUni(s2); toast("Gruppo nascosto."); render(); break; }
     case "legF": ui.stato = ui.stato === t.dataset.s ? "" : t.dataset.s; if (ui.tab !== "inv") { ui.tab = "inv"; ui.area = "*"; } render(); break;
     case "ddtAp": uiD.ap = !uiD.ap; render(); break;
+    case "rieUni": dlgUnisciManuale(); break;
     case "uniSicuri": dlgUnisciSicuri(); break;
     case "uniReset": salvaIgnUni(new Set()); render(); break;
     case "newAcq": dlgAcq(null); break;
@@ -1901,6 +1919,8 @@ document.addEventListener("input", e => {
 });
 document.addEventListener("change", e => {
   const id = e.target.id;
+  if (e.target.classList && e.target.classList.contains("rsel")) { const k = e.target.dataset.n; if (e.target.checked) rieSel.add(k); else rieSel.delete(k); const b = $("#rUn"); if (b) { b.disabled = !rieSel.size; b.textContent = "Unisci selezionati (" + rieSel.size + ")…"; } return; }
+  if (id === "uCross") { uiU.cross = e.target.checked; render(); return; }
   if (id === "fSt") { ui.stato = e.target.value; listInv(); }
   else if (id === "fAn") { ui.anno = e.target.value; listAcq(); }
   else if (id === "fBt") { ui3.bt = e.target.value; listBat(); }
