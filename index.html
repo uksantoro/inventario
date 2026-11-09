@@ -78,7 +78,7 @@ input[type=text],input[type=number],input[type=search],select,textarea{width:100
 .gr:last-child{border-bottom:0}
 .gr.dis{background:color-mix(in srgb,var(--muted) 16%,transparent)}.gr.dis .art,.gr.dis .cell{color:var(--muted)}
 .gr.s1{background:var(--y)}.gr.s2{background:var(--o)}.gr.s3{background:var(--r)}
-.leg{display:flex;flex-wrap:wrap;gap:4px 14px;padding:4px 0 2px;font-size:12px;color:var(--muted)}.lg{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.lg::before{content:"";width:12px;height:12px;border-radius:3px;background:var(--c);border:1px solid color-mix(in srgb,var(--c) 60%,#000)}.gr.prv,.gr.prv.dis{background:color-mix(in srgb,#38b6ff 24%,var(--bg))}.gr.str,.gr.str.prv{background:color-mix(in srgb,#d64545 26%,var(--bg))}.gr.sty,.gr.sty.prv{background:color-mix(in srgb,#f2c200 30%,var(--bg))}.gr.sgr,.gr.sgr.prv{background:color-mix(in srgb,#8a919c 24%,var(--bg))}.gr.sgr .art,.gr.sgr .cell{color:var(--muted)}.fxcard{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;display:grid;gap:10px;margin-bottom:12px}.fxcard h3{margin:0;font-size:16px}.fxbig{font-size:15px}.fxbig b{font-size:34px;font-variant-numeric:tabular-nums;color:var(--brand)}.fxline{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px}.stp{display:inline-flex;align-items:center;gap:10px}.stp b{min-width:30px;text-align:center;font-size:22px;font-variant-numeric:tabular-nums}.stp .btn{min-width:44px;min-height:40px;font-size:20px}
+.leg{display:flex;flex-wrap:wrap;gap:4px 14px;padding:4px 0 2px;font-size:12px;color:var(--muted)}.lg{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;background:none;border:1px solid transparent;border-radius:999px;padding:2px 8px;color:inherit;font:inherit;cursor:pointer}.lg[aria-pressed="true"]{border-color:var(--brand);background:var(--soft);color:var(--fg);font-weight:700}.num b.d0{color:var(--r-t,#c2253f)}.num b.dq{color:var(--muted);font-weight:500}.dst{font-weight:700}.dst.s-ap{color:#a07a00}.dst.s-pa{color:#c25a00}.dst.s-ok{color:var(--ok)}.lg::before{content:"";width:12px;height:12px;border-radius:3px;background:var(--c);border:1px solid color-mix(in srgb,var(--c) 60%,#000)}.gr.prv,.gr.prv.dis{background:color-mix(in srgb,#38b6ff 24%,var(--bg))}.gr.str,.gr.str.prv{background:color-mix(in srgb,#d64545 26%,var(--bg))}.gr.sty,.gr.sty.prv{background:color-mix(in srgb,#f2c200 30%,var(--bg))}.gr.sgr,.gr.sgr.prv{background:color-mix(in srgb,#8a919c 24%,var(--bg))}.gr.sgr .art,.gr.sgr .cell{color:var(--muted)}.fxcard{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;display:grid;gap:10px;margin-bottom:12px}.fxcard h3{margin:0;font-size:16px}.fxbig{font-size:15px}.fxbig b{font-size:34px;font-variant-numeric:tabular-nums;color:var(--brand)}.fxline{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px}.stp{display:inline-flex;align-items:center;gap:10px}.stp b{min-width:30px;text-align:center;font-size:22px;font-variant-numeric:tabular-nums}.stp .btn{min-width:44px;min-height:40px;font-size:20px}
 .chip.pv{background:color-mix(in srgb,#38b6ff 38%,var(--bg));color:var(--fg)}.selchk{accent-color:#1c7ed6}
 .gr.ver{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.gr.ver,.gr.ver.dis{background:color-mix(in srgb,#2e9e5b 24%,var(--bg))}.vchk{width:18px;height:18px;margin:0 8px 0 0;vertical-align:-3px;accent-color:#2e9e5b;cursor:pointer}
 .cols-inv{grid-template-columns:minmax(0,1.8fr) minmax(0,.9fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) 52px 52px 52px 52px 52px minmax(0,1.3fr) 284px}
@@ -308,7 +308,7 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
     <button class="btn sm" id="bMenu" aria-label="Menu"><span aria-hidden="true">⋯</span><span class="tx"> Menu</span></button>
   </div>
 </div>
-  <div class="leg" aria-label="Legenda colori righe"><span class="lg" style="--c:#d64545">Rotto</span><span class="lg" style="--c:#2e9e5b">Da verificare</span><span class="lg" style="--c:#38b6ff">Da provare</span><span class="lg" style="--c:#f2c200">In riparazione</span><span class="lg" style="--c:#8a919c">Dismesso</span></div>
+  <div class="leg" id="leg" aria-label="Legenda colori righe: tocca per filtrare"><button class="lg" data-act="legF" data-s="rotti" style="--c:#d64545">Rotto</button><button class="lg" data-act="legF" data-s="ver" style="--c:#2e9e5b">Da verificare</button><button class="lg" data-act="legF" data-s="prova" style="--c:#38b6ff">Da provare</button><button class="lg" data-act="legF" data-s="rip" style="--c:#f2c200">In riparazione</button><button class="lg" data-act="legF" data-s="dis" style="--c:#8a919c">Dismesso</button></div>
 </div>
 <div class="wrap"><main id="view"></main></div>
 <footer class="foot" id="foot"><span>Robinson Apulia · Sound&amp;Light</span><span id="fTot"></span><span id="stato" aria-live="polite"></span></footer>
@@ -867,6 +867,7 @@ function render() {
   drawTabs(L);
   $("#fTot").textContent = S.inv.length + " righe · " + S.inv.reduce((t, r) => t + n0(r.qty), 0) + " pezzi";
   const v = $("#view");
+  { const lg = $("#leg"); if (lg) { lg.hidden = ui.tab !== "inv"; lg.querySelectorAll(".lg").forEach(b => b.setAttribute("aria-pressed", String(ui.stato === b.dataset.s))); } }
   if (ui.tab === "inv") viewInv(v, SM);
   else if (ui.tab === "acq") viewAcq(v, SM);
   else if (ui.tab === "rie") viewRie(v);
@@ -938,7 +939,7 @@ function listInv(SM) {
     return `<div class="gr ri cols-inv ${n0(r.rotto) ? "str" : n0(r.ripar) ? "sty" : n0(r.dismesso) ? "sgr" : s ? "s" + s : ""}${r.prova ? " prv" : ""}${r.ver ? " ver" : ""}" data-act="${ui.sel ? "selRow" : "det"}" data-id="${r.id}"${r.ver ? ` data-vt="${esc(verTxt(r))}" title="${esc(verTxt(r))}"` : ""}><div class="art cell c-art">${chk}${esc(r.articolo)}${cam}${sub ? `<div class="sub">${sub}</div>` : ""}</div>
       <div class="c-ar cell sub">${esc(r.area || "Da assegnare")}</div><div class="c-ma cell">${esc(r.marca || "")}</div><div class="c-mo cell">${esc(r.modello || "")}</div>
       <div class="c-or cell sub" data-l="Origine">${esc(r.origine || "—")}</div>
-      <div class="nums" style="display:contents"><div class="num cell c-q" data-l="Qtà"><b>${r.qty ?? "—"}</b></div><div class="num cell" data-l="Disp."><b>${disp(r)}</b></div><div class="num cell" data-l="Rotti">${r.rotto ?? "·"}</div><div class="num cell" data-l="Rip.">${r.ripar ?? "·"}</div><div class="num cell" data-l="Dism.">${r.dismesso ?? "·"}</div></div>
+      <div class="nums" style="display:contents"><div class="num cell c-q" data-l="Qtà"><b>${r.qty ?? "—"}</b></div><div class="num cell" data-l="Disp."><b class="${disp(r) === 0 ? "d0" : disp(r) === n0(r.qty) ? "dq" : ""}">${disp(r)}</b></div><div class="num cell" data-l="Rotti">${r.rotto ?? "·"}</div><div class="num cell" data-l="Rip.">${r.ripar ?? "·"}</div><div class="num cell" data-l="Dism.">${r.dismesso ?? "·"}</div></div>
       <div class="c-no cell sub">${esc(r.note || "")}</div>
       <div class="acts"><button class="btn sm" data-act="editInv" data-id="${r.id}">Modifica</button><button class="btn sm" data-act="move" data-id="${r.id}">Sposta</button><button class="btn sm" data-act="stato" data-id="${r.id}">Stato</button><button class="btn sm dng" data-act="delInv" data-id="${r.id}" aria-label="Elimina">✕</button></div>
       <div class="mq">${r.qty ?? "—"}<small>pz</small></div>${ch.length ? `<div class="mch">${ch.join("")}</div>` : ""}${r.note ? `<div class="mnote sub">${esc(r.note)}</div>` : ""}</div>`;
@@ -1286,24 +1287,44 @@ const provDi = r => r.rip ? r.rip.map(x => ({ o: x.o, q: n0(x.q) })) : (r.origin
 const ignUni = () => { try { return new Set(JSON.parse(localStorage.getItem("sl_ign_uni") || "[]")); } catch (e) { return new Set(); } };
 const salvaIgnUni = set => { try { localStorage.setItem("sl_ign_uni", JSON.stringify([...set])); } catch (e) {} };
 const tokOrd = s => norm(s).replace(/[^a-z0-9à-ÿ ]/g, " ").split(" ").filter(Boolean).sort().join(" ");
-const simili = (a, b) => { const x = norm(a), y = norm(b); return x === y || tokOrd(a) === tokOrd(b) || (Math.min(x.length, y.length) >= 5 && sim(a, b) >= 0.85); };
+/* somiglianza tra due righe: 0 = diverse; 1 = stesso nome; .97 = stesse parole; altrimenti nomi molto simili.
+   Non sono mai simili se hanno marca o modello diversi, o numeri diversi nel nome (es. 230w / 330w). */
+const cifre = s => (norm(s).match(/\d+/g) || []).sort().join(",");
+function punteggio(ra, rb) {
+  const ma = norm(ra.marca || ""), mb = norm(rb.marca || ""); if (ma && mb && ma !== mb) return 0;
+  const oa = norm(ra.modello || ""), ob = norm(rb.modello || ""); if (oa && ob && oa !== ob) return 0;
+  if (cifre(ra.articolo) !== cifre(rb.articolo)) return 0;
+  const x = norm(ra.articolo), y = norm(rb.articolo);
+  if (x === y) return 1; if (tokOrd(ra.articolo) === tokOrd(rb.articolo)) return .97;
+  if (Math.min(x.length, y.length) >= 5) { const s = sim(ra.articolo, rb.articolo); if (s >= .85) return s; }
+  return 0;
+}
+/* gruppi «a legame completo»: una riga entra in un gruppo solo se è simile a TUTTE quelle già presenti (niente catene A~B~C) */
+function raggruppa(rows) {
+  const cl = [];
+  rows.slice().sort((a, b) => norm(a.articolo).localeCompare(norm(b.articolo)) || a.id - b.id).forEach(r => {
+    let best = null, bs = 0;
+    for (const c of cl) { let mn = 1; for (const m of c.rows) { const s = punteggio(r, m); if (!s) { mn = 0; break; } mn = Math.min(mn, s); } if (mn > bs) { bs = mn; best = c; } }
+    if (best) { best.rows.push(r); best.min = Math.min(best.min, bs); } else cl.push({ rows: [r], min: 1 });
+  });
+  return cl.filter(c => c.rows.length > 1);
+}
+const nomiOrd = rows => { const m = new Map(); rows.forEach(r => { const o = m.get(r.articolo) || { n: 0, q: 0 }; o.n++; o.q += n0(r.qty); m.set(r.articolo, o); }); return [...m].sort((a, b) => b[1].n - a[1].n || b[1].q - a[1].q).map(x => x[0]); };
 /* righe della stessa area con nome uguale o molto simile */
 function gruppiSimili(tutti) {
   const ign = tutti ? new Set() : ignUni(), perArea = new Map(), out = [];
   S.inv.forEach(r => { const a = r.area || ""; (perArea.get(a) || perArea.set(a, []).get(a)).push(r); });
-  for (const [area, rows] of perArea) {
-    const pa = rows.map((_, i) => i), trova = i => pa[i] === i ? i : (pa[i] = trova(pa[i]));
-    for (let i = 0; i < rows.length; i++) for (let j = i + 1; j < rows.length; j++) if (simili(rows[i].articolo, rows[j].articolo)) pa[trova(i)] = trova(j);
-    const g = new Map(); rows.forEach((r, i) => { const k = trova(i); (g.get(k) || g.set(k, []).get(k)).push(r); });
-    for (const L of g.values()) if (L.length > 1) { const key = L.map(r => r.id).sort((a, b) => a - b).join("-"); if (!ign.has(key)) out.push({ key, area, rows: L.sort((a, b) => n0(b.qty) - n0(a.qty)) }); }
+  for (const [area, rows] of perArea) for (const c of raggruppa(rows)) {
+    const key = c.rows.map(r => r.id).sort((a, b) => a - b).join("-");
+    if (!ign.has(key)) out.push({ key, area, rows: c.rows.sort((a, b) => n0(b.qty) - n0(a.qty)), sicuro: c.min >= .97 });
   }
-  return out.sort((a, b) => a.area.localeCompare(b.area, "it") || a.rows[0].articolo.localeCompare(b.rows[0].articolo, "it"));
+  return out.sort((a, b) => (b.sicuro - a.sicuro) || a.area.localeCompare(b.area, "it") || a.rows[0].articolo.localeCompare(b.rows[0].articolo, "it"));
 }
 const provHtml = r => { const P = provDi(r), ass = P.reduce((t, x) => t + x.q, 0); return P.map(x => `<span class="chip">${esc(x.o)} · ${x.q}</span>`).join("") + (n0(r.qty) > ass ? `<span class="chip y">senza Einkauf · ${n0(r.qty) - ass}</span>` : ""); };
 function viewUni(v) {
-  const G = gruppiSimili(), n = ignUni().size;
-  v.innerHTML = `<div class="bar"><div class="sub" style="flex:1 1 260px">Articoli della stessa area con nome uguale o simile. Scegli tu quali unire: prima di cambiare qualcosa ti chiedo conferma.</div>${n ? `<button class="btn" data-act="uniReset">Mostra di nuovo i gruppi nascosti (${n})</button>` : ""}</div>
-  <div id="list">${G.length ? `<div class="cards">${G.map(g => `<div class="card s1"><div style="min-width:0"><h3>${esc(g.rows[0].articolo)} <span class="sub">· ${g.rows.length} righe · ${esc(g.area || "Da assegnare")} · <b>${g.rows.reduce((t, r) => t + n0(r.qty), 0)}</b> pz in totale</span></h3>
+  const G = gruppiSimili(), n = ignUni().size, nS = G.filter(g => g.sicuro).length;
+  v.innerHTML = `<div class="bar"><div class="sub" style="flex:1 1 260px">Articoli della stessa area con nome uguale o simile. Scegli tu quali unire: prima di cambiare qualcosa ti chiedo conferma. «Sicuro» = stesso nome (cambiano solo maiuscole o ordine delle parole); «Da controllare» = nomi solo simili. Se marca, modello o numeri nel nome sono diversi, non li propongo.</div>${nS ? `<button class="btn pri" data-act="uniSicuri">Unisci tutti i sicuri (${nS})</button>` : ""}${n ? `<button class="btn" data-act="uniReset">Mostra di nuovo i gruppi nascosti (${n})</button>` : ""}</div>
+  <div id="list">${G.length ? `<div class="cards">${G.map(g => `<div class="card s1"><div style="min-width:0"><h3>${esc(nomiOrd(g.rows)[0])} <span class="chip ${g.sicuro ? "g" : "y"}">${g.sicuro ? "Sicuro" : "Da controllare"}</span> <span class="sub">· ${g.rows.length} righe · ${esc(g.area || "Da assegnare")} · <b>${g.rows.reduce((t, r) => t + n0(r.qty), 0)}</b> pz in totale</span></h3>
       <div class="un">${g.rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="sub">${n0(r.qty)} pz · disp. ${disp(r)}</span>${provHtml(r)}</div>`).join("")}</div></div>
       <div class="acts"><button class="btn sm pri" data-act="uni" data-k="${g.key}">Unisci…</button><button class="btn sm" data-act="uniIgn" data-k="${g.key}">Non unire</button></div></div>`).join("")}</div>` : `<div class="empty">Nessun articolo simile da unire.</div>`}</div>`;
 }
@@ -1313,13 +1334,19 @@ function dlgUnisci(key) {
   const tot = rows.reduce((t, r) => t + n0(r.qty), 0), agg = new Map();
   rows.forEach(r => provDi(r).forEach(x => agg.set(x.o, (agg.get(x.o) || 0) + x.q)));
   const ass = [...agg.values()].reduce((t, x) => t + x, 0);
-  const nomi = [...new Set(rows.map(r => r.articolo))];
+  const nomi = nomiOrd(rows);
   dlg("Unire questi articoli?", `<div>Le ${rows.length} righe diventano <b>una sola</b> in «${esc(rows[0].area || "Da assegnare")}». Quantità, rotti, in riparazione e dismessi vengono sommati; gli acquisti collegati restano collegati.</div>
     <div class="f"><span class="lab">Nome dopo l'unione</span>${nomi.map((n, i) => `<label class="optn"><input type="radio" name="unN" value="${esc(n)}" ${i === 0 ? "checked" : ""}><span>${esc(n)}</span></label>`).join("")}</div>
     <div class="un">${rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="sub">${n0(r.qty)} pz · disp. ${disp(r)}</span>${provHtml(r)}</div>`).join("")}</div>
     <div class="f"><span class="lab">Quantità totale dopo l'unione</span><input type="number" id="unTot" min="1" step="1" value="${tot}" inputmode="numeric"><div class="hint">Somma suggerita: <b>${tot}</b>. Cambiala se i pezzi in realtà sono di meno o di più (ad es. lo stesso articolo contato due volte). Se scendi sotto i pezzi assegnati agli Einkauf, questi vengono ridotti a partire dall'ultimo.</div></div>
     <div class="f"><span class="lab">Risultato</span><div><b>${tot} pz</b> in totale (con la somma suggerita)</div><div class="un"><div class="r">${[...agg].map(([o, q]) => `<span class="chip">${esc(o)} · ${q}</span>`).join("")}${tot > ass ? `<span class="chip y">senza Einkauf · ${tot - ass}</span>` : ""}${!agg.size ? '<span class="sub">Nessun Einkauf indicato</span>' : ""}</div></div></div>`,
     { ok: "Sì, unisci", wide: true, onOk: d => { const nome = (d.querySelector('input[name=unN]:checked') || {}).value || nomi[0]; const t = Number(($("#unTot", d) || {}).value); if (!Number.isInteger(t) || t < 1) { $("#derr", d).textContent = "Scrivi una quantità totale valida (intero, almeno 1)."; return false; } run(() => unisciRighe(ids, nome, t), "Articoli uniti: " + t + " pz."); } });
+}
+function dlgUnisciSicuri() {
+  const G = gruppiSimili().filter(g => g.sicuro); if (!G.length) return toast("Nessun gruppo sicuro da unire.");
+  dlgConferma("Unisci tutti i sicuri", `Unire <b>${G.length}</b> gruppi con nome identico (${G.reduce((t, g) => t + g.rows.length, 0)} righe)? Per ogni gruppo si somma la quantità e si tiene il nome più usato. Puoi annullare tutto con «Annulla».`, "Sì, unisci", () => {
+    go(() => G.forEach(g => unisciRighe(g.rows.map(r => r.id), nomiOrd(g.rows)[0], null)), G.length + " gruppi uniti.");
+  });
 }
 function unisciRighe(ids, nome, totale) {
   const rows = ids.map(invRow).filter(Boolean);
@@ -1840,6 +1867,9 @@ document.addEventListener("click", e => {
     case "showOpen": dlgShowVedi(id); break;
     case "uni": dlgUnisci(t.dataset.k); break;
     case "uniIgn": { const s2 = ignUni(); s2.add(t.dataset.k); salvaIgnUni(s2); toast("Gruppo nascosto."); render(); break; }
+    case "legF": ui.stato = ui.stato === t.dataset.s ? "" : t.dataset.s; if (ui.tab !== "inv") { ui.tab = "inv"; ui.area = "*"; } render(); break;
+    case "ddtAp": uiD.ap = !uiD.ap; render(); break;
+    case "uniSicuri": dlgUnisciSicuri(); break;
     case "uniReset": salvaIgnUni(new Set()); render(); break;
     case "newAcq": dlgAcq(null); break;
     case "editAcq": dlgAcq(id); break;
@@ -1864,6 +1894,7 @@ document.addEventListener("input", e => {
   else if (id === "qa") { ui.qa = e.target.value; listAcq(); }
   else if (id === "qr") { ui.qr = e.target.value; listRie(); }
   else if (id === "qc") { ui.qc = e.target.value; listCon(); }
+  else if (id === "qd") { uiD.q = e.target.value; listDdt(); }
   else if (id === "qL") { ui2.ql = e.target.value; listLog(); }
   else if (id === "qB") { ui3.qb = e.target.value; listBat(); }
   else if (id === "qS") { ui3.qs = e.target.value; listShow(); }
@@ -2150,21 +2181,23 @@ async function esportaDdt(d) {
 /* ---------- sezione DDT: schede «DDT riparazione» e «DDT acquisto» ---------- */
 function ddtElimina(id) { const x = S.ddt.find(i => i.id === id); dlgConferma("Elimina DDT", `Eliminare il DDT ${esc(x.num || "s.n.")} (${esc(x.forn)})?<br><small>Le quantità di magazzino non vengono modificate.</small>`, "Elimina", () => { const k = "dd:" + id; if (S.imgs.includes(k)) Img.del(k).catch(() => {}); go(() => { S.ddt = S.ddt.filter(i => i.id !== id); S.imgs = S.imgs.filter(q => q !== k); delete S.imgv[k]; }, "DDT eliminato."); });
 }
-const uiD = { t: "rip" };
+const uiD = { t: "rip", q: "", ap: false };
 const ddtAperto = d => d.tipo === "rip" && d.righe.some(x => x.q - n0(x.r) > 0);
 function viewDdt(v) {
-  v.innerHTML = `<div class="bar"><div class="chips grow"><button class="fchip" aria-pressed="${uiD.t === "rip"}" data-act="ddtT" data-t="rip">DDT riparazione</button><button class="fchip" aria-pressed="${uiD.t === "acq"}" data-act="ddtT" data-t="acq">DDT acquisto</button></div><button class="btn pri fl" data-act="ddtNew">+ Nuovo DDT ${uiD.t === "acq" ? "acquisto" : "riparazione"}</button></div><div id="list"></div><button class="btn pri fab" data-act="ddtNew" aria-label="Nuovo DDT"><span aria-hidden="true">+</span><span class="txt"> DDT</span></button>`;
+  v.innerHTML = `<div class="bar"><div class="chips grow"><button class="fchip" aria-pressed="${uiD.t === "rip"}" data-act="ddtT" data-t="rip">DDT riparazione</button><button class="fchip" aria-pressed="${uiD.t === "acq"}" data-act="ddtT" data-t="acq">DDT acquisto</button></div><button class="btn pri fl" data-act="ddtNew">+ Nuovo DDT ${uiD.t === "acq" ? "acquisto" : "riparazione"}</button></div><div class="bar"><input type="search" id="qd" placeholder="Cerca fornitore, articolo, n° DDT…" value="${esc(uiD.q)}" style="flex:1 1 220px">${uiD.t === "rip" ? `<button class="fchip" aria-pressed="${uiD.ap}" data-act="ddtAp">Solo aperti</button>` : ""}<span class="sub" id="dTot"></span></div><div id="list"></div><button class="btn pri fab" data-act="ddtNew" aria-label="Nuovo DDT"><span aria-hidden="true">+</span><span class="txt"> DDT</span></button>`;
   listDdt();
 }
 function listDdt() {
-  const L = S.ddt.filter(d => d.tipo === uiD.t).sort((a, b) => String(b.data).localeCompare(String(a.data)) || b.id - a.id);
+  const qq = norm(uiD.q).split(" ").filter(Boolean);
+  const L = S.ddt.filter(d => d.tipo === uiD.t).filter(d => !(uiD.ap && uiD.t === "rip" && !ddtAperto(d))).filter(d => !qq.length || qq.every(w => norm([d.forn, d.num, d.data, ...d.righe.map(x => x.a)].join(" ")).includes(w))).sort((a, b) => String(b.data).localeCompare(String(a.data)) || b.id - a.id);
   $("#list").innerHTML = L.length ? L.map(d => {
     const tot = d.righe.reduce((s, x) => s + x.q, 0), rien = d.righe.reduce((s, x) => s + n0(x.r), 0), foto = S.imgs.includes("dd:" + d.id);
-    const stato = d.tipo === "acq" ? "Ricevuto in magazzino" : rien >= tot ? "Rientrato" : rien > 0 ? "Rientro parziale (" + rien + "/" + tot + ")" : "In riparazione";
-    return `<div class="fxcard" data-act="ddtEdit" data-id="${d.id}" role="button" tabindex="0" style="cursor:pointer"><h3>DDT ${esc(d.num || "s.n.")} — ${esc(d.forn)}</h3><div class="sub">${dataIt(d.data)} · ${tot} pezzi · <b>${stato}</b></div>
+    const stato = d.tipo === "acq" ? "Ricevuto in magazzino" : rien >= tot ? "Rientrato" : rien > 0 ? "Rientro parziale (" + rien + "/" + tot + ")" : "In riparazione", sc = d.tipo === "acq" || rien >= tot ? "s-ok" : rien > 0 ? "s-pa" : "s-ap";
+    return `<div class="fxcard" data-act="ddtEdit" data-id="${d.id}" role="button" tabindex="0" style="cursor:pointer"><h3>DDT ${esc(d.num || "s.n.")} — ${esc(d.forn)}</h3><div class="sub">${dataIt(d.data)} · ${tot} pezzi · <span class="dst ${sc}">${stato}</span></div>
       ${d.righe.map(x => `<div class="fxline"><span>${x.q} × ${esc(x.a)} <small class="sub">${esc([x.ma, x.mo].filter(Boolean).join(" "))}</small></span><span class="sub">${d.tipo === "rip" ? "rientrati " + n0(x.r) + "/" + x.q : esc(x.ar || "da assegnare")}</span></div>`).join("")}
       <div class="sub" style="margin-top:6px">${foto ? "📷 con foto · " : ""}Tocca per aprire la scheda</div></div>`;
   }).join("") : `<div class="empty">Nessun DDT ${uiD.t === "acq" ? "di acquisto" : "di riparazione"}. Usa «+ Nuovo DDT».</div>`;
+  const dt = $("#dTot"); if (dt) dt.textContent = L.length + " DDT · " + (uiD.t === "rip" ? L.reduce((s, d) => s + d.righe.reduce((a, x) => a + x.q - n0(x.r), 0), 0) + " pezzi ancora fuori" : L.reduce((s, d) => s + d.righe.reduce((a, x) => a + x.q, 0), 0) + " pezzi ricevuti");
 }
 async function ddtPdfDa(id, xl) {
   const d = S.ddt.find(i => i.id === id); if (!d) return;
