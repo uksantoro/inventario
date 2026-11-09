@@ -1205,7 +1205,7 @@ function dlgCollega(id) {
 /* --- Riepilogo --- */
 const rieSel = new Set();
 function viewRie(v) {
-  v.innerHTML = `<div class="bar"><input type="search" class="grow" id="qr" placeholder="Cerca articolo…" value="${esc(ui.qr)}" aria-label="Cerca"><button class="btn pri" id="rUn" data-act="rieUni" ${rieSel.size ? "" : "disabled"}>Unisci selezionati (${rieSel.size})…</button></div><div class="hint" style="margin:0 0 6px">Spunta due o più articoli simili e premi «Unisci selezionati»: scegli le righe di origine e il nome/area di destinazione.</div><div id="list"></div>`;
+  v.innerHTML = `<div class="bar"><input type="search" class="grow" id="qr" placeholder="Cerca articolo…" value="${esc(ui.qr)}" aria-label="Cerca"><button class="btn pri" id="rUn" data-act="rieUni" ${rieSel.size ? "" : "disabled"}>Unisci selezionati (${rieSel.size})…</button></div><div class="hint" style="margin:0 0 6px">Spunta due o più articoli simili e premi «Unisci selezionati»: nel Riepilogo diventano un solo articolo, nell'Inventario restano nelle loro aree.</div><div id="list"></div>`;
   listRie();
 }
 const verTxt = r => r.ver ? "Da verificare dal " + (r.ver > 1000 ? new Date(r.ver).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "(data non registrata)") : "";
@@ -1292,11 +1292,12 @@ const tokOrd = s => norm(s).replace(/[^a-z0-9à-ÿ ]/g, " ").split(" ").filter(B
    Non sono mai simili se hanno marca o modello diversi, o numeri diversi nel nome (es. 230w / 330w). */
 const cifre = s => (norm(s).match(/\d+/g) || []).sort().join(",");
 function punteggio(ra, rb) {
-  const ma = norm(ra.marca || ""), mb = norm(rb.marca || ""); if (ma && mb && ma !== mb) return 0;
-  const oa = norm(ra.modello || ""), ob = norm(rb.modello || ""); if (oa && ob && oa !== ob) return 0;
-  if (cifre(ra.articolo) !== cifre(rb.articolo)) return 0;
   const x = norm(ra.articolo), y = norm(rb.articolo);
-  if (x === y) return 1; if (tokOrd(ra.articolo) === tokOrd(rb.articolo)) return .97;
+  const ma = norm(ra.marca || ""), mb = norm(rb.marca || ""), oa = norm(ra.modello || ""), ob = norm(rb.modello || "");
+  const conflitto = (ma && mb && ma !== mb) || (oa && ob && oa !== ob);
+  if (x === y) return conflitto ? .9 : 1;   // stesso nome ma marca/modello diversi: lo propongo, «da controllare»
+  if (conflitto || cifre(ra.articolo) !== cifre(rb.articolo)) return 0;
+  if (tokOrd(ra.articolo) === tokOrd(rb.articolo)) return .97;
   if (Math.min(x.length, y.length) >= 5) { const s = sim(ra.articolo, rb.articolo); if (s >= .85) return s; }
   return 0;
 }
@@ -1321,46 +1322,47 @@ function gruppiSimili(tutti, cross) {
   S.inv.forEach(r => { const a = cross ? "" : (r.area || ""); (perArea.get(a) || perArea.set(a, []).get(a)).push(r); });
   for (const [area, rows] of perArea) for (const c of raggruppa(rows)) {
     const key = c.rows.map(r => r.id).sort((a, b) => a - b).join("-"), aree = [...new Set(c.rows.map(r => r.area || ""))];
-    if (!ign.has(key)) out.push({ key, area: aree.length > 1 ? "più aree" : aree[0], multi: aree.length > 1, rows: c.rows.sort((a, b) => n0(b.qty) - n0(a.qty)), sicuro: c.min >= .97 });
+    if (!ign.has(key) && new Set(c.rows.map(grpKey)).size > 1) out.push({ key, area: aree.length > 1 ? "più aree" : aree[0], multi: aree.length > 1, rows: c.rows.sort((a, b) => n0(b.qty) - n0(a.qty)), sicuro: c.min >= .97 });
   }
   return out.sort((a, b) => (b.sicuro - a.sicuro) || a.area.localeCompare(b.area, "it") || a.rows[0].articolo.localeCompare(b.rows[0].articolo, "it"));
 }
 const provHtml = r => { const P = provDi(r), ass = P.reduce((t, x) => t + x.q, 0); return P.map(x => `<span class="chip">${esc(x.o)} · ${x.q}</span>`).join("") + (n0(r.qty) > ass ? `<span class="chip y">senza Einkauf · ${n0(r.qty) - ass}</span>` : ""); };
 function viewUni(v) {
-  const G = gruppiSimili(false, uiU.cross), n = ignUni().size, nS = G.filter(g => g.sicuro && !g.multi).length;
-  v.innerHTML = `<div class="bar"><div class="sub" style="flex:1 1 260px">Articoli della stessa area con nome uguale o simile. Scegli tu quali unire: prima di cambiare qualcosa ti chiedo conferma. «Sicuro» = stesso nome (cambiano solo maiuscole o ordine delle parole); «Da controllare» = nomi solo simili. Se marca, modello o numeri nel nome sono diversi, non li propongo.</div><label class="optn" style="flex:1 1 100%"><input type="checkbox" id="uCross" ${uiU.cross ? "checked" : ""}><span>Includi anche articoli di aree diverse (poi scegli l'area di destinazione)</span></label>${nS ? `<button class="btn pri" data-act="uniSicuri">Unisci tutti i sicuri (${nS})</button>` : ""}${n ? `<button class="btn" data-act="uniReset">Mostra di nuovo i gruppi nascosti (${n})</button>` : ""}</div>
+  const G = gruppiSimili(false, true), n = ignUni().size, nS = G.filter(g => g.sicuro).length;
+  v.innerHTML = `<div class="bar"><div class="sub" style="flex:1 1 260px">Articoli con nome uguale o simile, anche in aree diverse. «Unire» li collega: nell'Inventario restano righe separate, ognuna nella sua area; nel Riepilogo contano come un solo articolo. «Sicuro» = stesso nome; «Da controllare» = nomi solo simili. Se marca, modello o numeri nel nome sono diversi, non li propongo.</div>${nS ? `<button class="btn pri" data-act="uniSicuri">Unisci tutti i sicuri (${nS})</button>` : ""}${n ? `<button class="btn" data-act="uniReset">Mostra di nuovo i gruppi nascosti (${n})</button>` : ""}</div>
   <div id="list">${G.length ? `<div class="cards">${G.map(g => `<div class="card s1"><div style="min-width:0"><h3>${esc(nomiOrd(g.rows)[0])} <span class="chip ${g.sicuro ? "g" : "y"}">${g.sicuro ? "Sicuro" : "Da controllare"}</span> <span class="sub">· ${g.rows.length} righe · ${esc(g.area || "Da assegnare")} · <b>${g.rows.reduce((t, r) => t + n0(r.qty), 0)}</b> pz in totale</span></h3>
-      <div class="un">${g.rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="sub">${n0(r.qty)} pz · disp. ${disp(r)}</span>${provHtml(r)}</div>`).join("")}</div></div>
-      <div class="acts"><button class="btn sm pri" data-act="uni" data-k="${g.key}">Unisci…</button><button class="btn sm" data-act="uniIgn" data-k="${g.key}">Non unire</button></div></div>`).join("")}</div>` : `<div class="empty">Nessun articolo simile da unire.</div>`}</div>`;
+      <div class="un">${g.rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="chip">${esc(r.area || "Da assegnare")}</span><span class="sub">${n0(r.qty)} pz · disp. ${disp(r)}</span>${provHtml(r)}</div>`).join("")}</div></div>
+      <div class="acts"><button class="btn sm pri" data-act="uni" data-k="${g.key}">Unisci nel Riepilogo…</button><button class="btn sm" data-act="uniIgn" data-k="${g.key}">Non unire</button></div></div>`).join("")}</div>` : `<div class="empty">Nessun articolo simile da unire.</div>`}</div>`;
 }
 function dlgUnisci(key) {
   const ids = key.split("-").map(Number), rows = ids.map(invRow).filter(Boolean);
   if (rows.length < 2) return toast("Queste righe sono cambiate: riapro l'elenco."), render();
-  const tot = rows.reduce((t, r) => t + n0(r.qty), 0), agg = new Map();
-  rows.forEach(r => provDi(r).forEach(x => agg.set(x.o, (agg.get(x.o) || 0) + x.q)));
-  const ass = [...agg.values()].reduce((t, x) => t + x, 0);
-  const nomi = nomiOrd(rows);
-  dlg("Unire questi articoli?", `<div>Le ${rows.length} righe diventano <b>una sola</b> (scegli sotto l'area di destinazione). Quantità, rotti, in riparazione e dismessi vengono sommati; gli acquisti collegati restano collegati.</div>
-    <div class="f"><span class="lab">Area di destinazione</span><select id="unAr">${areaOpts(rows[0].area || "", "— Da assegnare —")}</select></div>
-    <div class="f"><span class="lab">Nome dopo l'unione</span>${nomi.map((n, i) => `<label class="optn"><input type="radio" name="unN" value="${esc(n)}" ${i === 0 ? "checked" : ""}><span>${esc(n)}</span></label>`).join("")}</div>
-    <div class="un">${rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="sub">${n0(r.qty)} pz · disp. ${disp(r)}</span>${provHtml(r)}</div>`).join("")}</div>
-    <div class="f"><span class="lab">Quantità totale dopo l'unione</span><input type="number" id="unTot" min="1" step="1" value="${tot}" inputmode="numeric"><div class="hint">Somma suggerita: <b>${tot}</b>. Cambiala se i pezzi in realtà sono di meno o di più (ad es. lo stesso articolo contato due volte). Se scendi sotto i pezzi assegnati agli Einkauf, questi vengono ridotti a partire dall'ultimo.</div></div>
-    <div class="f"><span class="lab">Risultato</span><div><b>${tot} pz</b> in totale (con la somma suggerita)</div><div class="un"><div class="r">${[...agg].map(([o, q]) => `<span class="chip">${esc(o)} · ${q}</span>`).join("")}${tot > ass ? `<span class="chip y">senza Einkauf · ${tot - ass}</span>` : ""}${!agg.size ? '<span class="sub">Nessun Einkauf indicato</span>' : ""}</div></div></div>`,
-    { ok: "Sì, unisci", wide: true, onOk: d => { const nome = (d.querySelector('input[name=unN]:checked') || {}).value || nomi[0]; const t = Number(($("#unTot", d) || {}).value); if (!Number.isInteger(t) || t < 1) { $("#derr", d).textContent = "Scrivi una quantità totale valida (intero, almeno 1)."; return false; } run(() => unisciRighe(ids, nome, t, $("#unAr", d).value), "Articoli uniti: " + t + " pz."); } });
+  const tot = rows.reduce((t, r) => t + n0(r.qty), 0);
+  dlg("Unire nel Riepilogo?", `<div>Le ${rows.length} righe restano <b>separate nell'Inventario</b>, ognuna nella sua area. Nel <b>Riepilogo</b> contano come <b>un solo articolo</b>: <b>${tot} pz</b> in totale.</div>
+    <div class="un">${rows.map(r => `<div class="r"><b>${esc(r.articolo)}</b><span class="chip">${esc(r.area || "Da assegnare")}</span><span class="sub">${n0(r.qty)} pz · disp. ${disp(r)}</span>${provHtml(r)}</div>`).join("")}</div>
+    <div class="hint">Puoi annullare con «Annulla», oppure scollegare una riga dalla sua scheda.</div>`,
+    { ok: "Sì, unisci", wide: true, onOk: () => { run(() => collegaRighe(ids), "Uniti nel Riepilogo: " + tot + " pz."); } });
+}
+function collegaRighe(ids) {
+  const keys = new Set(ids.map(invRow).filter(Boolean).map(grpKey));
+  if (keys.size < 2) throw new Err("Sono già collegati.");
+  const rows = S.inv.filter(r => keys.has(grpKey(r))), ex = rows.find(r => r.grp != null);
+  const g = ex ? ex.grp : S.inv.reduce((m, r) => Math.max(m, r.grp || 0), 0) + 1;
+  rows.forEach(r => { r.grp = g; });
 }
 function dlgUnisciManuale() {
   const rows = S.inv.filter(r => rieSel.has(grpKey(r))).sort((a, b) => a.articolo.localeCompare(b.articolo, "it") || (a.area || "").localeCompare(b.area || "", "it"));
   if (!rows.length) return toast("Seleziona prima gli articoli dal Riepilogo.");
-  dlg("Unisci selezionati — ORIGINE", `<div class="hint">ORIGINE: spunta le righe (area ed Einkauf) da unire. Nel passo dopo scegli nome e area di DESTINAZIONE.</div>
+  dlg("Unisci selezionati", `<div class="hint">Spunta le righe (area ed Einkauf) da unire. Nell'Inventario restano separate, ognuna nella sua area; nel Riepilogo diventano un solo articolo.</div>
     <div class="un">${rows.map(r => `<label class="optn"><input type="checkbox" class="mSel" value="${r.id}" checked><span><b>${esc(r.articolo)}</b> · ${esc(r.area || "Da assegnare")} · ${n0(r.qty)} pz · disp. ${disp(r)} ${provHtml(r)}</span></label>`).join("")}</div>`, {
     ok: "Avanti", wide: true,
     onOk: d => { const ids = [...d.querySelectorAll(".mSel:checked")].map(i => Number(i.value)); if (ids.length < 2) throw new Err("Spunta almeno due righe da unire."); d.close(); dlgUnisci(ids.join("-")); return false; }
   });
 }
 function dlgUnisciSicuri() {
-  const G = gruppiSimili().filter(g => g.sicuro && !g.multi); if (!G.length) return toast("Nessun gruppo sicuro da unire.");
-  dlgConferma("Unisci tutti i sicuri", `Unire <b>${G.length}</b> gruppi con nome identico (${G.reduce((t, g) => t + g.rows.length, 0)} righe)? Per ogni gruppo si somma la quantità e si tiene il nome più usato. Puoi annullare tutto con «Annulla».`, "Sì, unisci", () => {
-    go(() => G.forEach(g => unisciRighe(g.rows.map(r => r.id), nomiOrd(g.rows)[0], null, g.rows[0].area || "")), G.length + " gruppi uniti.");
+  const G = gruppiSimili().filter(g => g.sicuro); if (!G.length) return toast("Nessun gruppo sicuro da unire.");
+  dlgConferma("Unisci tutti i sicuri", `Unire nel Riepilogo <b>${G.length}</b> gruppi con nome identico (${G.reduce((t, g) => t + g.rows.length, 0)} righe)? Nell'Inventario non cambia nulla: ogni riga resta nella sua area.`, "Sì, unisci", () => {
+    go(() => G.forEach(g => collegaRighe(g.rows.map(r => r.id))), G.length + " gruppi uniti nel Riepilogo.");
   });
 }
 function unisciRighe(ids, nome, totale, area) {
@@ -1920,7 +1922,6 @@ document.addEventListener("input", e => {
 document.addEventListener("change", e => {
   const id = e.target.id;
   if (e.target.classList && e.target.classList.contains("rsel")) { const k = e.target.dataset.n; if (e.target.checked) rieSel.add(k); else rieSel.delete(k); const b = $("#rUn"); if (b) { b.disabled = !rieSel.size; b.textContent = "Unisci selezionati (" + rieSel.size + ")…"; } return; }
-  if (id === "uCross") { uiU.cross = e.target.checked; render(); return; }
   if (id === "fSt") { ui.stato = e.target.value; listInv(); }
   else if (id === "fAn") { ui.anno = e.target.value; listAcq(); }
   else if (id === "fBt") { ui3.bt = e.target.value; listBat(); }
