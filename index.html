@@ -438,7 +438,7 @@ const Repo = {
     throw new Err("Troppi conflitti.");
   }
 };
-const fixS = s => { if (!Array.isArray(s.int)) s.int = []; if (!s.fx || typeof s.fx !== "object" || Array.isArray(s.fx)) s.fx = {}; { const f = s.fx, som = (a, k) => Array.isArray(a) ? a.reduce((t, x) => t + (Number(x[k]) || 0), 0) : 0; if (!f.sk) f.sk = { g: som(f.pol, "grandi"), p: som(f.pol, "piccole"), s: 0 }; if (typeof f.sk.s !== "number") f.sk.s = 0; if (!f.fu) f.fu = { piene: som(f.bomb, "piene"), mezze: 0 }; if (!f.fm) f.fm = { taniche: som(f.fumo, "piene") }; for (const q of ["pol", "sp", "sch", "bomb", "fumo"]) delete f[q]; } if (!s.bud || typeof s.bud !== "object") s.bud = {}; if (!s.bud.anni || typeof s.bud.anni !== "object" || Array.isArray(s.bud.anni)) s.bud.anni = {}; if (!Array.isArray(s.bud.forn)) s.bud.forn = []; if (!Array.isArray(s.bud.mov)) s.bud.mov = []; if (!Array.isArray(s.imgs)) s.imgs = []; if (!s.imgv || typeof s.imgv !== "object" || Array.isArray(s.imgv)) s.imgv = {}; return s; };
+const fixS = s => { if (!Array.isArray(s.int)) s.int = []; if (!Array.isArray(s.ddt)) s.ddt = []; if (!s.fx || typeof s.fx !== "object" || Array.isArray(s.fx)) s.fx = {}; { const f = s.fx, som = (a, k) => Array.isArray(a) ? a.reduce((t, x) => t + (Number(x[k]) || 0), 0) : 0; if (!f.sk) f.sk = { g: som(f.pol, "grandi"), p: som(f.pol, "piccole"), s: 0 }; if (typeof f.sk.s !== "number") f.sk.s = 0; if (!f.fu) f.fu = { piene: som(f.bomb, "piene"), mezze: 0 }; if (!f.fm) f.fm = { taniche: som(f.fumo, "piene") }; for (const q of ["pol", "sp", "sch", "bomb", "fumo"]) delete f[q]; } if (!s.bud || typeof s.bud !== "object") s.bud = {}; if (!s.bud.anni || typeof s.bud.anni !== "object" || Array.isArray(s.bud.anni)) s.bud.anni = {}; if (!Array.isArray(s.bud.forn)) s.bud.forn = []; if (!Array.isArray(s.bud.mov)) s.bud.mov = []; if (!Array.isArray(s.imgs)) s.imgs = []; if (!s.imgv || typeof s.imgv !== "object" || Array.isArray(s.imgv)) s.imgv = {}; return s; };
 let S = Repo.fresh();
 function setStato(t, err) { const e = $("#stato"); if (e) { e.textContent = t; e.style.color = err ? "var(--danger)" : "var(--muted)"; } }
 /* ---------- registro: chi ha fatto cosa e quando ---------- */
@@ -789,6 +789,7 @@ const TABS = [
   ["inv", "Inventario", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>'],
   ["acq", "Acquisti", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a2 2 0 002 1.6h8.2a2 2 0 002-1.5L21 7H6"/></svg>'],
   ["rie", "Riepilogo", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>'],
+  ["ddt", "DDT", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="10" rx="1"/><path d="M15 9h4l3 3v4h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>'],
   ["bat", "Batterie", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="6" width="10" height="15" rx="2"/><path d="M10 3h4v3h-4zM12 10v6M9.5 13h5"/></svg>'],
   ["show", "Show/Live", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 15l-5-5-8 8M8 21h8"/></svg>'],
   ["oggi", "Oggi", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 00-6 6c0 5-2 6-2 6h16s-2-1-2-6a6 6 0 00-6-6z"/><path d="M10 19a2 2 0 004 0"/></svg>'],
@@ -875,6 +876,7 @@ function render() {
   else if (ui.tab === "int") viewInt(v);
   else if (ui.tab === "bud") viewBud(v);
   else if (ui.tab === "fx") viewFx(v);
+  else if (ui.tab === "ddt") viewDdt(v);
   else viewCon(v, L);
 }
 
@@ -1565,7 +1567,7 @@ function dlgShowModifica(id) {
 }
 function dlgAltro() {
   const { g, m } = (() => { const L = anomalie(); return { g: L.filter(x => x.gr === 3).length, m: L.filter(x => x.gr === 2).length }; })();
-  const voci = [["oggi", "Oggi · avvisi", calcolaAvvisi().filter(a => a.lv >= 2).length], ["int", "Interventi", S.int.filter(x => !x.fatto).length], ["bud", "Budget", 0], ["fx", "Effetti speciali", 0], ["uni", "Unisci articoli simili", gruppiSimili().length], ["rie", "Riepilogo", 0], ["log", "Registro modifiche", 0], ["con", "Controlli", g || m]];
+  const voci = [["oggi", "Oggi · avvisi", calcolaAvvisi().filter(a => a.lv >= 2).length], ["int", "Interventi", S.int.filter(x => !x.fatto).length], ["bud", "Budget", 0], ["fx", "Effetti speciali", 0], ["ddt", "DDT", S.ddt.filter(d => ddtAperto(d)).length], ["uni", "Unisci articoli simili", gruppiSimili().length], ["rie", "Riepilogo", 0], ["log", "Registro modifiche", 0], ["con", "Controlli", g || m]];
   dlg("Altre sezioni", `<div class="menu">${voci.map(([k, t, n]) => `<button class="btn" data-tab="${k}">${t}${n ? ` <span class="badge ${k === "con" && g ? "" : "o"}">${n}</span>` : ""}</button>`).join("")}</div>`, { noCancel: true });
 }
 
@@ -1724,7 +1726,7 @@ $("#fileIn").onchange = async ev => {
   try {
     const d = JSON.parse(await f.text());
     if (!Array.isArray(d.aree) || !Array.isArray(d.inv) || !Array.isArray(d.acq)) throw new Err("Il file non è un backup valido.");
-    go(() => { S = fixS({ aree: d.aree, inv: d.inv, acq: d.acq, imgs: Array.isArray(d.imgs) ? d.imgs : [], imgv: d.imgv || {}, int: d.int, bud: d.bud, layout: d.layout }); }, "Backup importato.");
+    go(() => { S = fixS({ aree: d.aree, inv: d.inv, acq: d.acq, imgs: Array.isArray(d.imgs) ? d.imgs : [], imgv: d.imgv || {}, int: d.int, ddt: d.ddt, bud: d.bud, layout: d.layout }); }, "Backup importato.");
   } catch (e) { toast(e instanceof Err ? e.message : "Il file non è un backup valido."); }
 };
 
@@ -1798,6 +1800,12 @@ document.addEventListener("click", e => {
     case "newMov": dlgMov(null); break;
     case "editMov": dlgMov(id); break;
     case "delMov": eliminaMov(id); break;
+    case "ddtT": uiD.t = t.dataset.t; render(); break;
+    case "ddtNew": if (uiD.t === "acq") dlgDDTAcq(); else dlgDDT([]); break;
+    case "ddtPdf": ddtPdfDa(id).catch(e => toast(e.message || "PDF non riuscito.")); break;
+    case "ddtFoto": dlgDdtFoto(id); break;
+    case "ddtRient": dlgRientro(id); break;
+    case "ddtDel": { const x = S.ddt.find(i => i.id === id); dlgConferma("Elimina DDT", `Eliminare il DDT ${esc(x.num || "s.n.")} (${esc(x.forn)})?<br><small>Le quantità di magazzino non vengono modificate.</small>`, "Elimina", () => { const k = "dd:" + id; if (S.imgs.includes(k)) Img.del(k).catch(() => {}); go(() => { S.ddt = S.ddt.filter(i => i.id !== id); S.imgs = S.imgs.filter(q => q !== k); delete S.imgv[k]; }, "DDT eliminato."); }); break; }
     case "movFoto": vediFotoMov(id); break;
     case "intFoto": Img.get("int:" + id).then(u => u ? apriFoto(u) : toast("Foto non disponibile.")).catch(() => toast("Foto non disponibile.")); break;
     case "budReset": Object.assign(uiB, { da: "", a: "", forn: "", q: "", ddt: "" }); render(); break;
@@ -1921,7 +1929,7 @@ async function boot() {
     if (m === "login") { render(); return chiediAccesso(); }
     if (!Reg.nome()) { render(); return chiediNome(() => boot(), true); }
     const r = await Repo.load();
-    if (r) S = fixS(r); else { S = Repo.fresh(); if (Repo.mode === "cloud") { await Repo.push(S); toast("Dati iniziali caricati nel database."); } }
+    if (r) S = fixS(r); else { S = fixS(Repo.fresh()); if (Repo.mode === "cloud") { await Repo.push(S); toast("Dati iniziali caricati nel database."); } }
     undo.length = 0; Repo.saveLocal(S); render();
     setStato(Repo.mode === "cloud" ? "Cloud collegato" : "Solo questo browser", false);
     Batt.carica().then(() => { render(); const b = battBassi(); if (b.length) toast("⚠ Scorte batterie in esaurimento: " + txtBassi(b)); });
@@ -1940,7 +1948,7 @@ function leggiVista() { try { const v = JSON.parse(localStorage.getItem(VISTA) |
 let vistaRip = false;
 function ripristinaVista() {
   const v = leggiVista(); if (!v) return;
-  const TABS_OK = ["inv", "acq", "rie", "con", "uni", "bat", "show", "log", "int", "bud", "fx", "oggi"];
+  const TABS_OK = ["inv", "acq", "rie", "con", "uni", "bat", "show", "log", "int", "bud", "fx", "oggi", "ddt"];
   if (v.ui) { Object.assign(ui, v.ui, { gr: new Set(Array.isArray(v.ui.gr) && v.ui.gr.length ? v.ui.gr : [3, 2, 1]) }); if (!TABS_OK.includes(ui.tab)) ui.tab = "inv"; }
   if (v.ui3) Object.assign(ui3, v.ui3); if (v.ui2) Object.assign(ui2, v.ui2);
   vistaRip = v;
@@ -2084,24 +2092,33 @@ function dlgDDTNuovi(ctx) {
   });
 }
 function ddtConferma(ctx) {
-  const { f, n, dt, voci, foto, xl } = ctx; const righe = [];
+  const { f, n, dt, voci, foto, xl } = ctx; const righe = [], did = nid(S.ddt);
   run(() => {
+    const rr = [];
     voci.forEach(x => {
-      if (x.id != null) { const r = invRow(x.id), dalRotto = Math.min(x.q, n0(r.rotto)); r.rotto = nz(n0(r.rotto) - dalRotto); r.ripar = n0(r.ripar) + x.q; setRip(r, f, dt, n); righe.push({ a: r.articolo, ma: r.marca || "", mo: r.modello || "", q: x.q, no: r.note || "" }); }
-      else { salvaRiga(null, { articolo: x.a, marca: null, modello: null, area: x.area, qty: x.q, rotto: null, ripar: x.q, dismesso: null, note: x.note || null, origini: x.orig ? [{ o: x.orig, q: x.q }] : [], rf: f, rd: dt, rn: n }); righe.push({ a: x.a, ma: "", mo: "", q: x.q, no: x.note || "" }); }
+      let r;
+      if (x.id != null) { r = invRow(x.id); const dalRotto = Math.min(x.q, n0(r.rotto)); r.rotto = nz(n0(r.rotto) - dalRotto); r.ripar = n0(r.ripar) + x.q; setRip(r, f, dt, n); }
+      else { salvaRiga(null, { articolo: x.a, marca: null, modello: null, area: x.area, qty: x.q, rotto: null, ripar: x.q, dismesso: null, note: x.note || null, origini: x.orig ? [{ o: x.orig, q: x.q }] : [], rf: f, rd: dt, rn: n }); r = S.inv[S.inv.length - 1]; }
+      rr.push({ id: rr.length + 1, inv: r.id, a: r.articolo, ma: r.marca || "", mo: r.modello || "", q: x.q, r: 0, no: r.note || "" });
+      righe.push({ a: r.articolo, ma: r.marca || "", mo: r.modello || "", q: x.q, no: r.note || "" });
     });
-  }, "DDT creato: " + righe.reduce((s, x) => s + x.q, 0) + " pezzi in riparazione presso " + f + ".");
-  const dd = { f, n, dt, righe, foto };
-  pdfDdt(dd).then(() => xl ? esportaDdt(dd) : null).catch(e => toast(e.message || "Creazione del DDT non riuscita."));
+    S.ddt.push({ id: did, tipo: "rip", num: n, data: dt, forn: f, righe: rr });
+  }, "DDT creato: " + voci.reduce((s, x) => s + x.q, 0) + " pezzi in riparazione presso " + f + ".");
+  const dd = { tipo: "rip", f, n, dt, righe, foto };
+  (async () => {
+    if (foto) { const k = "dd:" + did; await Img.set(k, foto); go(() => { if (!S.imgs.includes(k)) S.imgs.push(k); S.imgv[k] = Date.now(); }); }
+    await pdfDdt(dd); if (xl) await esportaDdt(dd);
+  })().catch(e => toast(e.message || "Creazione del DDT non riuscita."));
 }
 const inJpeg = u => new Promise((res, rej) => { const im = new Image(); im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0); res({ d: c.toDataURL("image/jpeg", 0.85), w: c.width, h: c.height }); }; im.onerror = () => rej(new Err("Foto non leggibile.")); im.src = u; });
 async function pdfDdt(d) {
   if (!window.jspdf) throw new Err("La libreria PDF non si è caricata. Controlla la connessione e riprova.");
   const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" }), L = 15, R = 195;
   doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("DOCUMENTO DI TRASPORTO", L, 20);
-  doc.setFontSize(11); doc.setFont("helvetica", "normal"); doc.text("Invio per riparazione", L, 27);
+  const acq = d.tipo === "acq", caus = acq ? "Acquisto - merce in entrata" : "Invio per riparazione";
+  doc.setFontSize(11); doc.setFont("helvetica", "normal"); doc.text(caus, L, 27);
   doc.setDrawColor(0, 71, 171); doc.setLineWidth(0.6); doc.line(L, 31, R, 31);
-  const kv = [["Mittente", "Robinson Apulia – Sound&Light"], ["Destinatario", d.f], ["N° DDT", d.n || "—"], ["Data", dataIt(d.dt)], ["Causale", "Invio per riparazione"]];
+  const RA = "Robinson Apulia – Sound&Light", kv = [["Mittente", acq ? d.f : RA], ["Destinatario", acq ? RA : d.f], ["N° DDT", d.n || "—"], ["Data", dataIt(d.dt)], ["Causale", caus]];
   let y = 40; kv.forEach(([k, v]) => { doc.setFont("helvetica", "bold"); doc.text(k, L, y); doc.setFont("helvetica", "normal"); doc.text(String(v), L + 32, y); y += 7; });
   y += 4; const cx = [L, L + 10, L + 80, L + 112, L + 144, L + 156];
   const testa = () => { doc.setFillColor(0, 71, 171); doc.rect(L, y - 5, R - L, 8, "F"); doc.setTextColor(255); doc.setFont("helvetica", "bold"); ["N°", "Articolo", "Marca", "Modello", "Qtà", "Note"].forEach((h, i) => doc.text(h, cx[i] + 1.5, y)); doc.setTextColor(0); doc.setFont("helvetica", "normal"); y += 8; };
@@ -2131,6 +2148,105 @@ async function esportaDdt(d) {
   const tot = ws.addRow(["", "Totale pezzi", "", "", d.righe.reduce((s, x) => s + x.q, 0), ""]); tot.font = { bold: true };
   if (d.foto) { const j = await inJpeg(d.foto); const id = wb.addImage({ base64: j.d, extension: "jpeg" }); const w = 320; ws.addImage(id, { tl: { col: 1, row: tot.number + 1 }, ext: { width: w, height: Math.round(w * j.h / j.w) } }); }
   await salvaFile("DDT_" + (d.n ? d.n.replace(/[^\w-]+/g, "_") + "_" : "") + d.f.replace(/[^\w-]+/g, "_") + "_" + d.dt + ".xlsx", await xlBlob(wb));
+}
+/* ---------- sezione DDT: schede «DDT riparazione» e «DDT acquisto» ---------- */
+const uiD = { t: "rip" };
+const ddtAperto = d => d.tipo === "rip" && d.righe.some(x => x.q - n0(x.r) > 0);
+function viewDdt(v) {
+  v.innerHTML = `<div class="bar"><div class="chips grow"><button class="fchip" aria-pressed="${uiD.t === "rip"}" data-act="ddtT" data-t="rip">DDT riparazione</button><button class="fchip" aria-pressed="${uiD.t === "acq"}" data-act="ddtT" data-t="acq">DDT acquisto</button></div><button class="btn pri fl" data-act="ddtNew">+ Nuovo DDT ${uiD.t === "acq" ? "acquisto" : "riparazione"}</button></div><div id="list"></div><button class="btn pri fab" data-act="ddtNew" aria-label="Nuovo DDT"><span aria-hidden="true">+</span><span class="txt"> DDT</span></button>`;
+  listDdt();
+}
+function listDdt() {
+  const L = S.ddt.filter(d => d.tipo === uiD.t).sort((a, b) => String(b.data).localeCompare(String(a.data)) || b.id - a.id);
+  $("#list").innerHTML = L.length ? L.map(d => {
+    const tot = d.righe.reduce((s, x) => s + x.q, 0), rien = d.righe.reduce((s, x) => s + n0(x.r), 0), foto = S.imgs.includes("dd:" + d.id);
+    const stato = d.tipo === "acq" ? "Ricevuto in magazzino" : rien >= tot ? "Rientrato" : rien > 0 ? "Rientro parziale (" + rien + "/" + tot + ")" : "In riparazione";
+    return `<div class="fxcard"><h3>DDT ${esc(d.num || "s.n.")} — ${esc(d.forn)}</h3><div class="sub">${dataIt(d.data)} · ${tot} pezzi · <b>${stato}</b></div>
+      ${d.righe.map(x => `<div class="fxline"><span>${x.q} × ${esc(x.a)} <small class="sub">${esc([x.ma, x.mo].filter(Boolean).join(" "))}</small></span><span class="sub">${d.tipo === "rip" ? "rientrati " + n0(x.r) + "/" + x.q : esc(x.ar || "da assegnare")}</span></div>`).join("")}
+      <div class="dacts"><button class="btn sm" data-act="ddtPdf" data-id="${d.id}">PDF</button><button class="btn sm" data-act="ddtFoto" data-id="${d.id}">${foto ? "📷 Foto" : "+ Foto"}</button>${ddtAperto(d) ? `<button class="btn sm pri" data-act="ddtRient" data-id="${d.id}">Rientro</button>` : ""}<button class="btn sm dng" data-act="ddtDel" data-id="${d.id}">Elimina</button></div></div>`;
+  }).join("") : `<div class="empty">Nessun DDT ${uiD.t === "acq" ? "di acquisto" : "di riparazione"}. Usa «+ Nuovo DDT».</div>`;
+}
+async function ddtPdfDa(id) {
+  const d = S.ddt.find(i => i.id === id); if (!d) return;
+  const foto = S.imgs.includes("dd:" + id) ? await Img.get("dd:" + id) : null;
+  await pdfDdt({ tipo: d.tipo, f: d.forn, n: d.num, dt: d.data, righe: d.righe.map(x => ({ a: x.a, ma: x.ma || "", mo: x.mo || "", q: x.q, no: x.no || "" })), foto });
+}
+function dlgDdtFoto(id) {
+  let nuova = null; const k = "dd:" + id, ha = S.imgs.includes(k);
+  dlg("Foto del DDT", `<div class="f"><label for="dfF">Scegli una foto (convertita in WebP)</label><input type="file" id="dfF" accept="image/*"></div><img id="dfP" alt="" style="max-width:100%;max-height:260px;border-radius:8px" hidden>${ha ? `<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="dfT"> Togli la foto attuale</label>` : ""}`, {
+    init: d => {
+      if (ha) Img.get(k).then(u => { if (u && !nuova) { const im = $("#dfP", d); im.src = u; im.hidden = false; } }).catch(() => {});
+      $("#dfF", d).onchange = async e => { const fl = e.target.files[0]; if (!fl) return; try { nuova = await comprimi(fl, 1000, 0.75); const im = $("#dfP", d); im.src = nuova; im.hidden = false; } catch (er) { $("#derr").textContent = er.message; } };
+    },
+    onOk: d => {
+      const togli = ha && $("#dfT", d) && $("#dfT", d).checked; if (!nuova && !togli) return;
+      $("#dok", d).disabled = true;
+      (async () => {
+        try { if (nuova) await Img.set(k, nuova); else await Img.del(k); go(() => { if (nuova) { if (!S.imgs.includes(k)) S.imgs.push(k); S.imgv[k] = Date.now(); } else { S.imgs = S.imgs.filter(q => q !== k); delete S.imgv[k]; } }, "Salvato."); d.close(); }
+        catch (e) { $("#derr", d).textContent = e.message || "Foto non salvata."; $("#dok", d).disabled = false; }
+      })();
+      return false;
+    }
+  });
+}
+function dlgRientro(id) {
+  const d = S.ddt.find(i => i.id === id); if (!d) return;
+  const P = d.righe.filter(x => x.q - n0(x.r) > 0);
+  dlg("Rientro dalla riparazione", `<div class="hint">Indica quanti pezzi sono rientrati: tornano disponibili in magazzino.</div>` + P.map(x => `<div class="f"><label>${esc(x.a)} (in riparazione: ${x.q - n0(x.r)})</label><input type="number" class="rN" data-r="${x.id}" min="0" max="${x.q - n0(x.r)}" inputmode="numeric" value="${x.q - n0(x.r)}"></div>`).join(""), {
+    ok: "Registra rientro",
+    onOk: dd => {
+      const L = [...dd.querySelectorAll(".rN")].map(e => ({ rid: +e.dataset.r, n: intOrNull(e.value) || 0 })).filter(x => x.n > 0);
+      if (!L.length) throw new Err("Indica almeno un pezzo rientrato.");
+      run(() => {
+        const dr = S.ddt.find(i => i.id === id);
+        L.forEach(({ rid, n }) => {
+          const x = dr.righe.find(q => q.id === rid); if (!x || n > x.q - n0(x.r)) throw new Err("Quantità non valida per «" + (x ? x.a : "") + "».");
+          const r = invRow(x.inv); if (r) { if (n > n0(r.ripar)) throw new Err("«" + r.articolo + "»: in riparazione risultano solo " + n0(r.ripar) + " pezzi."); r.ripar = nz(n0(r.ripar) - n); if (!n0(r.ripar)) setRip(r); }
+          x.r = n0(x.r) + n;
+        });
+      }, "Rientro registrato.");
+    }
+  });
+}
+function dlgDDTAcq() {
+  const riga = () => `<div class="nrow"><div class="f"><label>Articolo</label><input type="text" class="aA" list="dlNo" autocomplete="off"></div><div class="f"><label>Quantità</label><input type="number" class="aQ" min="1" inputmode="numeric" value="1"></div><div class="f"><label>Area di destinazione</label><select class="aR">${areaOpts("", "— Da assegnare —")}</select></div><div class="f"><label>Origine</label><select class="aO">${pvOpts("")}</select></div><div class="f"><label>Note</label><input type="text" class="aN" autocomplete="off"></div><button type="button" class="btn sm dng nX" aria-label="Togli">✕</button></div>`;
+  const prox = (() => { const l = S.ddt.filter(x => x.tipo === "acq").map(x => String(x.num || "").trim()).filter(x => /^\d+$/.test(x)).map(Number); return l.length ? String(Math.max(...l) + 1) : ""; })();
+  let dFoto = null;
+  dlg("Crea DDT di acquisto", `<div class="g2"><div class="f"><label for="aF">Fornitore (mittente)</label><input type="text" id="aF" list="dlFd" autocomplete="off"></div><div class="f"><label for="aN">N° DDT</label><input type="text" id="aN" value="${esc(prox)}"></div></div>
+   <div class="f"><label for="aD">Data</label><input type="date" id="aD" value="${oggiIso()}"></div>
+   <div class="f"><span class="lab">Articoli ricevuti: entrano in magazzino con la quantità indicata</span><div id="ar">${riga()}</div><div><button type="button" class="btn sm" id="aAdd">+ Aggiungi articolo</button></div></div>
+   <div class="f"><label for="aFoto">Foto (facoltativa, convertita in WebP)</label><input type="file" id="aFoto" accept="image/*"><img id="aFotoP" alt="" style="max-width:100%;max-height:160px;margin-top:6px;border-radius:8px" hidden></div>
+   <datalist id="dlNo">${nomi().map(x => `<option value="${esc(x)}">`).join("")}</datalist><datalist id="dlFd">${fornDdt().map(x => `<option value="${esc(x)}">`).join("")}</datalist>`, {
+    wide: true, ok: "Crea DDT",
+    init: d => {
+      $("#aAdd", d).onclick = () => { $("#ar", d).insertAdjacentHTML("beforeend", riga()); const a = d.querySelectorAll(".aA"); a[a.length - 1].focus(); };
+      $("#ar", d).onclick = e => { const b = e.target.closest(".nX"); if (b && d.querySelectorAll(".nrow").length > 1) b.closest(".nrow").remove(); };
+      $("#aFoto", d).onchange = async e => { const fl = e.target.files[0]; dFoto = null; $("#aFotoP", d).hidden = true; if (!fl) return; try { dFoto = await comprimi(fl, 1000, 0.75); const im = $("#aFotoP", d); im.src = dFoto; im.hidden = false; } catch (er) { $("#derr").textContent = er.message; } };
+    },
+    onOk: d => {
+      const f = $("#aF", d).value.trim(), n = $("#aN", d).value.trim(), dt = $("#aD", d).value || oggiIso();
+      if (!f) throw new Err("Scrivi il fornitore.");
+      const V = [...d.querySelectorAll(".nrow")].map(r => ({ a: $(".aA", r).value.trim().replace(/\s+/g, " "), q: intOrNull($(".aQ", r).value), area: $(".aR", r).value || "", o: $(".aO", r).value || "", no: $(".aN", r).value.trim() })).filter(x => x.a);
+      if (!V.length) throw new Err("Aggiungi almeno un articolo.");
+      V.forEach(x => { if (!Number.isInteger(x.q) || x.q < 1) throw new Err("Indica la quantità per «" + x.a + "»."); });
+      const did = nid(S.ddt), righe = [];
+      run(() => {
+        const rr = [];
+        V.forEach(x => {
+          let r = S.inv.find(q => !q.rip && norm(q.articolo) === norm(x.a) && (q.area || "") === x.area && (q.origine || "") === x.o);
+          if (r) { const qt = n0(r.qty) + x.q; salvaRiga(r.id, { articolo: r.articolo, marca: r.marca, modello: r.modello, area: r.area, qty: qt, rotto: r.rotto, ripar: r.ripar, dismesso: r.dismesso, note: r.note, origini: x.o ? [{ o: x.o, q: qt }] : [], rf: r.rf, rd: r.rd, rn: r.rn }); }
+          else { salvaRiga(null, { articolo: x.a, marca: null, modello: null, area: x.area || null, qty: x.q, rotto: null, ripar: null, dismesso: null, note: x.no || null, origini: x.o ? [{ o: x.o, q: x.q }] : [] }); r = S.inv[S.inv.length - 1]; }
+          rr.push({ id: rr.length + 1, inv: r.id, a: r.articolo, ma: r.marca || "", mo: r.modello || "", q: x.q, ar: x.area, o: x.o, no: x.no });
+          righe.push({ a: r.articolo, ma: r.marca || "", mo: r.modello || "", q: x.q, no: [x.area, x.no].filter(Boolean).join(" · ") });
+        });
+        S.ddt.push({ id: did, tipo: "acq", num: n, data: dt, forn: f, righe: rr });
+      }, "DDT di acquisto creato: " + V.reduce((s, x) => s + x.q, 0) + " pezzi in magazzino.");
+      (async () => {
+        if (dFoto) { const k = "dd:" + did; await Img.set(k, dFoto); go(() => { if (!S.imgs.includes(k)) S.imgs.push(k); S.imgv[k] = Date.now(); }); }
+        await pdfDdt({ tipo: "acq", f, n, dt, righe, foto: dFoto });
+      })().catch(e => toast(e.message || "Creazione del DDT non riuscita."));
+    }
+  });
 }
 /* ---- esportazione Excel di interventi e budget ---- */
 const stileXl = ws => { const h = ws.getRow(1); h.font = { bold: true, color: { argb: "FFFFFFFF" } }; h.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0047AB" } }; h.alignment = { vertical: "middle", wrapText: true }; ws.views = [{ state: "frozen", ySplit: 1 }]; };
