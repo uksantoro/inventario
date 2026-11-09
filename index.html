@@ -293,6 +293,18 @@ body{padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
   .prv{grid-template-columns:minmax(0,1fr) 76px auto}
   .ph img{max-height:38dvh}
 }
+@media (max-width:760px){
+  .leg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;padding:8px 0 4px}
+  .lg{flex-direction:column;justify-content:center;align-items:center;gap:4px;min-height:0!important;height:auto!important;padding:5px 2px;font-size:11px;line-height:1.15;text-align:center;white-space:normal;border-radius:10px;border:1px solid var(--line);background:var(--surface)}
+  .lg::before{display:block;width:14px;height:14px;margin:0 auto}
+  .lg[aria-pressed="true"]{border-color:var(--brand);background:var(--soft)}
+  .b2c{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .b2c>*{width:100%;min-width:0;box-sizing:border-box;margin:0}
+  .b2c>input[type=search],.b2c>select,.b2c>.grow,.b2c>.b2c-f{grid-column:1/-1;flex:none}
+  .b2c .chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .b2c .chips .fchip,.b2c>.fchip,.b2c>.btn{justify-content:center;text-align:center}
+  .b2c>.sub{align-self:center;text-align:right}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -908,7 +920,7 @@ function viewInv(v, SM) {
   v.innerHTML = `<div class="inv"><aside class="areas" aria-label="Aree">${side.map(([k, n]) => `<button class="area" aria-pressed="${ui.area === k}" data-area="${esc(k)}"><span>${esc(n)}</span><small>${pz(k)}</small></button>`).join("")}</aside>
   <section style="min-width:0">
     <select class="areasel" id="areaSel" aria-label="Area" style="margin-bottom:10px">${side.map(([k, n]) => `<option value="${esc(k)}" ${ui.area === k ? "selected" : ""}>${esc(n)} (${pz(k)} pz)</option>`).join("")}</select>
-    <div class="bar"><input type="search" class="grow" id="q" placeholder="Cerca articolo, marca, modello…" value="${esc(ui.q)}" aria-label="Cerca">
+    <div class="bar b2c"><input type="search" class="grow" id="q" placeholder="Cerca articolo, marca, modello…" value="${esc(ui.q)}" aria-label="Cerca">
       <select id="fSt" aria-label="Filtro stato"><option value="">Tutti gli stati</option><option value="rotti" ${ui.stato === "rotti" ? "selected" : ""}>Con rotti</option><option value="rip" ${ui.stato === "rip" ? "selected" : ""}>In riparazione</option><option value="dis" ${ui.stato === "dis" ? "selected" : ""}>Con dismessi</option><option value="noorg" ${ui.stato === "noorg" ? "selected" : ""}>Senza origine</option><option value="ver" ${ui.stato === "ver" ? "selected" : ""}>Da verificare (${S.inv.filter(r => r.ver).length})</option><option value="prova" ${ui.stato === "prova" ? "selected" : ""}>Da provare (${S.inv.filter(r => r.prova).length})</option></select>
       <button class="btn" data-act="selMode" id="bSel">Seleziona</button>
       <button class="btn" data-act="ddt">Crea DDT</button>
@@ -2205,7 +2217,7 @@ function ddtElimina(id) { const x = S.ddt.find(i => i.id === id); dlgConferma("E
 const uiD = { t: "rip", q: "", ap: false };
 const ddtAperto = d => d.tipo === "rip" && d.righe.some(x => x.q - n0(x.r) > 0);
 function viewDdt(v) {
-  v.innerHTML = `<div class="bar"><div class="chips grow"><button class="fchip" aria-pressed="${uiD.t === "rip"}" data-act="ddtT" data-t="rip">DDT riparazione</button><button class="fchip" aria-pressed="${uiD.t === "acq"}" data-act="ddtT" data-t="acq">DDT acquisto</button></div><button class="btn pri fl" data-act="ddtNew">+ Nuovo DDT ${uiD.t === "acq" ? "acquisto" : "riparazione"}</button></div><div class="bar"><input type="search" id="qd" placeholder="Cerca fornitore, articolo, n° DDT…" value="${esc(uiD.q)}" style="flex:1 1 220px">${uiD.t === "rip" ? `<button class="fchip" aria-pressed="${uiD.ap}" data-act="ddtAp">Solo aperti</button>` : ""}<span class="sub" id="dTot"></span></div><div id="list"></div><button class="btn pri fab" data-act="ddtNew" aria-label="Nuovo DDT"><span aria-hidden="true">+</span><span class="txt"> DDT</span></button>`;
+  v.innerHTML = `<div class="bar b2c"><div class="chips grow"><button class="fchip" aria-pressed="${uiD.t === "rip"}" data-act="ddtT" data-t="rip">DDT riparazione</button><button class="fchip" aria-pressed="${uiD.t === "acq"}" data-act="ddtT" data-t="acq">DDT acquisto</button></div><button class="btn pri fl b2c-f" data-act="ddtNew">+ Nuovo DDT ${uiD.t === "acq" ? "acquisto" : "riparazione"}</button></div><div class="bar b2c"><input type="search" id="qd" placeholder="Cerca fornitore, articolo, n° DDT…" value="${esc(uiD.q)}" style="flex:1 1 220px">${uiD.t === "rip" ? `<button class="fchip" aria-pressed="${uiD.ap}" data-act="ddtAp">Solo aperti</button>` : ""}<span class="sub" id="dTot"></span></div><div id="list"></div><button class="btn pri fab" data-act="ddtNew" aria-label="Nuovo DDT"><span aria-hidden="true">+</span><span class="txt"> DDT</span></button>`;
   listDdt();
 }
 function listDdt() {
