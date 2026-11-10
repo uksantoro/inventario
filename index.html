@@ -1683,7 +1683,7 @@ const thin = { style: "thin", color: { argb: "FF7F7F7F" } };
 const bAll = { top: thin, bottom: thin, left: thin, right: thin };
 function foglio(wb, nome, sezione, righe, origine, nAree) {
   const ws = wb.addWorksheet(nome.replace(/[\\\/\?\*\[\]:]/g, " ").slice(0, 31), { views: [{ showGridLines: false }] });
-  [46, 19, 9, 15, 15, 62, 11, origine ? 24 : 2].forEach((w, i) => ws.getColumn(i + 1).width = w);
+  [46, 19, 9, 15, 15, 62, 11, ...(origine ? [15, 24] : [2])].forEach((w, i) => ws.getColumn(i + 1).width = w);
   const f = (sz, b, col) => ({ name: FONT, size: sz, bold: !!b, color: { argb: col || GRI } });
   ws.getCell("A5").value = "ROBINSON "; ws.getCell("A5").font = f(14, 1, BLU);
   ws.getCell("B5").value = "APULIA"; ws.getCell("B5").font = f(12); ws.getCell("B5").border = { bottom: { style: "dotted" } };
@@ -1693,21 +1693,22 @@ function foglio(wb, nome, sezione, righe, origine, nAree) {
   ws.getCell("E7").value = "Datum:"; ws.getCell("E7").font = f(14, 1); ws.getCell("E7").alignment = { horizontal: "right" };
   const dt = ws.getCell("F7"); dt.value = new Date(); dt.numFmt = "dd/mm/yyyy"; dt.font = f(16, 1); dt.alignment = { horizontal: "left" }; dt.border = { bottom: { style: "dotted" } };
   [15.75, 15.75, 15.75, 15.75, 18.75, 15.75, 20.25, 20.25].forEach((h, i) => ws.getRow(i + 1).height = h);
-  const heads = ["Gegenstand", "Area", "Rotto", "Dismesso", "In riparazione", "Note", "Quantità"]; if (origine) heads.push("Origine");
+  const heads = ["Gegenstand", "Area", "Rotto", "Dismesso", "In riparazione", "Note", "Quantità"]; if (origine) heads.push("Disponibilità", "Origine");
   ws.getRow(9).height = 33;
   heads.forEach((t, i) => { const c = ws.getCell(9, i + 1); c.value = t; c.font = { name: FONT, size: i === 0 ? 14 : 12, bold: true }; c.alignment = { horizontal: "center", vertical: "middle", wrapText: true }; c.border = bAll; });
   ws.getRow(10).height = 23.25;
-  const ncol = origine ? 8 : 7;
+  const ncol = origine ? 9 : 7;
   for (let c = 1; c <= ncol; c++) ws.getCell(10, c).border = { top: thin };
   const s = ws.getCell("A10"); s.value = sezione.toUpperCase(); s.font = f(18, 1); s.alignment = { horizontal: "center", vertical: "middle" };
   const n = Math.max(righe.length, 10), first = 11;
   for (let i = 0; i < n; i++) {
     const r = first + i, x = righe[i] || {}; const row = ws.getRow(r);
-    const v = [x.articolo, x.area, x.rotto, x.dismesso, x.ripar, x.note, x.qty, x.origine];
+    const dsp = x.articolo == null ? null : Math.max(0, n0(x.qty) - n0(x.rotto) - n0(x.ripar) - n0(x.dismesso));
+    const v = origine ? [x.articolo, x.area, x.rotto, x.dismesso, x.ripar, x.note, x.qty, dsp == null ? null : { formula: `MAX(0,G${r}-C${r}-D${r}-E${r})`, result: dsp }, x.origine] : [x.articolo, x.area, x.rotto, x.dismesso, x.ripar, x.note, x.qty];
     for (let c = 1; c <= ncol; c++) {
       const cell = row.getCell(c); cell.value = v[c - 1] == null || v[c - 1] === "" ? null : v[c - 1];
       cell.font = f(12); cell.border = bAll;
-      const num = [3, 4, 5, 7].includes(c);
+      const num = [3, 4, 5, 7].includes(c) || (origine && c === 8);
       cell.alignment = { horizontal: num ? "center" : "left", vertical: "middle", wrapText: !num };
       if (num) cell.numFmt = "0";
     }
@@ -1724,7 +1725,7 @@ function foglio(wb, nome, sezione, righe, origine, nAree) {
     [3, 4, 5, 7].forEach(c => ws.getCell(r, c).dataValidation = { type: "whole", operator: "greaterThanOrEqual", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Numero", error: "Inserire un numero intero (pezzi)." });
   }
   try { const id = ws.workbook.addImage({ base64: LOGO, extension: "png" }); ws.addImage(id, { tl: { col: 5.1, row: 0 }, ext: { width: 104, height: 112 } }); } catch (e) {}
-  ws.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, printArea: "A1:" + (origine ? "H" : "G") + ft };
+  ws.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, printArea: "A1:" + (origine ? "I" : "G") + ft };
 }
 async function creaExcel(tipo, valore) {
   if (typeof ExcelJS === "undefined") throw new Err("La libreria Excel non si è caricata. Controlla la connessione e riprova.");
