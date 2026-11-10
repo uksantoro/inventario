@@ -2212,7 +2212,31 @@ async function esportaDdt(d) {
   await salvaFile("DDT_" + (d.n ? d.n.replace(/[^\w-]+/g, "_") + "_" : "") + d.f.replace(/[^\w-]+/g, "_") + "_" + d.dt + ".xlsx", await xlBlob(wb));
 }
 /* ---------- sezione DDT: schede «DDT riparazione» e «DDT acquisto» ---------- */
-function ddtElimina(id) { const x = S.ddt.find(i => i.id === id); dlgConferma("Elimina DDT", `Eliminare il DDT ${esc(x.num || "s.n.")} (${esc(x.forn)})?<br><small>Le quantità di magazzino non vengono modificate.</small>`, "Elimina", () => { const k = "dd:" + id; if (S.imgs.includes(k)) Img.del(k).catch(() => {}); go(() => { S.ddt = S.ddt.filter(i => i.id !== id); S.imgs = S.imgs.filter(q => q !== k); delete S.imgv[k]; }, "DDT eliminato."); });
+function ddtElimina(id) {
+  const x = S.ddt.find(i => i.id === id); if (!x) return;
+  const rip = x.tipo === "rip", pz = x.righe.reduce((t, g) => t + (rip ? g.q - n0(g.r) : g.q), 0);
+  const nota = rip ? (pz ? `I ${pz} pezzi non ancora rientrati tornano disponibili in magazzino (escono da «In riparazione»).` : "Tutti i pezzi sono già rientrati: il magazzino non cambia.") : `I ${pz} pezzi entrati con questo DDT vengono tolti dal magazzino.`;
+  dlgConferma("Elimina DDT", `Eliminare il DDT ${esc(x.num || "s.n.")} (${esc(x.forn)})?<br><small>${nota}</small>`, "Elimina", () => {
+    const k = "dd:" + id;
+    go(() => {
+      const d = S.ddt.find(i => i.id === id);
+      d.righe.forEach(g => {
+        const r = invRow(g.inv); if (!r) return;
+        if (rip) {
+          const fuori = g.q - n0(g.r); if (fuori < 1) return;
+          r.ripar = nz(n0(r.ripar) - Math.min(fuori, n0(r.ripar))); setRip(r, r.rf, r.rd, r.rn);
+        } else {
+          if (r.rip) throw new Err("«" + r.articolo + "» ha più origini: correggi la quantità dall'inventario e poi elimina il DDT.");
+          const qt = n0(r.qty) - g.q;
+          if (qt < n0(r.rotto) + n0(r.ripar) + n0(r.dismesso)) throw new Err("«" + r.articolo + "»: i pezzi in magazzino non bastano per annullare il DDT (alcuni sono rotti, in riparazione o dismessi).");
+          salvaRiga(r.id, { articolo: r.articolo, marca: r.marca, modello: r.modello, area: r.area, qty: qt, rotto: r.rotto, ripar: r.ripar, dismesso: r.dismesso, note: r.note, origini: r.origine ? [{ o: r.origine, q: qt }] : [], rf: r.rf, rd: r.rd, rn: r.rn });
+          if (qt === 0) eliminaRiga(r.id);
+        }
+      });
+      S.ddt = S.ddt.filter(i => i.id !== id); S.imgs = S.imgs.filter(q => q !== k); delete S.imgv[k];
+    }, "DDT eliminato: " + (rip ? "pezzi tornati disponibili." : "quantità tolte dal magazzino."));
+    if (!S.ddt.some(i => i.id === id) && Img) Img.del(k).catch(() => {});
+  });
 }
 const uiD = { t: "rip", q: "", ap: false };
 const ddtAperto = d => d.tipo === "rip" && d.righe.some(x => x.q - n0(x.r) > 0);
