@@ -1681,6 +1681,8 @@ function dlgAree() {
 const BLU = "FF005EB8", GRI = "FF4F4F4F", FONT = "Cera ROB";
 const thin = { style: "thin", color: { argb: "FF7F7F7F" } };
 const bAll = { top: thin, bottom: thin, left: thin, right: thin };
+const TINTA = { 3: "FFFCE4E4", 4: "FFEAEAEA", 5: "FFFFF5CC" }; // rotto: rosso lieve · dismesso: grigio lieve · riparazione: giallo lieve
+const tinta = (cell, c) => { if (TINTA[c]) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: TINTA[c] } }; };
 function foglio(wb, nome, sezione, righe, origine, nAree) {
   const ws = wb.addWorksheet(nome.replace(/[\\\/\?\*\[\]:]/g, " ").slice(0, 31), { views: [{ showGridLines: false }] });
   [46, 19, 9, 15, 15, 62, 11, ...(origine ? [15, 24] : [2])].forEach((w, i) => ws.getColumn(i + 1).width = w);
@@ -1695,7 +1697,7 @@ function foglio(wb, nome, sezione, righe, origine, nAree) {
   [15.75, 15.75, 15.75, 15.75, 18.75, 15.75, 20.25, 20.25].forEach((h, i) => ws.getRow(i + 1).height = h);
   const heads = ["Gegenstand", "Area", "Rotto", "Dismesso", "In riparazione", "Note", "Quantità"]; if (origine) heads.push("Disponibilità", "Origine");
   ws.getRow(9).height = 33;
-  heads.forEach((t, i) => { const c = ws.getCell(9, i + 1); c.value = t; c.font = { name: FONT, size: i === 0 ? 14 : 12, bold: true }; c.alignment = { horizontal: "center", vertical: "middle", wrapText: true }; c.border = bAll; });
+  heads.forEach((t, i) => { const c = ws.getCell(9, i + 1); c.value = t; c.font = { name: FONT, size: i === 0 ? 14 : 12, bold: true }; c.alignment = { horizontal: "center", vertical: "middle", wrapText: true }; c.border = bAll; tinta(c, i + 1); });
   ws.getRow(10).height = 23.25;
   const ncol = origine ? 9 : 7;
   for (let c = 1; c <= ncol; c++) ws.getCell(10, c).border = { top: thin };
@@ -1707,7 +1709,7 @@ function foglio(wb, nome, sezione, righe, origine, nAree) {
     const v = origine ? [x.articolo, x.area, x.rotto, x.dismesso, x.ripar, x.note, x.qty, dsp == null ? null : { formula: `MAX(0,G${r}-C${r}-D${r}-E${r})`, result: dsp }, x.origine] : [x.articolo, x.area, x.rotto, x.dismesso, x.ripar, x.note, x.qty];
     for (let c = 1; c <= ncol; c++) {
       const cell = row.getCell(c); cell.value = v[c - 1] == null || v[c - 1] === "" ? null : v[c - 1];
-      cell.font = f(12); cell.border = bAll;
+      cell.font = f(12); cell.border = bAll; tinta(cell, c);
       const num = [3, 4, 5, 7].includes(c) || (origine && c === 8);
       cell.alignment = { horizontal: num ? "center" : "left", vertical: "middle", wrapText: !num };
       if (num) cell.numFmt = "0";
